@@ -30,9 +30,18 @@ namespace osu.Game.Overlays
                 {
                     Anchor = Anchor.BottomCentre,
                     Origin = Anchor.BottomCentre,
-                    Font = OsuFont.Numeric.With(weight: FontWeight.Bold, size: 12),
-                    Colour = colours.YellowDark,
-                    Text = @"DEVELOPER BUILD",
+                    Font = OsuFont.Torus.With(size: 12),
+                    Colour = colours.GrayF,
+                    Text = "jvnkosu! development build",
+                    Y = -12,
+                },
+                new OsuSpriteText
+                {
+                    Anchor = Anchor.BottomCentre,
+                    Origin = Anchor.BottomCentre,
+                    Font = OsuFont.Torus.With(weight: FontWeight.Bold, size: 15),
+                    Colour = colours.Yellow,
+                    Text = "Experimental version",
                 },
                 new Sprite
                 {
