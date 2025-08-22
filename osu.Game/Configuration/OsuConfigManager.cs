@@ -92,7 +92,7 @@ namespace osu.Game.Configuration
 
             SetDefault(OsuSetting.ExternalLinkWarning, true);
             SetDefault(OsuSetting.PreferNoVideo, false);
-
+            SetDefault(OsuSetting.BackgroundCategory, "Default");
             SetDefault(OsuSetting.ShowOnlineExplicitContent, false);
 
             SetDefault(OsuSetting.NotifyOnUsernameMentioned, true);
@@ -193,7 +193,7 @@ namespace osu.Game.Configuration
             SetDefault(OsuSetting.IntroSequence, IntroSequence.Triangles);
 
             SetDefault(OsuSetting.MenuBackgroundSource, BackgroundSource.Skin);
-            SetDefault(OsuSetting.SeasonalBackgroundMode, SeasonalBackgroundMode.Sometimes);
+            SetDefault(OsuSetting.SeasonalBackgroundMode, SeasonalBackgroundMode.Never);
 
             SetDefault(OsuSetting.DiscordRichPresence, DiscordRichPresenceMode.Full);
 
@@ -436,6 +436,7 @@ namespace osu.Game.Configuration
         MenuBackgroundSource,
         GameplayDisableWinKey,
         SeasonalBackgroundMode,
+        BackgroundCategory,
         EditorWaveformOpacity,
         EditorShowHitMarkers,
         EditorAutoSeekOnPlacement,

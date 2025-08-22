@@ -8,6 +8,7 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Localisation;
 using osu.Game.Configuration;
+using osu.Game.Graphics.Backgrounds;
 using osu.Game.Localisation;
 using osu.Game.Online.API;
 using osu.Game.Online.API.Requests.Responses;
@@ -18,6 +19,9 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
     {
         protected override LocalisableString Header => UserInterfaceStrings.MainMenuHeader;
 
+        [Resolved]
+        private SeasonalBackgroundLoader backgroundLoader { get; set; }
+
         private IBindable<APIUser> user;
 
         private SettingsEnumDropdown<BackgroundSource> backgroundSourceDropdown;
@@ -26,6 +30,34 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
         private void load(OsuConfigManager config, IAPIProvider api)
         {
             user = api.LocalUser.GetBoundCopy();
+
+            var backgroundModeBindable = config.GetBindable<SeasonalBackgroundMode>(OsuSetting.SeasonalBackgroundMode);
+            var enabledProxyBindable = new Bindable<bool>();
+
+            backgroundModeBindable.BindValueChanged(mode => enabledProxyBindable.Value = mode.NewValue == SeasonalBackgroundMode.Always, true);
+            enabledProxyBindable.BindValueChanged(enabled => backgroundModeBindable.Value = enabled.NewValue ? SeasonalBackgroundMode.Always : SeasonalBackgroundMode.Never);
+
+            var backgroundToggle = new SettingsCheckbox
+            {
+                LabelText = "Пользовательские фоны",
+                Current = enabledProxyBindable
+            };
+
+            var categoryDropdown = new SettingsDropdown<string>
+            {
+                LabelText = "Категория фонов",
+                Current = config.GetBindable<string>(OsuSetting.BackgroundCategory)
+            };
+
+            backgroundLoader.AvailableCategories.BindValueChanged(categories => categoryDropdown.Items = categories.NewValue, true);
+
+            backgroundModeBindable.BindValueChanged(mode =>
+            {
+                if (mode.NewValue == SeasonalBackgroundMode.Always)
+                    categoryDropdown.Show();
+                else
+                    categoryDropdown.Hide();
+            }, true);
 
             Children = new Drawable[]
             {
@@ -56,11 +88,8 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
                     LabelText = UserInterfaceStrings.BackgroundSource,
                     Current = config.GetBindable<BackgroundSource>(OsuSetting.MenuBackgroundSource),
                 },
-                new SettingsEnumDropdown<SeasonalBackgroundMode>
-                {
-                    LabelText = UserInterfaceStrings.SeasonalBackgrounds,
-                    Current = config.GetBindable<SeasonalBackgroundMode>(OsuSetting.SeasonalBackgroundMode),
-                }
+                backgroundToggle,
+                categoryDropdown,
             };
         }
 

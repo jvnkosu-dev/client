@@ -62,7 +62,7 @@ namespace osu.Game.Screens.Backgrounds
             source.ValueChanged += _ => Scheduler.AddOnce(next);
             beatmap.ValueChanged += _ => Scheduler.AddOnce(next);
             introSequence.ValueChanged += _ => Scheduler.AddOnce(next);
-            seasonalBackgroundLoader.SeasonalBackgroundChanged += () => Scheduler.AddOnce(next);
+            seasonalBackgroundLoader.BackgroundChanged += () => Scheduler.AddOnce(next);
 
             currentDisplay = RNG.Next(0, background_count);
             Next();

@@ -4,6 +4,7 @@
 #nullable disable
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
@@ -19,79 +20,104 @@ namespace osu.Game.Graphics.Backgrounds
 {
     public partial class SeasonalBackgroundLoader : Component
     {
-        /// <summary>
-        /// Fired when background should be changed due to receiving backgrounds from API
-        /// or when the user setting is changed (as it might require unloading the seasonal background).
-        /// </summary>
-        public event Action SeasonalBackgroundChanged;
+        public event Action<Exception> OnLoadFailure;
+        public event Action BackgroundChanged;
+
+        public readonly Bindable<IEnumerable<string>> AvailableCategories = new Bindable<IEnumerable<string>>(new List<string>());
 
         [Resolved]
         private IAPIProvider api { get; set; }
 
-        private Bindable<SeasonalBackgroundMode> seasonalBackgroundMode;
-        private Bindable<APISeasonalBackgrounds> seasonalBackgrounds;
+        private Bindable<SeasonalBackgroundMode> backgroundMode;
+        private Bindable<string> selectedCategory;
+        private Bindable<APISeasonalBackgrounds> currentBackgrounds;
 
-        private int current;
+        private int currentBackgroundIndex;
+
+        private bool shouldShowCustomBackgrounds => backgroundMode.Value != SeasonalBackgroundMode.Never;
 
         [BackgroundDependencyLoader]
         private void load(OsuConfigManager config, SessionStatics sessionStatics)
         {
-            seasonalBackgroundMode = config.GetBindable<SeasonalBackgroundMode>(OsuSetting.SeasonalBackgroundMode);
-            seasonalBackgroundMode.BindValueChanged(_ => SeasonalBackgroundChanged?.Invoke());
+            backgroundMode = config.GetBindable<SeasonalBackgroundMode>(OsuSetting.SeasonalBackgroundMode);
+            backgroundMode.BindValueChanged(_ => BackgroundChanged?.Invoke());
 
-            seasonalBackgrounds = sessionStatics.GetBindable<APISeasonalBackgrounds>(Static.SeasonalBackgrounds);
-            seasonalBackgrounds.BindValueChanged(_ =>
-            {
-                if (shouldShowSeasonal)
-                    SeasonalBackgroundChanged?.Invoke();
-            });
+            selectedCategory = config.GetBindable<string>(OsuSetting.BackgroundCategory);
+            selectedCategory.BindValueChanged(_ => fetchBackgroundsForSelectedCategory());
 
-            fetchSeasonalBackgrounds();
+            currentBackgrounds = sessionStatics.GetBindable<APISeasonalBackgrounds>(Static.SeasonalBackgrounds);
+
+            if (shouldShowCustomBackgrounds)
+                fetchCategories();
         }
 
-        private void fetchSeasonalBackgrounds()
+        private void fetchCategories()
         {
-            if (seasonalBackgrounds.Value != null)
-                return;
+            if (!shouldShowCustomBackgrounds) return;
 
-            var request = new GetSeasonalBackgroundsRequest();
+            var request = new GetBackgroundCategoriesRequest();
             request.Success += response =>
             {
-                seasonalBackgrounds.Value = response;
-                current = RNG.Next(0, response.Backgrounds?.Count ?? 0);
+                var serverCategories = response.Categories ?? Enumerable.Empty<string>();
+
+                AvailableCategories.Value = new[] { "Default" }.Concat(serverCategories)
+                                                               .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+                if (!AvailableCategories.Value.Contains(selectedCategory.Value))
+                    selectedCategory.Value = "Default";
+                else
+                    fetchBackgroundsForSelectedCategory();
+            };
+
+            request.Failure += exception =>
+            {
+                AvailableCategories.Value = new[] { "Не удалось загрузить..." };
+                OnLoadFailure?.Invoke(exception);
             };
 
             api.PerformAsync(request);
         }
 
-        public SeasonalBackground LoadNextBackground()
+        private void fetchBackgroundsForSelectedCategory()
         {
-            if (!shouldShowSeasonal)
+            if (!shouldShowCustomBackgrounds) return;
+
+            if (AvailableCategories.Value.Count() == 1 && AvailableCategories.Value.First().Contains("Не удалось"))
+            {
+                currentBackgrounds.Value = new APISeasonalBackgrounds { Backgrounds = new List<APISeasonalBackground>() };
+                BackgroundChanged?.Invoke();
+                return;
+            }
+
+            string categoryToFetch = selectedCategory.Value == "Default" ? null : selectedCategory.Value;
+            var request = new GetSeasonalBackgroundsRequest(categoryToFetch);
+
+            request.Success += response =>
+            {
+                currentBackgrounds.Value = response;
+                currentBackgroundIndex = RNG.Next(0, response.Backgrounds?.Count ?? 0);
+                BackgroundChanged?.Invoke();
+            };
+
+            request.Failure += exception =>
+            {
+                OnLoadFailure?.Invoke(exception);
+            };
+
+            api.PerformAsync(request);
+        }
+
+        public Background LoadNextBackground()
+        {
+            if (!shouldShowCustomBackgrounds || currentBackgrounds.Value?.Backgrounds?.Any() != true)
                 return null;
 
-            var backgrounds = seasonalBackgrounds.Value.Backgrounds;
-
-            current = (current + 1) % backgrounds.Count;
-            string url = backgrounds[current].Url;
+            var backgrounds = currentBackgrounds.Value.Backgrounds;
+            currentBackgroundIndex = (currentBackgroundIndex + 1) % backgrounds.Count;
+            string url = backgrounds[currentBackgroundIndex].Url;
 
             return new SeasonalBackground(url);
         }
-
-        private bool shouldShowSeasonal
-        {
-            get
-            {
-                if (seasonalBackgroundMode.Value == SeasonalBackgroundMode.Never)
-                    return false;
-
-                if (seasonalBackgroundMode.Value == SeasonalBackgroundMode.Sometimes && !isInSeason)
-                    return false;
-
-                return seasonalBackgrounds.Value?.Backgrounds?.Any() == true;
-            }
-        }
-
-        private bool isInSeason => seasonalBackgrounds.Value != null && DateTimeOffset.Now < seasonalBackgrounds.Value.EndDate;
     }
 
     [LongRunningLoad]

@@ -38,6 +38,7 @@ using osu.Game.Configuration;
 using osu.Game.Database;
 using osu.Game.Extensions;
 using osu.Game.Graphics;
+using osu.Game.Graphics.Backgrounds;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Input;
@@ -169,6 +170,9 @@ namespace osu.Game
         [Cached]
         private readonly ScreenshotManager screenshotManager = new ScreenshotManager();
 
+        [Cached]
+        private readonly SeasonalBackgroundLoader backgroundLoader;
+
         protected SentryLogger SentryLogger;
 
         public virtual StableStorage GetStorageForStableInstall() => null;
@@ -249,6 +253,9 @@ namespace osu.Game
 
         public OsuGame(string[] args = null)
         {
+            backgroundLoader = new SeasonalBackgroundLoader();
+            backgroundLoader.OnLoadFailure += handleBackgroundLoadFailure;
+
             this.args = args;
 
             Logger.NewEntry += forwardGeneralLogToNotifications;
@@ -1232,6 +1239,8 @@ namespace osu.Game
 
             loadComponentSingleFile(screenshotManager, Add);
 
+            loadComponentSingleFile(backgroundLoader, Add);
+
             // dependency on notification overlay, dependent by settings overlay
             loadComponentSingleFile(CreateUpdateManager(), Add, true);
 
@@ -1333,6 +1342,17 @@ namespace osu.Game
             handleStartupImport();
         }
 
+        private void handleBackgroundLoadFailure(Exception exception)
+        {
+            Schedule(() =>
+            {
+                Notifications?.Post(new SimpleNotification
+                {
+                    Text = "Не удалось загрузить фоны. Проверьте подключение к интернету.",
+                    Icon = FontAwesome.Solid.ExclamationTriangle
+                });
+            });
+        }
         private void handleBackButton()
         {
             // TODO: this is SUPER SUPER bad.
@@ -1701,6 +1721,11 @@ namespace osu.Game
             {
                 case IntroScreen intro:
                     introScreen = intro;
+                    SimpleNotification notification = new SimpleNotification
+                    {
+                        Text = "Welcome to jvnkosu!lazer!",
+                    };
+                    Notifications?.Post(notification);
                     devBuildBanner?.Show();
                     break;
 
