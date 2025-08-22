@@ -413,10 +413,9 @@ namespace osu.Game
         {
             Schedule(() =>
             {
-                // TODO: cache categories to only show this if *new* categories appear
                 Notifications?.Post(new SimpleNotification
                 {
-                    Text = "Successfully refreshed background categories",
+                    Text = ButtonSystemStrings.SeasonalBackgroundsRefreshed,
                     Icon = FontAwesome.Solid.CheckCircle,
                     Transient = true
                 });
@@ -1362,7 +1361,7 @@ namespace osu.Game
             {
                 Notifications?.Post(new SimpleErrorNotification
                 {
-                    Text = "Failed to load backgrounds!\nCheck your internet connection",
+                    Text = ButtonSystemStrings.SeasonalBackgroundsFail,
                     Icon = FontAwesome.Solid.ExclamationTriangle,
                     Transient = true
                 });
@@ -1738,7 +1737,7 @@ namespace osu.Game
                     introScreen = intro;
                     SimpleNotification notification = new SimpleNotification
                     {
-                        Text = "Welcome to jvnkosu!lazer!",
+                        Text = ButtonSystemStrings.GreetingNotification,
                         Transient = true,
                     };
                     Notifications?.Post(notification);

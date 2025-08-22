@@ -40,19 +40,19 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
 
             var backgroundToggle = new SettingsCheckbox
             {
-                LabelText = "Пользовательские фоны",
+                LabelText = UserInterfaceStrings.UseSeasonalBackgrounds,
                 Current = enabledProxyBindable
             };
 
             var categoryDropdown = new SettingsDropdown<string>
             {
-                LabelText = "Категория фонов",
+                LabelText = UserInterfaceStrings.SeasonalBackgroundsCategories,
                 Current = config.GetBindable<string>(OsuSetting.BackgroundCategory)
             };
 
             var refreshButton = new SettingsButton
             {
-                Text = "Обновить список категорий",
+                Text = UserInterfaceStrings.SeasonalBackgroundsRefresh,
                 Action = () => backgroundLoader.RefreshCategories()
             };
 

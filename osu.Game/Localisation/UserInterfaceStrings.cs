@@ -65,15 +65,25 @@ namespace osu.Game.Localisation
         public static LocalisableString BackgroundSource => new TranslatableString(getKey(@"background_source"), @"Background source");
 
         /// <summary>
+        /// "Use custom backgrounds from server"
+        /// </summary>
+        public static LocalisableString UseSeasonalBackgrounds => new TranslatableString(getKey(@"use_seasonal_backgrounds"), @"Use custom backgrounds from server");
+
+        /// <summary>
         /// "Seasonal backgrounds"
         /// </summary>
         public static LocalisableString SeasonalBackgrounds => new TranslatableString(getKey(@"seasonal_backgrounds"), @"Seasonal backgrounds");
 
-        /*/// <summary>
-        /// "Seasonal backgrounds"
-        /// </summary>*/
-        /* public static LocalisableString SeasonalBackgroundsCategories => new TranslatableString(getKey(@"seasonal_backgrounds_categories"), @"Seasonal backgrounds categories");
- */
+        /// <summary>
+        /// "Background categories"
+        /// </summary>
+        public static LocalisableString SeasonalBackgroundsCategories => new TranslatableString(getKey(@"seasonal_backgrounds_categories"), @"Background categories");
+
+        /// <summary>
+        /// "Refresh categories"
+        /// </summary>
+        public static LocalisableString SeasonalBackgroundsRefresh => new TranslatableString(getKey(@"seasonal_backgrounds_refresh"), @"Refresh categories");
+
         /// <summary>
         /// "Changes to this setting will only apply with an active osu!supporter tag."
         /// </summary>

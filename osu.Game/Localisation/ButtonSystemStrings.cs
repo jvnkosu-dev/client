@@ -78,6 +78,20 @@ Your experience will not be perfect, and may even feel subpar compared to games 
 
 Please bear with us as we continue to improve the game for you!");
 
+        /// <summary>
+        /// "Welcome to jvnkosu!lazer!"
+        /// </summary>
+        public static LocalisableString GreetingNotification => new TranslatableString(getKey(@"greeting_notification"), @"Welcome to jvnkosu!lazer!");
+
+        /// <summary>
+        /// "Failed to load backgrounds!\nCheck your internet connection"
+        /// </summary>
+        public static LocalisableString SeasonalBackgroundsFail => new TranslatableString(getKey(@"seasonal_backgrounds_fail"), @"Failed to load backgrounds!\nCheck your internet connection"); // TODO: implement l10n in osu-resources
+
+        /// <summary>
+        /// "Successfully refreshed background categories!"
+        /// </summary>
+        public static LocalisableString SeasonalBackgroundsRefreshed => new TranslatableString(getKey(@"seasonal_backgrounds_refreshed"), @"Successfully refreshed background categories!");
         private static string getKey(string key) => $@"{prefix}:{key}";
     }
 }
