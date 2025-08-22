@@ -23,6 +23,11 @@ namespace osu.Game.Graphics.Backgrounds
         public event Action<Exception> OnLoadFailure;
         public event Action BackgroundChanged;
 
+        /// <summary>
+        /// Fired when categories have been successfully refreshed from the server.
+        /// </summary>
+        public event Action OnCategoriesRefreshed;
+
         public readonly Bindable<IEnumerable<string>> AvailableCategories = new Bindable<IEnumerable<string>>(new List<string>());
 
         [Resolved]
@@ -51,11 +56,20 @@ namespace osu.Game.Graphics.Backgrounds
                 fetchCategories();
         }
 
+        /// <summary>
+        /// Public method to trigger a refresh of categories from the UI.
+        /// </summary>
+        public void RefreshCategories()
+        {
+            fetchCategories();
+        }
+
         private void fetchCategories()
         {
             if (!shouldShowCustomBackgrounds) return;
 
             var request = new GetBackgroundCategoriesRequest();
+
             request.Success += response =>
             {
                 var serverCategories = response.Categories ?? Enumerable.Empty<string>();
@@ -67,6 +81,8 @@ namespace osu.Game.Graphics.Backgrounds
                     selectedCategory.Value = "Default";
                 else
                     fetchBackgroundsForSelectedCategory();
+
+                OnCategoriesRefreshed?.Invoke();
             };
 
             request.Failure += exception =>

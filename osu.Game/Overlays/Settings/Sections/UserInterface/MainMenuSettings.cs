@@ -12,6 +12,7 @@ using osu.Game.Graphics.Backgrounds;
 using osu.Game.Localisation;
 using osu.Game.Online.API;
 using osu.Game.Online.API.Requests.Responses;
+using osu.Game.Overlays.Settings;
 
 namespace osu.Game.Overlays.Settings.Sections.UserInterface
 {
@@ -49,14 +50,26 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
                 Current = config.GetBindable<string>(OsuSetting.BackgroundCategory)
             };
 
+            var refreshButton = new SettingsButton
+            {
+                Text = "Обновить список категорий",
+                Action = () => backgroundLoader.RefreshCategories()
+            };
+
             backgroundLoader.AvailableCategories.BindValueChanged(categories => categoryDropdown.Items = categories.NewValue, true);
 
             backgroundModeBindable.BindValueChanged(mode =>
             {
                 if (mode.NewValue == SeasonalBackgroundMode.Always)
+                {
                     categoryDropdown.Show();
+                    refreshButton.Show();
+                }
                 else
+                {
                     categoryDropdown.Hide();
+                    refreshButton.Hide();
+                }
             }, true);
 
             Children = new Drawable[]
@@ -90,6 +103,7 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
                 },
                 backgroundToggle,
                 categoryDropdown,
+                refreshButton,
             };
         }
 

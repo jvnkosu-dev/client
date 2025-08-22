@@ -255,6 +255,7 @@ namespace osu.Game
         {
             backgroundLoader = new SeasonalBackgroundLoader();
             backgroundLoader.OnLoadFailure += handleBackgroundLoadFailure;
+            backgroundLoader.OnCategoriesRefreshed += handleCategoriesRefreshed;
 
             this.args = args;
 
@@ -407,6 +408,17 @@ namespace osu.Game
                     Task.Factory.StartNew(() => Import(paths), TaskCreationOptions.LongRunning);
                 }
             }
+        }
+        private void handleCategoriesRefreshed()
+        {
+            Schedule(() =>
+            {
+                Notifications?.Post(new SimpleNotification
+                {
+                    Text = "Список категорий фонов обновлен.",
+                    Icon = FontAwesome.Solid.CheckCircle
+                });
+            });
         }
 
         [BackgroundDependencyLoader]
