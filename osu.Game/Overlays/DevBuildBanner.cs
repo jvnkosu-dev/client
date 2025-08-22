@@ -32,7 +32,7 @@ namespace osu.Game.Overlays
                     Origin = Anchor.BottomCentre,
                     Font = OsuFont.Torus.With(size: 12),
                     Colour = colours.GrayF,
-                    Text = "jvnkosu! development build",
+                    Text =  $@"jvnkosu! " + game.Version,
                     Y = -12,
                 },
                 new OsuSpriteText
