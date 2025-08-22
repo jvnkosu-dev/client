@@ -413,10 +413,12 @@ namespace osu.Game
         {
             Schedule(() =>
             {
+                // TODO: cache categories to only show this if *new* categories appear
                 Notifications?.Post(new SimpleNotification
                 {
-                    Text = "Список категорий фонов обновлен.",
-                    Icon = FontAwesome.Solid.CheckCircle
+                    Text = "Successfully refreshed background categories",
+                    Icon = FontAwesome.Solid.CheckCircle,
+                    Transient = true
                 });
             });
         }
@@ -1358,10 +1360,11 @@ namespace osu.Game
         {
             Schedule(() =>
             {
-                Notifications?.Post(new SimpleNotification
+                Notifications?.Post(new SimpleErrorNotification
                 {
-                    Text = "Не удалось загрузить фоны. Проверьте подключение к интернету.",
-                    Icon = FontAwesome.Solid.ExclamationTriangle
+                    Text = "Failed to load backgrounds!\nCheck your internet connection",
+                    Icon = FontAwesome.Solid.ExclamationTriangle,
+                    Transient = true
                 });
             });
         }
@@ -1736,6 +1739,7 @@ namespace osu.Game
                     SimpleNotification notification = new SimpleNotification
                     {
                         Text = "Welcome to jvnkosu!lazer!",
+                        Transient = true,
                     };
                     Notifications?.Post(notification);
                     devBuildBanner?.Show();
