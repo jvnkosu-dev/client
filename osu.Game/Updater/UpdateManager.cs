@@ -69,9 +69,10 @@ namespace osu.Game.Updater
                 if (FixedReleaseStream != null)
                     config.SetValue(OsuSetting.ReleaseStream, FixedReleaseStream.Value);
 
-                // notify the user if they're using a build that is not officially sanctioned.
-                if (RuntimeInfo.EntryAssembly.GetCustomAttribute<OfficialBuildAttribute>() == null)
-                    Notifications.Post(new SimpleNotification { Text = NotificationsStrings.NotOfficialBuild });
+                // nope, doesn't matter, we're already not official
+                // // notify the user if they're using a build that is not officially sanctioned.
+                // if (RuntimeInfo.EntryAssembly.GetCustomAttribute<OfficialBuildAttribute>() == null)
+                //     Notifications.Post(new SimpleNotification { Text = NotificationsStrings.NotOfficialBuild });
             }
             else
             {

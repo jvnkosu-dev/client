@@ -115,10 +115,12 @@ namespace osu.Desktop
             if (IsFirstRun)
                 LocalConfig.SetValue(OsuSetting.ReleaseStream, ReleaseStream.Lazer);
 
-            if (IsPackageManaged)
-                return new NoActionUpdateManager();
+            // if (IsPackageManaged)
+            //     return new NoActionUpdateManager();
 
-            return new VelopackUpdateManager();
+            // return new VelopackUpdateManager();
+
+            return new NoActionUpdateManager(); // for now, APIs are useless for actually downloading the releases. TODO: adapt UpdateManager for gitea
         }
 
         public override bool RestartAppWhenExited()
