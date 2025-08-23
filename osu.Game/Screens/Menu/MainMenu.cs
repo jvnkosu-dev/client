@@ -105,7 +105,7 @@ namespace osu.Game.Screens.Menu
         private ParallaxContainer buttonsContainer;
         private SongTicker songTicker;
         private Container logoTarget;
-        private OnlineMenuBanner onlineMenuBanner;
+        /*private OnlineMenuBanner onlineMenuBanner;*/
         private MenuTipDisplay menuTipDisplay;
         private FillFlowContainer bottomElementsFlow;
         private SupporterDisplay supporterDisplay;
@@ -198,12 +198,12 @@ namespace osu.Game.Screens.Menu
                         {
                             Anchor = Anchor.TopCentre,
                             Origin = Anchor.TopCentre,
-                        },
-                        onlineMenuBanner = new OnlineMenuBanner
+                        }
+                        /*onlineMenuBanner = new OnlineMenuBanner
                         {
                             Anchor = Anchor.TopCentre,
                             Origin = Anchor.TopCentre,
-                        }
+                        }*/
                     }
                 },
                 supporterDisplay = new SupporterDisplay
@@ -224,12 +224,12 @@ namespace osu.Game.Screens.Menu
                     case ButtonSystemState.Initial:
                     case ButtonSystemState.Exit:
                         ApplyToBackground(b => b.FadeColour(OsuColour.Gray(baseDim), 500, Easing.OutSine));
-                        onlineMenuBanner.State.Value = Visibility.Hidden;
+                        /*onlineMenuBanner.State.Value = Visibility.Hidden;*/
                         break;
 
                     default:
                         ApplyToBackground(b => b.FadeColour(OsuColour.Gray(baseDim * 0.8f), 500, Easing.OutSine));
-                        onlineMenuBanner.State.Value = Visibility.Visible;
+                        /*onlineMenuBanner.State.Value = Visibility.Visible;*/
                         break;
                 }
             };

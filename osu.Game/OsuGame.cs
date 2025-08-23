@@ -32,6 +32,7 @@ using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Framework.Screens;
 using osu.Framework.Threading;
+using osu.Game.Audio;
 using osu.Game.Beatmaps;
 using osu.Game.Collections;
 using osu.Game.Configuration;
@@ -170,8 +171,11 @@ namespace osu.Game
         [Cached]
         private readonly ScreenshotManager screenshotManager = new ScreenshotManager();
 
+        // --- ÍÀØÈ ÍÎÂÛÅ ÊÎÌÏÎÍÅÍÒÛ ---
         [Cached]
         private readonly SeasonalBackgroundLoader backgroundLoader;
+        [Cached]
+        private readonly WelcomeMusicManager musicManager;
 
         protected SentryLogger SentryLogger;
 
@@ -253,9 +257,11 @@ namespace osu.Game
 
         public OsuGame(string[] args = null)
         {
+            // --- ÑÎÇÄÀÅÌ ÍÀØÈ ÊÎÌÏÎÍÅÍÒÛ È ÏÎÄÏÈÑÛÂÀÅÌÑß ÍÀ ÑÎÁÛÒÈß ---
             backgroundLoader = new SeasonalBackgroundLoader();
             backgroundLoader.OnLoadFailure += handleBackgroundLoadFailure;
             backgroundLoader.OnCategoriesRefreshed += handleCategoriesRefreshed;
+            musicManager = new WelcomeMusicManager();
 
             this.args = args;
 
@@ -415,9 +421,8 @@ namespace osu.Game
             {
                 Notifications?.Post(new SimpleNotification
                 {
-                    Text = ButtonSystemStrings.SeasonalBackgroundsRefreshed,
-                    Icon = FontAwesome.Solid.CheckCircle,
-                    Transient = true
+                    Text = "Ñïèñîê êàòåãîðèé ôîíîâ îáíîâëåí.",
+                    Icon = FontAwesome.Solid.CheckCircle
                 });
             });
         }
@@ -471,7 +476,8 @@ namespace osu.Game
             IsActive.BindValueChanged(active => updateActiveState(active.NewValue), true);
 
             Audio.AddAdjustment(AdjustableProperty.Volume, inactiveVolumeFade);
-
+            dependencies.CacheAs(musicManager);
+            Add(musicManager);
             SelectedMods.BindValueChanged(modsChanged);
             Beatmap.BindValueChanged(beatmapChanged, true);
             configUserActivity.BindValueChanged(_ => updateWindowTitle());
@@ -1287,7 +1293,12 @@ namespace osu.Game
             }, rightFloatingOverlayContent.Add, true);
 
             loadComponentSingleFile(new AccountCreationOverlay(), topMostOverlayContent.Add, true);
-            loadComponentSingleFile<IDialogOverlay>(new DialogOverlay(), topMostOverlayContent.Add, true);
+
+            var dialogOverlay = new DialogOverlay();
+            dependencies.CacheAs<IDialogOverlay>(dialogOverlay);
+            dependencies.Cache(dialogOverlay);
+            loadComponentSingleFile(dialogOverlay, topMostOverlayContent.Add);
+
             loadComponentSingleFile(new MedalOverlay(), topMostOverlayContent.Add);
 
             loadComponentSingleFile(new BackgroundDataStoreProcessor(), Add);

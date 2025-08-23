@@ -213,6 +213,8 @@ namespace osu.Game.Configuration
             SetDefault(OsuSetting.MultiplayerShowInProgressFilter, true);
 
             SetDefault(OsuSetting.LastProcessedMetadataId, -1);
+            SetDefault(OsuSetting.WelcomeMusicMode, WelcomeMusicMode.Default);
+            SetDefault(OsuSetting.WelcomeMusicCategory, "Default");
 
             SetDefault(OsuSetting.ComboColourNormalisationAmount, 0.2f, 0f, 1f, 0.01f);
             SetDefault(OsuSetting.UserOnlineStatus, UserStatus.Online);
@@ -382,6 +384,8 @@ namespace osu.Game.Configuration
         AudioOffset,
 
         VolumeInactive,
+        WelcomeMusicMode,
+        WelcomeMusicCategory,
         MenuMusic,
         MenuVoice,
         MenuTips,

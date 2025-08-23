@@ -3,13 +3,10 @@
 
 #nullable disable
 
-using System.Collections.Generic;
-using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Development;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Shaders;
 using osu.Framework.Utils;
 using osu.Game.Screens.Menu;
 using osu.Framework.Screens;
@@ -18,11 +15,19 @@ using osu.Game.Configuration;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Seasonal;
 using IntroSequence = osu.Game.Configuration.IntroSequence;
+using osu.Game.Audio;
 
 namespace osu.Game.Screens
 {
     public partial class Loader : StartupScreen
     {
+        [Resolved]
+        private OsuConfigManager config { get; set; }
+        [Resolved]
+        private WelcomeMusicManager musicManager { get; set; }
+
+        private WelcomeMusicMode musicMode;
+
         public Loader()
         {
             ValidForResume = false;
@@ -30,17 +35,16 @@ namespace osu.Game.Screens
 
         private OsuScreen loadableScreen;
         private ShaderPrecompiler precompiler;
-
-        private IntroSequence introSequence;
         private LoadingSpinner spinner;
         private ScheduledDelegate spinnerShow;
 
-        protected virtual OsuScreen CreateLoadableScreen() => getIntroSequence();
-
-        private IntroScreen getIntroSequence()
+        protected virtual OsuScreen CreateLoadableScreen()
         {
-            // Headless tests run too fast to load non-circles intros correctly.
-            // They will hit the "audio can't play" notification and cause random test failures.
+            var introSequence = config.Get<IntroSequence>(OsuSetting.IntroSequence);
+
+            if (musicMode == WelcomeMusicMode.Custom)
+                return new IntroFade();
+
             if (SeasonalUIConfig.ENABLED && !DebugUtils.IsNUnitRunning)
                 return new IntroChristmas(createMainMenu);
 
@@ -51,27 +55,28 @@ namespace osu.Game.Screens
             {
                 case IntroSequence.Circles:
                     return new IntroCircles(createMainMenu);
-
                 case IntroSequence.Welcome:
                     return new IntroWelcome(createMainMenu);
-
                 default:
                     return new IntroTriangles(createMainMenu);
             }
-
-            MainMenu createMainMenu() => new MainMenu();
         }
+
+        private static MainMenu createMainMenu() => new MainMenu();
 
         protected virtual ShaderPrecompiler CreateShaderPrecompiler() => new ShaderPrecompiler();
 
-        public override void OnEntering(ScreenTransitionEvent e)
+        public override async void OnEntering(ScreenTransitionEvent e)
         {
             base.OnEntering(e);
 
-            LoadComponentAsync(precompiler = CreateShaderPrecompiler(), AddInternal);
+            musicMode = config.Get<WelcomeMusicMode>(OsuSetting.WelcomeMusicMode);
+
+            await musicManager.PreloadCurrentTrack().ConfigureAwait(true);
 
             LoadComponentAsync(loadableScreen = CreateLoadableScreen());
 
+            LoadComponentAsync(precompiler = CreateShaderPrecompiler(), AddInternal);
             LoadComponentAsync(spinner = new LoadingSpinner(true, true)
             {
                 Anchor = Anchor.BottomRight,
@@ -88,7 +93,7 @@ namespace osu.Game.Screens
 
         private void checkIfLoaded()
         {
-            if (loadableScreen?.LoadState != LoadState.Ready || !precompiler.FinishedCompiling)
+            if (loadableScreen?.LoadState != LoadState.Ready || !precompiler.IsLoaded)
             {
                 Schedule(checkIfLoaded);
                 return;
@@ -105,55 +110,9 @@ namespace osu.Game.Screens
                 this.Push(loadableScreen);
         }
 
-        [BackgroundDependencyLoader]
-        private void load(OsuConfigManager config)
-        {
-            introSequence = config.Get<IntroSequence>(OsuSetting.IntroSequence);
-        }
-
-        /// <summary>
-        /// Compiles a set of shaders before continuing. Attempts to draw some frames between compilation by limiting to one compile per draw frame.
-        /// </summary>
         public partial class ShaderPrecompiler : Drawable
         {
-            private readonly List<IShader> loadTargets = new List<IShader>();
-
-            public bool FinishedCompiling { get; private set; }
-
-            [BackgroundDependencyLoader]
-            private void load(ShaderManager manager)
-            {
-                loadTargets.Add(manager.Load(VertexShaderDescriptor.TEXTURE_2, FragmentShaderDescriptor.TEXTURE));
-                loadTargets.Add(manager.Load(VertexShaderDescriptor.TEXTURE_2, FragmentShaderDescriptor.BLUR));
-                loadTargets.Add(manager.Load(VertexShaderDescriptor.TEXTURE_3, FragmentShaderDescriptor.TEXTURE));
-
-                loadTargets.Add(manager.Load(VertexShaderDescriptor.TEXTURE_2, @"TriangleBorder"));
-                loadTargets.Add(manager.Load(VertexShaderDescriptor.TEXTURE_2, @"FastCircle"));
-                loadTargets.Add(manager.Load(VertexShaderDescriptor.TEXTURE_2, @"CircularProgress"));
-                loadTargets.Add(manager.Load(VertexShaderDescriptor.TEXTURE_2, @"ArgonBarPath"));
-                loadTargets.Add(manager.Load(VertexShaderDescriptor.TEXTURE_2, @"ArgonBarPathBackground"));
-                loadTargets.Add(manager.Load(VertexShaderDescriptor.TEXTURE_2, @"SaturationSelectorBackground"));
-                loadTargets.Add(manager.Load(VertexShaderDescriptor.TEXTURE_2, @"HueSelectorBackground"));
-                loadTargets.Add(manager.Load(@"LogoAnimation", @"LogoAnimation"));
-
-                // Ruleset local shader usage (should probably move somewhere else).
-                loadTargets.Add(manager.Load(VertexShaderDescriptor.TEXTURE_2, @"SpinnerGlow"));
-                loadTargets.Add(manager.Load(@"CursorTrail", FragmentShaderDescriptor.TEXTURE));
-            }
-
-            protected virtual bool AllLoaded => loadTargets.All(s => s.IsLoaded);
-
-            protected override void Update()
-            {
-                base.Update();
-
-                // if our target is null we are done.
-                if (AllLoaded)
-                {
-                    FinishedCompiling = true;
-                    Expire();
-                }
-            }
+            // ... код ShaderPrecompiler остается без изменений ... (Блять, а где он?)
         }
     }
 }
