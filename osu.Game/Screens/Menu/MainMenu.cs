@@ -40,6 +40,7 @@ using osu.Game.Screens.OnlinePlay.DailyChallenge;
 using osu.Game.Screens.OnlinePlay.Multiplayer;
 using osu.Game.Screens.OnlinePlay.Playlists;
 using osu.Game.Screens.Select;
+using osu.Game.Screens.SelectV2;
 using osu.Game.Seasonal;
 using osuTK;
 using osuTK.Graphics;
@@ -118,12 +119,15 @@ namespace osu.Game.Screens.Menu
         [CanBeNull]
         private IDisposable logoProxy;
 
+        private Bindable<bool> forceSSV1;
+
         [BackgroundDependencyLoader(true)]
         private void load(BeatmapListingOverlay beatmapListing, SettingsOverlay settings, OsuConfigManager config, SessionStatics statics, AudioManager audio)
         {
             holdDelay = config.GetBindable<double>(OsuSetting.UIHoldActivationDelay);
             loginDisplayed = statics.GetBindable<bool>(Static.LoginOverlayDisplayed);
             showMobileDisclaimer = config.GetBindable<bool>(OsuSetting.ShowMobileDisclaimer);
+            forceSSV1 = config.GetBindable<bool>(OsuSetting.ForceLegacySongSelect);
 
             if (host.CanExit)
             {
@@ -479,7 +483,7 @@ namespace osu.Game.Screens.Menu
         {
         }
 
-        private void loadSongSelect() => this.Push(new PlaySongSelect());
+        private void loadSongSelect() => this.Push(forceSSV1.Value ? new PlaySongSelect() : new SoloSongSelect());
 
         private partial class MobileDisclaimerDialog : PopupDialog
         {

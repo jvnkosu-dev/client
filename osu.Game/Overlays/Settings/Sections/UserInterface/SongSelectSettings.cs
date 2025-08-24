@@ -21,6 +21,12 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
             {
                 new SettingsCheckbox
                 {
+                    LabelText = UserInterfaceStrings.ForceLegacySongSelect,
+                    Current = config.GetBindable<bool>(OsuSetting.ForceLegacySongSelect),
+                    ClassicDefault = false
+                },
+                new SettingsCheckbox
+                {
                     LabelText = UserInterfaceStrings.ShowConvertedBeatmaps,
                     Current = config.GetBindable<bool>(OsuSetting.ShowConvertedBeatmaps),
                     Keywords = new[] { "converts", "converted" }

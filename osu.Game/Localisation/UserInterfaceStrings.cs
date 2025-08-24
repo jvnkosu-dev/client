@@ -184,6 +184,11 @@ namespace osu.Game.Localisation
         /// </summary>
         public static LocalisableString SelectedMods => new TranslatableString(getKey(@"selected_mods"), @"Selected Mods");
 
+        /// <summary>
+        /// "Use legacy song select (SelectV1)"
+        /// </summary>
+        public static LocalisableString ForceLegacySongSelect => new TranslatableString(getKey(@"force_select_v1"), @"Use legacy song select (SelectV1)");
+
         private static string getKey(string key) => $@"{prefix}:{key}";
     }
 }
