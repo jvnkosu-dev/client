@@ -9,6 +9,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
 using osu.Framework.Audio.Track;
+using osu.Framework.Bindables;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Colour;
@@ -20,6 +21,7 @@ using osu.Framework.Input.Events;
 using osu.Framework.Input.StateChanges;
 using osu.Framework.Utils;
 using osu.Game.Beatmaps.ControlPoints;
+using osu.Game.Configuration;
 using osu.Game.Graphics.Backgrounds;
 using osu.Game.Graphics.Containers;
 using osu.Game.Overlays;
@@ -63,7 +65,10 @@ namespace osu.Game.Screens.Menu
         protected Sample SampleDownbeat;
 
         private readonly Container colourAndTriangles;
-        private readonly TrianglesV2 triangles;
+        private Box colourBox;
+        private TrianglesV2 triangles;
+
+        private Bindable<Colour4> logoColour;
 
         /// <summary>
         /// Return value decides whether the logo should play its own sample for the click action.
@@ -186,10 +191,13 @@ namespace osu.Game.Screens.Menu
                                                                     Origin = Anchor.Centre,
                                                                     Children = new Drawable[]
                                                                     {
-                                                                        new Box
+                                                                        colourBox = new Box
                                                                         {
                                                                             RelativeSizeAxes = Axes.Both,
-                                                                            Colour = ColourInfo.GradientVertical(Color4Extensions.FromHex(@"ff66ab"), Color4Extensions.FromHex(@"cc5289")),
+                                                                            Colour = ColourInfo.GradientVertical(
+                                                                                Color4Extensions.FromHex(@"ff66ba"), // original osu! cookie pink
+                                                                                Color4Extensions.Darken(Color4Extensions.FromHex(@"ff66ba"), 1.0f)
+                                                                            ),
                                                                         },
                                                                         triangles = new TrianglesV2
                                                                         {
@@ -198,7 +206,10 @@ namespace osu.Game.Screens.Menu
                                                                             Thickness = 0.009f,
                                                                             ScaleAdjust = 3,
                                                                             SpawnRatio = 1.4f,
-                                                                            Colour = ColourInfo.GradientVertical(Color4Extensions.FromHex(@"ff66ab"), Color4Extensions.FromHex(@"b6346f")),
+                                                                            Colour = ColourInfo.GradientVertical(
+                                                                                Color4Extensions.FromHex(@"ff66ba"),
+                                                                                Color4Extensions.Darken(Color4Extensions.FromHex(@"ff66ba"), 2.5f)
+                                                                            ),
                                                                             RelativeSizeAxes = Axes.Both,
                                                                         },
                                                                     }
@@ -249,6 +260,21 @@ namespace osu.Game.Screens.Menu
             };
         }
 
+        public void UpdateColour() {
+            if (triangles == null || colourBox == null)
+                return; // we're still loading
+
+            triangles.Colour = ColourInfo.GradientVertical(
+                logoColour.Value,
+                Color4Extensions.Darken(logoColour.Value, 1.0f)
+            );
+
+            colourBox.Colour = ColourInfo.GradientVertical(
+                logoColour.Value,
+                Color4Extensions.Darken(logoColour.Value, 2.5f)
+            );
+        }
+
         public Container LogoElements { get; private set; }
 
         /// <summary>
@@ -276,7 +302,7 @@ namespace osu.Game.Screens.Menu
         }
 
         [BackgroundDependencyLoader]
-        private void load(TextureStore textures, AudioManager audio)
+        private void load(TextureStore textures, AudioManager audio, OsuConfigManager config)
         {
             sampleClick = audio.Samples.Get(@"Menu/osu-logo-select");
 
@@ -285,6 +311,8 @@ namespace osu.Game.Screens.Menu
 
             logo.Texture = textures.Get(@"Menu/logo");
             ripple.Texture = textures.Get(@"Menu/logo");
+
+            logoColour = config.GetBindable<Colour4>(OsuSetting.MenuCookieColor);
         }
 
         private int lastBeatIndex;
@@ -365,6 +393,7 @@ namespace osu.Game.Screens.Menu
         protected override void Update()
         {
             base.Update();
+            UpdateColour();
 
             const float scale_adjust_cutoff = 0.4f;
 
