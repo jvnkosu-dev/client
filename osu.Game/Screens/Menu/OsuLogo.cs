@@ -264,12 +264,12 @@ namespace osu.Game.Screens.Menu
             if (triangles == null || colourBox == null)
                 return; // we're still loading
 
-            triangles.Colour = ColourInfo.GradientVertical(
+            colourBox.Colour = ColourInfo.GradientVertical(
                 logoColour.Value,
                 Color4Extensions.Darken(logoColour.Value, 1.0f)
             );
 
-            colourBox.Colour = ColourInfo.GradientVertical(
+            triangles.Colour = ColourInfo.GradientVertical(
                 logoColour.Value,
                 Color4Extensions.Darken(logoColour.Value, 2.5f)
             );
