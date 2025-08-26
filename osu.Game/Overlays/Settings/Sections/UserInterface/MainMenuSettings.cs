@@ -37,13 +37,11 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
             var backgroundModeBindable = config.GetBindable<SeasonalBackgroundMode>(OsuSetting.SeasonalBackgroundMode);
             var enabledProxyBindable = new Bindable<bool>();
 
-            backgroundModeBindable.BindValueChanged(mode => enabledProxyBindable.Value = mode.NewValue == SeasonalBackgroundMode.Always, true);
-            enabledProxyBindable.BindValueChanged(enabled => backgroundModeBindable.Value = enabled.NewValue ? SeasonalBackgroundMode.Always : SeasonalBackgroundMode.Never);
-
             var backgroundToggle = new SettingsCheckbox
             {
                 LabelText = UserInterfaceStrings.UseSeasonalBackgrounds,
-                Current = enabledProxyBindable
+                Current = config.GetBindable<bool>(OsuSetting.UseSeasonalBackgroundsV2),
+                ClassicDefault = true
             };
 
             var categoryDropdown = new SettingsDropdown<string>

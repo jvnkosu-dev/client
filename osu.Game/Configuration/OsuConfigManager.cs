@@ -198,6 +198,7 @@ namespace osu.Game.Configuration
 
             SetDefault(OsuSetting.MenuBackgroundSource, BackgroundSource.Skin);
             SetDefault(OsuSetting.SeasonalBackgroundMode, SeasonalBackgroundMode.Never);
+            SetDefault(OsuSetting.UseSeasonalBackgroundsV2, true);
 
             SetDefault(OsuSetting.DiscordRichPresence, DiscordRichPresenceMode.Full);
 
@@ -442,6 +443,7 @@ namespace osu.Game.Configuration
         MenuBackgroundSource,
         GameplayDisableWinKey,
         SeasonalBackgroundMode,
+        UseSeasonalBackgroundsV2, // TODO: add migrations
         BackgroundCategory,
         EditorWaveformOpacity,
         EditorShowHitMarkers,

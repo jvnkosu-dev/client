@@ -171,7 +171,7 @@ namespace osu.Game
         private readonly ScreenshotManager screenshotManager = new ScreenshotManager();
 
         [Cached]
-        private readonly SeasonalBackgroundLoader backgroundLoader;
+        private SeasonalBackgroundLoader seasonalBackgroundLoader;
 
         protected SentryLogger SentryLogger;
 
@@ -253,10 +253,6 @@ namespace osu.Game
 
         public OsuGame(string[] args = null)
         {
-            backgroundLoader = new SeasonalBackgroundLoader();
-            backgroundLoader.OnLoadFailure += handleBackgroundLoadFailure;
-            backgroundLoader.OnCategoriesRefreshed += handleCategoriesRefreshed;
-
             this.args = args;
 
             Logger.NewEntry += forwardGeneralLogToNotifications;
@@ -271,6 +267,8 @@ namespace osu.Game
                     tabletLogNotifyOnError = true;
                 }, true);
             });
+
+            initializeSeasonalBackgrounds();
         }
 
         #region IOverlayManager
@@ -408,18 +406,6 @@ namespace osu.Game
                     Task.Factory.StartNew(() => Import(paths), TaskCreationOptions.LongRunning);
                 }
             }
-        }
-        private void handleCategoriesRefreshed()
-        {
-            Schedule(() =>
-            {
-                Notifications?.Post(new SimpleNotification
-                {
-                    Text = ButtonSystemStrings.SeasonalBackgroundsRefreshed,
-                    Icon = FontAwesome.Solid.CheckCircle,
-                    Transient = true
-                });
-            });
         }
 
         [BackgroundDependencyLoader]
@@ -1252,7 +1238,7 @@ namespace osu.Game
 
             loadComponentSingleFile(screenshotManager, Add);
 
-            loadComponentSingleFile(backgroundLoader, Add);
+            loadComponentSingleFile(seasonalBackgroundLoader, Add);
 
             // dependency on notification overlay, dependent by settings overlay
             loadComponentSingleFile(CreateUpdateManager(), Add, true);
@@ -1355,18 +1341,6 @@ namespace osu.Game
             handleStartupImport();
         }
 
-        private void handleBackgroundLoadFailure(Exception exception)
-        {
-            Schedule(() =>
-            {
-                Notifications?.Post(new SimpleErrorNotification
-                {
-                    Text = ButtonSystemStrings.SeasonalBackgroundsFail,
-                    Icon = FontAwesome.Solid.ExclamationTriangle,
-                    Transient = true
-                });
-            });
-        }
         private void handleBackButton()
         {
             // TODO: this is SUPER SUPER bad.
@@ -1502,6 +1476,40 @@ namespace osu.Game
                 tabletLogNotifyOnWarning = false;
             }
         }
+
+        private void initializeSeasonalBackgrounds()
+        {
+            seasonalBackgroundLoader = new SeasonalBackgroundLoader();
+            seasonalBackgroundLoader.OnCategoriesRefreshed += handleCategoriesRefreshed;
+            seasonalBackgroundLoader.OnLoadFailure += handleBackgroundLoadFailure;
+        }
+
+        private void handleCategoriesRefreshed()
+        {
+            Schedule(() =>
+            {
+                Notifications?.Post(new SimpleNotification
+                {
+                    Text = ButtonSystemStrings.SeasonalBackgroundsRefreshed,
+                    Icon = FontAwesome.Solid.CheckCircle,
+                    Transient = true
+                });
+            });
+        }
+
+        private void handleBackgroundLoadFailure(Exception exception)
+        {
+            Schedule(() =>
+            {
+                Notifications?.Post(new SimpleErrorNotification
+                {
+                    Text = ButtonSystemStrings.SeasonalBackgroundsFail,
+                    Icon = FontAwesome.Solid.ExclamationTriangle,
+                    Transient = true
+                });
+            });
+        }
+
 
         private Task asyncLoadStream;
 
