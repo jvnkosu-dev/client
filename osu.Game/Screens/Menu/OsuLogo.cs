@@ -196,7 +196,7 @@ namespace osu.Game.Screens.Menu
                                                                             RelativeSizeAxes = Axes.Both,
                                                                             Colour = ColourInfo.GradientVertical(
                                                                                 Color4Extensions.FromHex(@"ff66ba"), // original osu! cookie pink
-                                                                                Color4Extensions.Darken(Color4Extensions.FromHex(@"ff66ba"), 1.0f)
+                                                                                Color4Extensions.Darken(Color4Extensions.FromHex(@"ff66ba"), 0.5f)
                                                                             ),
                                                                         },
                                                                         triangles = new TrianglesV2
@@ -208,7 +208,7 @@ namespace osu.Game.Screens.Menu
                                                                             SpawnRatio = 1.4f,
                                                                             Colour = ColourInfo.GradientVertical(
                                                                                 Color4Extensions.FromHex(@"ff66ba"),
-                                                                                Color4Extensions.Darken(Color4Extensions.FromHex(@"ff66ba"), 2.5f)
+                                                                                Color4Extensions.Darken(Color4Extensions.FromHex(@"ff66ba"), 1.0f)
                                                                             ),
                                                                             RelativeSizeAxes = Axes.Both,
                                                                         },
@@ -266,12 +266,12 @@ namespace osu.Game.Screens.Menu
 
             colourBox.Colour = ColourInfo.GradientVertical(
                 logoColour.Value,
-                Color4Extensions.Darken(logoColour.Value, 1.0f)
+                Color4Extensions.Darken(logoColour.Value, 0.5f)
             );
 
             triangles.Colour = ColourInfo.GradientVertical(
                 logoColour.Value,
-                Color4Extensions.Darken(logoColour.Value, 2.5f)
+                Color4Extensions.Darken(logoColour.Value, 1.0f)
             );
         }
 
@@ -313,6 +313,7 @@ namespace osu.Game.Screens.Menu
             ripple.Texture = textures.Get(@"Menu/logo");
 
             logoColour = config.GetBindable<Colour4>(OsuSetting.MenuCookieColor);
+            logoColour.BindValueChanged(_ => UpdateColour());
         }
 
         private int lastBeatIndex;
@@ -393,7 +394,6 @@ namespace osu.Game.Screens.Menu
         protected override void Update()
         {
             base.Update();
-            UpdateColour();
 
             const float scale_adjust_cutoff = 0.4f;
 
