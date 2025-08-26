@@ -314,6 +314,7 @@ namespace osu.Game.Screens.Menu
 
             logoColour = config.GetBindable<Colour4>(OsuSetting.MenuCookieColor);
             logoColour.BindValueChanged(_ => UpdateColour());
+            UpdateColour();
         }
 
         private int lastBeatIndex;
