@@ -59,9 +59,9 @@ namespace osu.Game.Graphics.Backgrounds
         /// <summary>
         /// Public method to trigger a refresh of categories from the UI.
         /// </summary>
-        public void RefreshCategories()
+        public void RefreshCategories(bool ignoreSuccess = false)
         {
-            fetchCategories();
+            fetchCategories(ignoreSuccess);
         }
 
         private void fetchCategories(bool ignoreSuccess = false)
@@ -76,7 +76,8 @@ namespace osu.Game.Graphics.Backgrounds
 
                 AvailableCategories.Value = serverCategories.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
-                if (!AvailableCategories.Value.Any()) {
+                if (!AvailableCategories.Value.Any())
+                {
                     selectedCategory.Value = "";
                     return; // we don't have any categories!!!
                 }

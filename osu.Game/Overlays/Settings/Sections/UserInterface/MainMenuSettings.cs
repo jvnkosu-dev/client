@@ -5,16 +5,13 @@
 
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
-using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Colour;
 using osu.Framework.Localisation;
 using osu.Game.Configuration;
 using osu.Game.Graphics.Backgrounds;
 using osu.Game.Localisation;
 using osu.Game.Online.API;
 using osu.Game.Online.API.Requests.Responses;
-using osu.Game.Overlays.Settings;
 
 namespace osu.Game.Overlays.Settings.Sections.UserInterface
 {
@@ -29,13 +26,13 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
 
         private SettingsEnumDropdown<BackgroundSource> backgroundSourceDropdown;
 
+        private Bindable<bool> useSeasonalBackgrounds;
+
         [BackgroundDependencyLoader]
         private void load(OsuConfigManager config, IAPIProvider api)
         {
             user = api.LocalUser.GetBoundCopy();
-
-            var backgroundModeBindable = config.GetBindable<SeasonalBackgroundMode>(OsuSetting.SeasonalBackgroundMode);
-            var enabledProxyBindable = new Bindable<bool>();
+            useSeasonalBackgrounds = config.GetBindable<bool>(OsuSetting.UseSeasonalBackgroundsV2);
 
             var backgroundToggle = new SettingsCheckbox
             {
@@ -56,28 +53,21 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
                 Action = () => backgroundLoader.RefreshCategories()
             };
 
-            backgroundLoader.AvailableCategories.BindValueChanged(categories => categoryDropdown.Items = categories.NewValue, true);
+            // TODO: the category dropdown disappear if no backgrounds (e.g. when first enabling the setting)
+            refreshButton.CanBeShown.BindTo(useSeasonalBackgrounds);
+            categoryDropdown.CanBeShown.BindTo(useSeasonalBackgrounds);
+            useSeasonalBackgrounds.BindValueChanged(
+                _ => backgroundLoader.RefreshCategories(true)
+            );
 
-            backgroundModeBindable.BindValueChanged(mode =>
-            {
-                if (mode.NewValue == SeasonalBackgroundMode.Always)
-                {
-                    categoryDropdown.Show();
-                    refreshButton.Show();
-                }
-                else
-                {
-                    categoryDropdown.Hide();
-                    refreshButton.Hide();
-                }
-            }, true);
+            backgroundLoader.AvailableCategories.BindValueChanged(categories => categoryDropdown.Items = categories.NewValue, true);
 
             Children = new Drawable[]
             {
                 new SettingsCheckbox
                 {
                     LabelText = UserInterfaceStrings.ShowMenuTips,
-                    Current = config.GetBindable<bool>(OsuSetting.MenuTips)
+                    Current = config.GetBindable<bool>(OsuSetting.MenuTips),
                 },
                 new SettingsCheckbox
                 {
