@@ -40,6 +40,7 @@ using osu.Game.Localisation;
 using osu.Game.Online.API;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Overlays;
+using osu.Game.Overlays.Dialog;
 using osu.Game.Overlays.Notifications;
 using osu.Game.Overlays.OSD;
 using osu.Game.Rulesets;
@@ -1312,6 +1313,8 @@ namespace osu.Game.Screens.Edit
                 yield return upload;
             }
 
+            yield return new EditorMenuItem("Remove all online IDs", MenuItemType.Destructive, anonymizeBeatmap);
+
             if (editorBeatmap.BeatmapInfo.OnlineID > 0)
             {
                 yield return new OsuMenuItemSpacer();
@@ -1394,6 +1397,14 @@ namespace osu.Game.Screens.Edit
             }
 
             void startSubmission() => this.Push(new BeatmapSubmissionScreen());
+        }
+
+        private void anonymizeBeatmap()
+        {
+            dialogOverlay.Push(new ConfirmDialog(
+                "Really remove online IDs?",
+                () => playableBeatmap.BeatmapInfo.ResetOnlineInfo(true)
+            ));
         }
 
         private void exportBeatmap(bool legacy)

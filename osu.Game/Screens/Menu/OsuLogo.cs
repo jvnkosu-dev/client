@@ -260,7 +260,8 @@ namespace osu.Game.Screens.Menu
             };
         }
 
-        public void UpdateColour() {
+        public void UpdateColour()
+        {
             if (triangles == null || colourBox == null)
                 return; // we're still loading
 
