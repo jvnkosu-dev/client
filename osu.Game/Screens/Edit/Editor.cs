@@ -1402,8 +1402,23 @@ namespace osu.Game.Screens.Edit
         private void anonymizeBeatmap()
         {
             dialogOverlay.Push(new ConfirmDialog(
-                "Really remove online IDs?",
-                () => playableBeatmap.BeatmapInfo.ResetOnlineInfo(true)
+                "Really remove online IDs?", () =>
+                {
+                    var maps = editorBeatmap.BeatmapInfo.BeatmapSet.Beatmaps;
+                    foreach (BeatmapInfo map in maps)
+                    {
+                        map.OnlineID = -1;
+                        map.BeatmapSet.OnlineID = -1;
+                        map.ResetOnlineInfo(true);
+                        beatmapManager.Save(
+                            map,
+                            beatmapManager.GetWorkingBeatmap(map, true)!.Beatmap,
+                            editorBeatmap.BeatmapSkin
+                        ); // as much as I don't want to mutate this much, there's no other choice
+                    }
+                    updateLastSavedHash();
+                    onScreenDisplay?.Display(new BeatmapEditorToast("Online IDs removed", editorBeatmap.BeatmapInfo.GetDisplayTitle()));
+                }
             ));
         }
 
