@@ -13,6 +13,7 @@ using osu.Framework.Extensions.IEnumerableExtensions;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps.Formats;
+using osu.Game.Configuration;
 using osu.Game.Collections;
 using osu.Game.Database;
 using osu.Game.Extensions;
@@ -36,8 +37,8 @@ namespace osu.Game.Beatmaps
 
         public ProcessBeatmapDelegate? ProcessBeatmap { private get; set; }
 
-        public BeatmapImporter(Storage storage, RealmAccess realm)
-            : base(storage, realm)
+        public BeatmapImporter(Storage storage, RealmAccess realm, OsuConfigManager? config)
+            : base(storage, realm, config)
         {
         }
 

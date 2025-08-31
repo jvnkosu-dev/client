@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps;
+using osu.Game.Configuration;
 using osu.Game.Database;
 using osu.Game.Extensions;
 using osu.Game.IO;
@@ -28,8 +29,8 @@ namespace osu.Game.Skinning
 
         private readonly ModelManager<SkinInfo> modelManager;
 
-        public SkinImporter(Storage storage, RealmAccess realm, IStorageResourceProvider skinResources)
-            : base(storage, realm)
+        public SkinImporter(Storage storage, RealmAccess realm, IStorageResourceProvider skinResources, OsuConfigManager? config = null)
+            : base(storage, realm, config)
         {
             this.skinResources = skinResources;
 

@@ -21,6 +21,7 @@ using osu.Framework.Platform;
 using osu.Framework.Threading;
 using osu.Framework.Utils;
 using osu.Game.Audio;
+using osu.Game.Configuration;
 using osu.Game.Database;
 using osu.Game.IO;
 using osu.Game.Overlays.Notifications;
@@ -74,7 +75,7 @@ namespace osu.Game.Skinning
             }
         }
 
-        public SkinManager(Storage storage, RealmAccess realm, GameHost host, IResourceStore<byte[]> resources, AudioManager audio, Scheduler scheduler)
+        public SkinManager(Storage storage, RealmAccess realm, GameHost host, IResourceStore<byte[]> resources, AudioManager audio, Scheduler scheduler, OsuConfigManager config)
             : base(storage, realm)
         {
             this.audio = audio;
@@ -84,7 +85,7 @@ namespace osu.Game.Skinning
 
             userFiles = new StorageBackedResourceStore(storage.GetStorageForDirectory("files"));
 
-            skinImporter = new SkinImporter(storage, realm, this)
+            skinImporter = new SkinImporter(storage, realm, this, config)
             {
                 PostNotification = obj => PostNotification?.Invoke(obj),
             };
