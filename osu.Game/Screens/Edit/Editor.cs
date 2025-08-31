@@ -1402,24 +1402,36 @@ namespace osu.Game.Screens.Edit
         private void anonymizeBeatmap()
         {
             dialogOverlay.Push(new ConfirmDialog(
-                "Really remove online IDs?", () =>
+                "Really remove online IDs?", () => attemptAsyncMutationOperation(anonymizeMaps))
+            );
+
+            Task anonymizeMaps()
+            {
+                var maps = editorBeatmap.BeatmapInfo.BeatmapSet.Beatmaps;
+                foreach (BeatmapInfo map in maps)
                 {
-                    var maps = editorBeatmap.BeatmapInfo.BeatmapSet.Beatmaps;
-                    foreach (BeatmapInfo map in maps)
+                    try
                     {
                         map.OnlineID = -1;
                         map.BeatmapSet.OnlineID = -1;
                         map.ResetOnlineInfo(true);
                         beatmapManager.Save(
                             map,
-                            beatmapManager.GetWorkingBeatmap(map, true)!.Beatmap,
+                            beatmapManager.GetWorkingBeatmap(map, true).Beatmap,
                             editorBeatmap.BeatmapSkin
-                        ); // as much as I don't want to mutate this much, there's no other choice
+                        );
                     }
-                    updateLastSavedHash();
-                    onScreenDisplay?.Display(new BeatmapEditorToast("Online IDs removed", editorBeatmap.BeatmapInfo.GetDisplayTitle()));
+                    catch (Exception ex)
+                    {
+                        Logger.Error(ex, ex.Message);
+                        notifications?.Post(new SimpleErrorNotification { Text = "Failed to update beatmap difficulty!\nCheck logs for details" });
+                        throw; // we don't want to handle it further, task will do it for us
+                    }
                 }
-            ));
+                updateLastSavedHash();
+                onScreenDisplay?.Display(new BeatmapEditorToast("Online IDs removed", editorBeatmap.BeatmapInfo.GetDisplayTitle()));
+                return Task.CompletedTask;
+            }
         }
 
         private void exportBeatmap(bool legacy)
