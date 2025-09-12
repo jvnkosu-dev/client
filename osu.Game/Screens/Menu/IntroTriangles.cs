@@ -196,13 +196,13 @@ namespace osu.Game.Screens.Menu
                 using (BeginAbsoluteSequence(0))
                 {
                     using (BeginDelayedSequence(text_1))
-                        welcomeText.FadeIn().OnComplete(t => t.Text = "wel");
+                        welcomeText.FadeIn().OnComplete(t => t.Text = "w");
 
                     using (BeginDelayedSequence(text_2))
-                        welcomeText.FadeIn().OnComplete(t => t.Text = "welcome");
+                        welcomeText.FadeIn().OnComplete(t => t.Text = "welc");
 
                     using (BeginDelayedSequence(text_3))
-                        welcomeText.FadeIn().OnComplete(t => t.Text = "welcome to");
+                        welcomeText.FadeIn().OnComplete(t => t.Text = "welcome");
 
                     using (BeginDelayedSequence(text_4))
                     {

@@ -79,9 +79,9 @@ Your experience will not be perfect, and may even feel subpar compared to games 
 Please bear with us as we continue to improve the game for you!");
 
         /// <summary>
-        /// "Welcome to jvnkosu!lazer!"
+        /// "Welcome to jvnkosu!"
         /// </summary>
-        public static LocalisableString GreetingNotification => new TranslatableString(getKey(@"greeting_notification"), @"Welcome to jvnkosu!lazer!");
+        public static LocalisableString GreetingNotification => new TranslatableString(getKey(@"greeting_notification"), @"Welcome to jvnkosu!");
 
         /// <summary>
         /// "Failed to load backgrounds!\nCheck your internet connection"
