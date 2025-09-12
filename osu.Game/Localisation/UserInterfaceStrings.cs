@@ -50,9 +50,9 @@ namespace osu.Game.Localisation
         public static LocalisableString InterfaceVoices => new TranslatableString(getKey(@"interface_voices"), @"Interface voices");
 
         /// <summary>
-        /// "osu! music theme"
+        /// "Music theme"
         /// </summary>
-        public static LocalisableString OsuMusicTheme => new TranslatableString(getKey(@"osu_music_theme"), @"osu! music theme");
+        public static LocalisableString OsuMusicTheme => new TranslatableString(getKey(@"osu_music_theme"), @"Music theme");
 
         /// <summary>
         /// "Intro sequence"
@@ -85,9 +85,9 @@ namespace osu.Game.Localisation
         public static LocalisableString SeasonalBackgroundsRefresh => new TranslatableString(getKey(@"seasonal_backgrounds_refresh"), @"Refresh categories");
 
         /// <summary>
-        /// "Changes to this setting will only apply with an active osu!supporter tag."
+        /// "Changes to this setting will only apply with an active supporter tag."
         /// </summary>
-        public static LocalisableString NotSupporterNote => new TranslatableString(getKey(@"not_supporter_note"), @"Changes to this setting will only apply with an active osu!supporter tag.");
+        public static LocalisableString NotSupporterNote => new TranslatableString(getKey(@"not_supporter_note"), @"Changes to this setting will only apply with an active supporter tag.");
 
         /// <summary>
         /// "Song Select"
@@ -188,6 +188,11 @@ namespace osu.Game.Localisation
         /// "Use legacy song select (SelectV1)"
         /// </summary>
         public static LocalisableString ForceLegacySongSelect => new TranslatableString(getKey(@"force_select_v1"), @"Use legacy song select (SelectV1)");
+
+        /// <summary>
+        /// "Main menu logo colour"
+        /// </summary>
+        public static LocalisableString LogoColour => new TranslatableString(getKey(@"menu_logo_colour"), @"Main menu logo colour");
 
         private static string getKey(string key) => $@"{prefix}:{key}";
     }

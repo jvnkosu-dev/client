@@ -96,7 +96,7 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
                 refreshButton,
                 new SettingsColour
                 {
-                    LabelText = @"osu! logo colour",
+                    LabelText = UserInterfaceStrings.LogoColour,
                     Current = config.GetBindable<Colour4>(OsuSetting.MenuCookieColor),
                     ClassicDefault = Colour4.FromHex(@"ff66ba"),
                 },
