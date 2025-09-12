@@ -345,8 +345,3 @@ FodyWeavers.xsd
 
 .idea/.idea.osu.Desktop/.idea/misc.xml
 .idea/.idea.osu.Android/.idea/deploymentTargetDropDown.xml
-
-# For some time (until I set up NuGet and publish resources there), these will be ignored.
-osu.Desktop.slnf
-osu.sln
-osu.Game/osu.Game.csproj
