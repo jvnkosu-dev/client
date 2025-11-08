@@ -7,5 +7,20 @@ namespace osu.Game.Rulesets.Mania.Mods
 {
     public class ManiaModDifficultyAdjust : ModDifficultyAdjust
     {
+        public override DifficultyBindable OverallDifficulty { get; } = new DifficultyBindable
+        {
+            Precision = 0.1f,
+            MinValue = 0,
+            MaxValue = 10,
+            // Use larger extended limits for mania to include OD values that occur with EZ or HR enabled
+#if !DEBUG
+            ExtendedMaxValue = 15,
+            ExtendedMinValue = -15,
+#else
+            ExtendedMinValue = -250,
+            ExtendedMaxValue = 50,
+#endif
+            ReadCurrentFromDifficulty = diff => diff.OverallDifficulty,
+        };
     }
 }

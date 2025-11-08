@@ -182,8 +182,8 @@ namespace osu.Game.Screens.Ranking
             if (Score != null)
             {
                 // only show flair / animation when arriving after watching a play that isn't autoplay.
-                bool shouldFlair = player != null && !Score.User.IsBot;
-
+                // bool shouldFlair = player != null && !Score.User.IsBot;
+                bool shouldFlair = player != null;
                 ScorePanelList.AddScore(Score, shouldFlair);
                 // this is mostly for medal display.
                 // we don't want the medal animation to trample on the results screen animation, so we (ab)use `OverlayActivationMode`

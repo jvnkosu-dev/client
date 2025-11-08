@@ -16,13 +16,19 @@ namespace osu.Game.Rulesets.Osu.Mods
 {
     public partial class OsuModDifficultyAdjust : ModDifficultyAdjust
     {
+
         [SettingSource("Circle Size", "Override a beatmap's set CS.", FIRST_SETTING_ORDER - 1, SettingControlType = typeof(DifficultyAdjustSettingsControl))]
         public DifficultyBindable CircleSize { get; } = new DifficultyBindable
         {
             Precision = 0.1f,
             MinValue = 0,
             MaxValue = 10,
+#if !DEBUG
             ExtendedMaxValue = 11,
+#else
+            ExtendedMinValue = -250,
+            ExtendedMaxValue = 13,
+#endif
             ReadCurrentFromDifficulty = diff => diff.CircleSize,
         };
 
@@ -32,8 +38,13 @@ namespace osu.Game.Rulesets.Osu.Mods
             Precision = 0.1f,
             MinValue = 0,
             MaxValue = 10,
+#if !DEBUG
             ExtendedMinValue = -10,
             ExtendedMaxValue = 11,
+#else
+            ExtendedMinValue = -250,
+            ExtendedMaxValue = 13,
+#endif
             ReadCurrentFromDifficulty = diff => diff.ApproachRate,
         };
 
@@ -51,7 +62,8 @@ namespace osu.Game.Rulesets.Osu.Mods
 
                 return string.Empty;
 
-                string format(string acronym, DifficultyBindable bindable) => $"{acronym}{bindable.Value!.Value.ToStandardFormattedString(1)}";
+                string format(string acronym, DifficultyBindable bindable)
+                    => $"{acronym}{bindable.Value!.Value.ToStandardFormattedString(1)}";
             }
         }
 

@@ -37,7 +37,7 @@ namespace osu.Game.Beatmaps
 
         public ProcessBeatmapDelegate? ProcessBeatmap { private get; set; }
 
-        public BeatmapImporter(Storage storage, RealmAccess realm, OsuConfigManager? config)
+        public BeatmapImporter(Storage storage, RealmAccess realm, OsuConfigManager? config = null)
             : base(storage, realm, config)
         {
         }
