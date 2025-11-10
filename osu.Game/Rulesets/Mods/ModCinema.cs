@@ -31,6 +31,7 @@ namespace osu.Game.Rulesets.Mods
         public override LocalisableString Description => "Watch the video without visual distractions.";
 
         public override Type[] IncompatibleMods => base.IncompatibleMods.Concat(new[] { typeof(ModAutoplay), typeof(ModNoFail), typeof(ModFailCondition) }).ToArray();
+        public override bool Ranked => false;
 
         public void ApplyToHUD(HUDOverlay overlay)
         {

@@ -23,6 +23,8 @@ namespace osu.Game.Rulesets.Mods
         public sealed override bool UserPlayable => false;
         public sealed override bool ValidForMultiplayer => false;
         public sealed override bool ValidForMultiplayerAsFreeMod => false;
+        public override bool Ranked => false;
+
 
         public override Type[] IncompatibleMods => new[] { typeof(ModCinema), typeof(ModRelax), typeof(ModAdaptiveSpeed), typeof(ModTouchDevice) };
 
