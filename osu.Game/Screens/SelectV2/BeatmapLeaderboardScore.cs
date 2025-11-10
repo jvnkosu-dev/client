@@ -393,7 +393,7 @@ namespace osu.Game.Screens.SelectV2
                                         Origin = Anchor.Centre,
                                         Spacing = new Vector2(-2),
                                         Colour = DrawableRank.GetRankLetterColour(Score.Rank),
-                                        Font = OsuFont.Numeric.With(size: 14),
+                                        Font = OsuFont.TorusAlternate.With(size: 24, weight: FontWeight.Bold),
                                         Text = DrawableRank.GetRankLetter(Score.Rank),
                                         ShadowColour = Color4.Black.Opacity(0.3f),
                                         ShadowOffset = new Vector2(0, 0.08f),

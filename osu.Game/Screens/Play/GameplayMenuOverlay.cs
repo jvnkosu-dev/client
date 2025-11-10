@@ -18,11 +18,13 @@ using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
+using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Input.Bindings;
 using osuTK;
 using osuTK.Graphics;
 using osu.Game.Localisation;
 using osu.Game.Utils;
+using System.Runtime.InteropServices;
 
 namespace osu.Game.Screens.Play
 {
@@ -40,6 +42,7 @@ namespace osu.Game.Screens.Play
         public Action? OnResume { get; init; }
         public Action? OnRetry { get; init; }
         public Action? OnQuit { get; init; }
+        public Action? OnQuitReplay { get; init; }
 
         /// <summary>
         /// Action that is invoked when <see cref="GlobalAction.Back"/> is triggered.
@@ -69,6 +72,8 @@ namespace osu.Game.Screens.Play
         [Resolved]
         private GlobalActionContainer globalAction { get; set; } = null!;
 
+        private ShearedButton saveReplay { get; set; } = null!;
+
         protected GameplayMenuOverlay()
         {
             RelativeSizeAxes = Axes.Both;
@@ -90,7 +95,7 @@ namespace osu.Game.Screens.Play
                     RelativeSizeAxes = Axes.X,
                     AutoSizeAxes = Axes.Y,
                     Direction = FillDirection.Vertical,
-                    Spacing = new Vector2(0, 50),
+                    Spacing = new Vector2(0, 25),
                     Origin = Anchor.Centre,
                     Anchor = Anchor.Centre,
                     Children = new Drawable[]
@@ -118,6 +123,15 @@ namespace osu.Game.Screens.Play
                                 Radius = 50
                             },
                         },
+                        saveReplay = new ShearedButton
+                        {
+                            Text = "Quit and save replay",
+                            Origin = Anchor.TopCentre,
+                            Anchor = Anchor.TopCentre,
+                            Height = 32,
+                            Colour = colours.PurpleLight,
+                            // Visibility = false
+                        },
                         playInfoText = new OsuTextFlowContainer(cp => cp.Font = OsuFont.GetFont(size: 18))
                         {
                             Origin = Anchor.TopCentre,
@@ -137,6 +151,12 @@ namespace osu.Game.Screens.Play
 
             if (OnQuit != null)
                 AddButton(GameplayMenuOverlayStrings.Quit, new Color4(170, 27, 39, 255), () => OnQuit.Invoke());
+
+            if (OnQuitReplay != null)
+            {
+                // saveReplay.Visibility = true;
+                saveReplay.Action = () => OnQuitReplay.Invoke();
+            }
 
             State.ValueChanged += _ => InternalButtons.Deselect();
 

@@ -30,19 +30,19 @@ namespace osu.Game.Overlays
                 {
                     Anchor = Anchor.BottomCentre,
                     Origin = Anchor.BottomCentre,
-                    Font = OsuFont.Torus.With(size: 12),
+                    Font = OsuFont.Torus.With(size: 15, weight: FontWeight.Bold),
                     Colour = colours.GrayF,
-                    Text =  $@"jvnkosu! " + game.Version,
-                    Y = -12,
+                    Text =  $@"jvnkosu! " + game.Version + (game.IsDeployedBuild ? "" : " • Experimental version"),
+                    Y = -3,
                 },
-                new OsuSpriteText
-                {
-                    Anchor = Anchor.BottomCentre,
-                    Origin = Anchor.BottomCentre,
-                    Font = OsuFont.Torus.With(weight: FontWeight.Bold, size: 15),
-                    Colour = colours.Yellow,
-                    Text = "Experimental version",
-                },
+                // new OsuSpriteText
+                // {
+                //     Anchor = Anchor.BottomCentre,
+                //     Origin = Anchor.BottomCentre,
+                //     Font = OsuFont.Torus.With(weight: FontWeight.Bold, size: 15),
+                //     Colour = colours.Yellow,
+                //     Text = "Experimental version",
+                // },
                 new Sprite
                 {
                     Anchor = Anchor.BottomCentre,

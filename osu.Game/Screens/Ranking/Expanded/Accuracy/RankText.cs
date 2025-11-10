@@ -49,7 +49,7 @@ namespace osu.Game.Screens.Ranking.Expanded.Accuracy
                     Spacing = new Vector2(-15, 0),
                     Text = DrawableRank.GetRankLetter(rank),
                     // Font = OsuFont.Numeric.With(size: 76),
-                    Font = OsuFont.TorusAlternate.With(size: 128, weight: FontWeight.Bold),
+                    Font = OsuFont.TorusAlternate.With(size: 100, weight: FontWeight.Bold),
                     UseFullGlyphHeight = false
                 },
                 superFlash = new BufferedContainer(cachedFrameBuffer: true)
@@ -89,7 +89,7 @@ namespace osu.Game.Screens.Ranking.Expanded.Accuracy
                             Origin = Anchor.Centre,
                             Spacing = new Vector2(-15, 0),
                             Text = DrawableRank.GetRankLetter(rank),
-                            Font = OsuFont.Numeric.With(size: 76),
+                            Font = OsuFont.TorusAlternate.With(size: 100, weight: FontWeight.Bold),
                             UseFullGlyphHeight = false,
                             Shadow = false
                         },

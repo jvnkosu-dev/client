@@ -516,6 +516,7 @@ namespace osu.Game.Screens.Play
                         Retries = RestartCount,
                         OnRetry = () => Restart(),
                         OnQuit = () => PerformExitWithConfirmation(),
+                        OnQuitReplay = () => PerformExitReplay()
                     },
                 },
             };
@@ -699,6 +700,20 @@ namespace osu.Game.Screens.Play
             }
 
             return true;
+        }
+
+        // XXX: replays saved from pause screen, when played back, will continue playing past the point player quits
+        // unfixable because it's not possible to manually trigger a failure in a way that would be recorded (w/o using a mod)
+        protected void PerformExitReplay()
+        {
+            // manually triggering a failure in a messy manner to avoid score submission
+            GameplayClockContainer.Stop();
+            GameplayState.HasFailed = true;
+            updateGameplayState();
+            ConcludeFailedScore(Score);
+
+            prepareAndImportScoreAsync(true);
+            PerformExit();
         }
 
         private void performUserRequestedSkip()

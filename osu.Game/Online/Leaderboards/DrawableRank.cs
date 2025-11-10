@@ -53,7 +53,7 @@ namespace osu.Game.Online.Leaderboards
                             Spacing = new Vector2(-3, 0),
                             Padding = new MarginPadding { Top = -5 },
                             Colour = GetRankLetterColour(rank),
-                            Font = OsuFont.TorusAlternate.With(size: 42, weight: FontWeight.SemiBold),
+                            Font = OsuFont.TorusAlternate.With(size: 40, weight: FontWeight.Bold),
                             Text = GetRankLetter(rank),
                             ShadowColour = Color4.Black.Opacity(0.3f),
                             ShadowOffset = new Vector2(0, 0.08f),
@@ -72,11 +72,13 @@ namespace osu.Game.Online.Leaderboards
             switch (rank)
             {
                 case ScoreRank.SH:
-                    return @"S";
+                    return @"S+";
 
                 case ScoreRank.X:
-                case ScoreRank.XH:
                     return @"SS";
+
+                case ScoreRank.XH:
+                    return @"SS+";
 
                 default:
                     return rank.ToString();

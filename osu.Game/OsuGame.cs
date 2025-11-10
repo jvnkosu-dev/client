@@ -1729,12 +1729,13 @@ namespace osu.Game
             {
                 case IntroScreen intro:
                     introScreen = intro;
-                    SimpleNotification notification = new SimpleNotification
-                    {
-                        Text = ButtonSystemStrings.GreetingNotification,
-                        Transient = true,
-                    };
-                    Notifications?.Post(notification);
+                    // SimpleNotification notification = new SimpleNotification
+                    // {
+                    //     Text = ButtonSystemStrings.GreetingNotification,
+                    //     Transient = true,
+                    //     PopInSampleName = "",
+                    // };
+                    // Notifications?.Post(notification);
                     devBuildBanner?.Show();
                     break;
 
