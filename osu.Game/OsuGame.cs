@@ -932,7 +932,7 @@ namespace osu.Game
 
         protected virtual Loader CreateLoader() => new Loader();
 
-        protected virtual UpdateManager CreateUpdateManager() => new NoActionUpdateManager();
+        protected virtual UpdateManager CreateUpdateManager() => new UpdateManager();
 
         /// <summary>
         /// Adjust the globally applied <see cref="DrawSizePreservingFillContainer.TargetDrawSize"/> in every <see cref="ScalingContainer"/>.
