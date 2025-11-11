@@ -23,6 +23,8 @@ namespace osu.Game.Screens
 {
     public partial class Loader : StartupScreen
     {
+        private bool showDisclaimer;
+
         public Loader()
         {
             ValidForResume = false;
@@ -35,7 +37,13 @@ namespace osu.Game.Screens
         private LoadingSpinner spinner;
         private ScheduledDelegate spinnerShow;
 
-        protected virtual OsuScreen CreateLoadableScreen() => getIntroSequence();
+        protected virtual OsuScreen CreateLoadableScreen()
+        {
+            if (showDisclaimer)
+                return new Disclaimer(getIntroSequence());
+
+            return getIntroSequence();
+        }
 
         private IntroScreen getIntroSequence()
         {
@@ -106,8 +114,9 @@ namespace osu.Game.Screens
         }
 
         [BackgroundDependencyLoader]
-        private void load(OsuConfigManager config)
+        private void load(OsuGameBase game, OsuConfigManager config)
         {
+            showDisclaimer = game.IsDeployedBuild;
             introSequence = config.Get<IntroSequence>(OsuSetting.IntroSequence);
         }
 
