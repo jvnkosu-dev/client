@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Allocation;
+using osu.Framework.Development;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
@@ -9,6 +10,7 @@ using osu.Framework.Graphics.Textures;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osuTK;
+using osuTK.Graphics;
 
 namespace osu.Game.Overlays
 {
@@ -26,30 +28,42 @@ namespace osu.Game.Overlays
 
             AddRange(new Drawable[]
             {
-                new OsuSpriteText
+                new FillFlowContainer
                 {
-                    Anchor = Anchor.BottomCentre,
-                    Origin = Anchor.BottomCentre,
-                    Font = OsuFont.Torus.With(size: 15, weight: FontWeight.Bold),
-                    Colour = colours.GrayF,
-                    Text =  $@"jvnkosu! " + game.Version + (game.IsDeployedBuild ? "" : " • Experimental version"),
-                    Y = -3,
-                },
-                // new OsuSpriteText
-                // {
-                //     Anchor = Anchor.BottomCentre,
-                //     Origin = Anchor.BottomCentre,
-                //     Font = OsuFont.Torus.With(weight: FontWeight.Bold, size: 15),
-                //     Colour = colours.Yellow,
-                //     Text = "Experimental version",
-                // },
-                new Sprite
-                {
-                    Anchor = Anchor.BottomCentre,
-                    Origin = Anchor.BottomCentre,
-                    Texture = textures.Get(@"Menu/dev-build-footer"),
-                    Scale = new Vector2(0.4f, 1),
-                    Y = 2,
+                    AutoSizeAxes = Axes.Both,
+                    Direction = FillDirection.Vertical,
+                    Children = new Drawable[]
+                    {
+                        new FillFlowContainer
+                        {
+                            AutoSizeAxes = Axes.Both,
+                            Direction = FillDirection.Horizontal,
+                            Spacing = new Vector2(5),
+                            Anchor = Anchor.TopCentre,
+                            Origin = Anchor.TopCentre,
+                            Children = new Drawable[]
+                            {
+                                new OsuSpriteText
+                                {
+                                    Font = OsuFont.GetFont(weight: FontWeight.Bold),
+                                    Text = game.Name
+                                },
+                                new OsuSpriteText
+                                {
+                                    Colour = DebugUtils.IsDebugBuild ? colours.Red : Color4.White,
+                                    Text = game.Version
+                                },
+                            }
+                        },
+                        new Sprite
+                        {
+                            // Anchor = Anchor.BottomCentre,
+                            // Origin = Anchor.BottomCentre,
+                            Texture = textures.Get(@"Menu/dev-build-footer"),
+                            Scale = new Vector2(0.4f, 1),
+                            Y = 2,
+                        }
+                    },
                 },
             });
         }
