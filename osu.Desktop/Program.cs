@@ -208,9 +208,10 @@ namespace osu.Desktop
         [SupportedOSPlatform("windows")]
         private static void configureWindows(VelopackApp app)
         {
-            app.OnFirstRun(_ => WindowsAssociationManager.InstallAssociations());
-            app.OnAfterUpdateFastCallback(_ => WindowsAssociationManager.UpdateAssociations());
-            app.OnBeforeUninstallFastCallback(_ => WindowsAssociationManager.UninstallAssociations());
+            // we do not want associations here, as that breaks official lazer's associations
+            // app.OnFirstRun(_ => WindowsAssociationManager.InstallAssociations());
+            // app.OnAfterUpdateFastCallback(_ => WindowsAssociationManager.UpdateAssociations());
+            // app.OnBeforeUninstallFastCallback(_ => WindowsAssociationManager.UninstallAssociations());
         }
     }
 }
