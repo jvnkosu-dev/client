@@ -127,7 +127,9 @@ namespace osu.Game.Rulesets.Mods
         /// The settings are returned in ascending key order as per <see cref="SettingsMap"/>.
         /// The ordering is intentionally enforced manually, as ordering of <see cref="Dictionary{TKey,TValue}.Values"/> is unspecified.
         /// </remarks>
-        internal IEnumerable<IBindable> SettingsBindables => SettingsMap.OrderBy(pair => pair.Key).Select(pair => pair.Value);
+        internal IEnumerable<IBindable> SettingsBindables => SettingsMap.OrderBy(pair => pair.Key)
+                                                                .Select(pair => pair.Value)
+                                                                .Where(x => !x.GetType().GetCustomAttributes(typeof(JsonIgnoreAttribute)).Any());
 
         /// <summary>
         /// Provides mapping of names to <see cref="IBindable"/>s of all settings within this mod.

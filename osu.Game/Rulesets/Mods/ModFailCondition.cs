@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using Newtonsoft.Json;
 using osu.Framework.Bindables;
 using osu.Game.Configuration;
 using osu.Game.Rulesets.Judgements;
@@ -9,16 +10,22 @@ using osu.Game.Rulesets.Scoring;
 
 namespace osu.Game.Rulesets.Mods
 {
-    public abstract class ModFailCondition : Mod, IApplicableToHealthProcessor, IApplicableFailOverride
+    public abstract class ModFailCondition : Mod, IApplicableToHealthProcessor, IApplicableFailOverride, IApplicableFailExit
     {
         public override Type[] IncompatibleMods => new[] { typeof(ModNoFail), typeof(ModCinema) };
 
         [SettingSource("Restart on fail", "Automatically restarts when failed.")]
         public BindableBool Restart { get; } = new BindableBool();
 
+        [SettingSource("Exit game on fail", "Automatically exits the game when failed."), JsonIgnore]
+        public BindableBool Exit { get; } = new BindableBool();
+
         public virtual bool PerformFail() => true;
 
         public virtual bool RestartOnFail => Restart.Value;
+
+        [JsonIgnore]
+        public virtual bool ExitOnFail => Exit.Value;
 
         private Action? triggerFailureDelegate;
 
@@ -39,7 +46,7 @@ namespace osu.Game.Rulesets.Mods
         /// </summary>
         /// <param name="healthProcessor">The loaded <see cref="HealthProcessor"/>.</param>
         /// <param name="result">The latest <see cref="JudgementResult"/>.</param>
-        /// <returns>Whether the fail condition has been met.</returns>
+        /// <returns>Whether the fail condition has been met.</returns>z
         /// <remarks>
         /// This method should only be used to trigger failures based on <paramref name="result"/>.
         /// Using outside values to evaluate failure may introduce event ordering discrepancies, use

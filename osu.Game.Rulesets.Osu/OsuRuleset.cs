@@ -230,6 +230,12 @@ namespace osu.Game.Rulesets.Osu
                         new ModScoreV2(),
                     };
 
+                case ModType.Special:
+                    return new Mod[]
+                    {
+                        new OsuModRateAdjustConcrete(),
+                    };
+
                 default:
                     return Array.Empty<Mod>();
             }

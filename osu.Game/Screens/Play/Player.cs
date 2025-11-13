@@ -983,6 +983,14 @@ namespace osu.Game.Screens.Play
             if (PauseOverlay.State.Value == Visibility.Visible)
                 PauseOverlay.Hide();
 
+            bool exitOnFail = GameplayState.Mods.OfType<IApplicableFailExit>().Any(m => m.ExitOnFail);
+            if (exitOnFail)
+            {
+                // game.AttemptExit();
+                game.Exit();
+            }
+
+
             bool restartOnFail = GameplayState.Mods.OfType<IApplicableFailOverride>().Any(m => m.RestartOnFail);
             if (!restartOnFail)
                 failAnimationContainer.Start();
