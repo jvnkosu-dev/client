@@ -231,10 +231,12 @@ namespace osu.Game.Rulesets.Osu
                     };
 
                 case ModType.Special:
+#if DEBUG
                     return new Mod[]
                     {
                         new OsuModRateAdjustConcrete(),
                     };
+#endif
 
                 default:
                     return Array.Empty<Mod>();

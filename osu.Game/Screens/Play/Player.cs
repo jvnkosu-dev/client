@@ -200,6 +200,8 @@ namespace osu.Game.Screens.Play
         protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
             => dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
 
+        private OsuConfigManager config;
+
         protected override void LoadComplete()
         {
             base.LoadComplete();
@@ -226,12 +228,13 @@ namespace osu.Game.Screens.Play
         [BackgroundDependencyLoader(true)]
         private void load(OsuConfigManager config, OsuGameBase game, CancellationToken cancellationToken)
         {
+            this.config = config;
             var gameplayMods = Mods.Value.Select(m => m.DeepClone()).ToArray();
 
             if (gameplayMods.Any(m => m is UnknownMod))
             {
                 Logger.Log("Gameplay was started with an unknown mod applied.", level: LogLevel.Important);
-                return;
+                // return;
             }
 
             if (Beatmap.Value is DummyWorkingBeatmap)
@@ -983,7 +986,8 @@ namespace osu.Game.Screens.Play
             if (PauseOverlay.State.Value == Visibility.Visible)
                 PauseOverlay.Hide();
 
-            bool exitOnFail = GameplayState.Mods.OfType<IApplicableFailExit>().Any(m => m.ExitOnFail);
+            bool exitOnFail = GameplayState.Mods.OfType<IApplicableFailExit>().Any(m => m.ExitOnFail)
+                                && Score.ScoreInfo.User.Username == config.Get<string>(OsuSetting.Username); // TODO: do more concrete checks
             if (exitOnFail)
             {
                 // game.AttemptExit();
