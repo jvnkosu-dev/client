@@ -40,9 +40,9 @@ namespace osu.Game.Localisation
         public static LocalisableString LocallyModifiedTooltip => new TranslatableString(getKey(@"locally_modified_tooltip"), @"Has been locally modified");
 
         /// <summary>
-        /// "Unknown"
+        /// "Offline"
         /// </summary>
-        public static LocalisableString StatusUnknown => new TranslatableString(getKey(@"status_unknown"), @"Unknown");
+        public static LocalisableString StatusUnknown => new TranslatableString(getKey(@"status_unknown"), @"Offline");
 
         /// <summary>
         /// "Total Plays"

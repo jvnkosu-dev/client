@@ -33,7 +33,8 @@ namespace osu.Game.Beatmaps.Drawables.Cards
                         Status = beatmapSet.Status,
                         Anchor = Anchor.CentreLeft,
                         Origin = Anchor.CentreLeft,
-                        TextSize = 13f
+                        TextSize = 13f,
+                        ShowUnknownStatus = true
                     },
                     new DifficultySpectrumDisplay
                     {

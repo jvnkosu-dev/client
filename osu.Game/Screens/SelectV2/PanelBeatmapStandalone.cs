@@ -149,6 +149,7 @@ namespace osu.Game.Screens.SelectV2
                                             Anchor = Anchor.BottomLeft,
                                             TextSize = OsuFont.Style.Caption2.Size,
                                             Margin = new MarginPadding { Right = 4f },
+                                            ShowUnknownStatus = true
                                         },
                                         updateButton = new PanelUpdateBeatmapButton
                                         {

@@ -143,6 +143,7 @@ namespace osu.Game.Screens.SelectV2
                                     TextSize = OsuFont.Style.Caption2.Size,
                                     Margin = new MarginPadding { Right = 5f },
                                     Animated = false,
+                                    ShowUnknownStatus = true
                                 },
                                 updateButton = new PanelUpdateBeatmapButton
                                 {

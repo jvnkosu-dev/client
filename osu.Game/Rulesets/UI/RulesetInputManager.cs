@@ -2,6 +2,8 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
@@ -31,6 +33,8 @@ namespace osu.Game.Rulesets.UI
         protected override bool AllowRightClickFromLongTouch => false;
 
         public readonly KeyBindingContainer<T> KeyBindingContainer;
+
+        private readonly RulesetKeyBindingContainer rulesetKeyBindingContainer;
 
         [Resolved]
         private ScoreProcessor? scoreProcessor { get; set; }
@@ -64,8 +68,10 @@ namespace osu.Game.Rulesets.UI
 
         protected RulesetInputManager(RulesetInfo ruleset, int variant, SimultaneousBindingMode unique)
         {
+            rulesetKeyBindingContainer = createRulesetKeyBindingContainer(ruleset, variant, unique);
+
             InternalChild = KeyBindingContainer =
-                CreateKeyBindingContainer(ruleset, variant, unique)
+                rulesetKeyBindingContainer
                     .WithChild(content = new Container { RelativeSizeAxes = Axes.Both });
         }
 
@@ -174,11 +180,10 @@ namespace osu.Game.Rulesets.UI
 
         public void Attach(InputCountController inputCountController)
         {
-            var triggers = KeyBindingContainer.DefaultKeyBindings
-                                              .Select(b => b.GetAction<T>())
-                                              .Distinct()
-                                              .Select(action => new KeyCounterActionTrigger<T>(action))
-                                              .ToArray();
+            var bindings = rulesetKeyBindingContainer.DefaultKeyBindings;
+            var triggers = bindings.Select(b => new KeyCounterBindingTrigger<T>(b, b.GetAction<T>()))
+                                   .DistinctBy(b => b.Action)
+                                   .ToArray();
 
             KeyBindingContainer.AddRange(triggers);
             inputCountController.AddRange(triggers);
@@ -213,6 +218,9 @@ namespace osu.Game.Rulesets.UI
         #endregion
 
         protected virtual KeyBindingContainer<T> CreateKeyBindingContainer(RulesetInfo ruleset, int variant, SimultaneousBindingMode unique)
+            => new RulesetKeyBindingContainer(ruleset, variant, unique);
+
+        private RulesetKeyBindingContainer createRulesetKeyBindingContainer(RulesetInfo ruleset, int variant, SimultaneousBindingMode unique)
             => new RulesetKeyBindingContainer(ruleset, variant, unique);
 
         public partial class RulesetKeyBindingContainer : DatabasedKeyBindingContainer<T>

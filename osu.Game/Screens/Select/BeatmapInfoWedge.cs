@@ -269,6 +269,7 @@ namespace osu.Game.Screens.Select
                                 TextSize = 11,
                                 TextPadding = new MarginPadding { Horizontal = 8, Vertical = 2 },
                                 Status = beatmapInfo.Status,
+                                ShowUnknownStatus = true,
                                 Alpha = string.IsNullOrEmpty(beatmapInfo.DifficultyName) ? 0 : 1
                             }
                         }

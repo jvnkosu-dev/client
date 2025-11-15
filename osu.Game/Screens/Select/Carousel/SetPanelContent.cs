@@ -81,6 +81,7 @@ namespace osu.Game.Screens.Select.Carousel
                                 Anchor = Anchor.CentreLeft,
                                 TextSize = 11,
                                 TextPadding = new MarginPadding { Horizontal = 8, Vertical = 2 },
+                                ShowUnknownStatus = true,
                                 Status = beatmapSet.Status
                             },
                             iconFlow = new FillFlowContainer<DifficultyIcon>

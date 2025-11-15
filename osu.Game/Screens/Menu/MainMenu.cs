@@ -411,7 +411,7 @@ namespace osu.Game.Screens.Menu
                 // if the dialog has already displayed and been accepted by the user, we are good.
                 && !exitConfirmedViaDialog
                 // Only require confirmation if there is either an ongoing operation or the user exited via a non-hold escape press.
-                && (notifications.HasOngoingOperations /* || !exitConfirmedViaHoldOrClick */);
+                && (notifications.HasOngoingOperations || !exitConfirmedViaHoldOrClick);
 
             if (requiresConfirmation)
             {

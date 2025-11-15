@@ -129,7 +129,7 @@ namespace osu.Game.Graphics
             switch (status)
             {
                 case BeatmapOnlineStatus.None:
-                    return Color4.RosyBrown;
+                    return Color4.AliceBlue;
 
                 case BeatmapOnlineStatus.LocallyModified:
                     return Color4.OrangeRed;
