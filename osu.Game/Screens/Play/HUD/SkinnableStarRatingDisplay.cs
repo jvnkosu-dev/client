@@ -41,7 +41,7 @@ namespace osu.Game.Screens.Play.HUD
             AutoSizeAxes = Axes.Both;
             InternalChildren = new Drawable[]
             {
-                starRatingDisplay = new StarRatingDisplay(new StarDifficulty(0.00, 0))
+                starRatingDisplay = new StarRatingDisplay(new StarDifficulty(0.00, 0), animated: true)
             };
         }
 

@@ -7,6 +7,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions.Color4Extensions;
+using osu.Framework.Extensions.ImageExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Audio;
 using osu.Framework.Graphics.Colour;
@@ -14,12 +15,14 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
 using osu.Framework.Utils;
+using osu.Game.Graphics;
 using osu.Game.Scoring;
 using osu.Game.Screens.Ranking.Contracted;
 using osu.Game.Screens.Ranking.Expanded;
 using osu.Game.Users;
 using osuTK;
 using osuTK.Graphics;
+using ZstdSharp.Unsafe;
 
 namespace osu.Game.Screens.Ranking
 {
@@ -96,6 +99,7 @@ namespace osu.Game.Screens.Ranking
 
         [Resolved]
         private OsuGameBase game { get; set; } = null!;
+        private OsuColour colour { get; set; } = null!;
 
         private AudioContainer audioContent = null!;
 
@@ -124,11 +128,13 @@ namespace osu.Game.Screens.Ranking
         }
 
         [BackgroundDependencyLoader]
-        private void load(AudioManager audio)
+        private void load(AudioManager audio, OsuColour colour)
         {
             // ScorePanel doesn't include the top extruding area in its own size.
             // Adding a manual offset here allows the expanded version to take on an "acceptable" vertical centre when at 100% UI scale.
             const float vertical_fudge = 20;
+
+            this.colour = colour;
 
             InternalChild = audioContent = new AudioContainer
             {
@@ -239,6 +245,15 @@ namespace osu.Game.Screens.Ranking
 
         private void updateState()
         {
+            ColourInfo getColour(ColourInfo info)
+            {
+                var ci = info.AverageColour;
+                var rank = (ColourInfo)OsuColour.ForRank(Score.Rank);
+                (float _, float _, float v) = Color4Extensions.ToHSV(ci);
+                (float rh, float rs, _) = Color4Extensions.ToHSV(rank);
+                return Color4Extensions.FromHSV(rh, rs * 0.2f, v);
+            }
+
             topLayerContent?.FadeOut(content_fade_duration).Expire();
             middleLayerContent?.FadeOut(content_fade_duration).Expire();
 
@@ -247,8 +262,8 @@ namespace osu.Game.Screens.Ranking
                 case PanelState.Expanded:
                     Size = new Vector2(EXPANDED_WIDTH, expanded_height);
 
-                    topLayerBackground.FadeColour(expanded_top_layer_colour, RESIZE_DURATION, Easing.OutQuint);
-                    middleLayerBackground.FadeColour(expanded_middle_layer_colour, RESIZE_DURATION, Easing.OutQuint);
+                    topLayerBackground.FadeColour(getColour(expanded_top_layer_colour), RESIZE_DURATION, Easing.OutQuint);
+                    middleLayerBackground.FadeColour(getColour(expanded_middle_layer_colour), RESIZE_DURATION, Easing.OutQuint);
 
                     bool firstLoad = topLayerContent == null;
                     topLayerContentContainer.Add(topLayerContent = new ExpandedPanelTopContent(Score.User, firstLoad) { Alpha = 0 });
@@ -261,8 +276,8 @@ namespace osu.Game.Screens.Ranking
                 case PanelState.Contracted:
                     Size = new Vector2(CONTRACTED_WIDTH, contracted_height);
 
-                    topLayerBackground.FadeColour(contracted_top_layer_colour, RESIZE_DURATION, Easing.OutQuint);
-                    middleLayerBackground.FadeColour(contracted_middle_layer_colour, RESIZE_DURATION, Easing.OutQuint);
+                    topLayerBackground.FadeColour(getColour(contracted_top_layer_colour), RESIZE_DURATION, Easing.OutQuint);
+                    middleLayerBackground.FadeColour(getColour(contracted_middle_layer_colour), RESIZE_DURATION, Easing.OutQuint);
 
                     topLayerContentContainer.Add(topLayerContent = new ContractedPanelTopContent
                     {
