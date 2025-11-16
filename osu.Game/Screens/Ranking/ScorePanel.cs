@@ -251,7 +251,7 @@ namespace osu.Game.Screens.Ranking
                 var rank = (ColourInfo)OsuColour.ForRank(Score.Rank);
                 (float _, float _, float v) = Color4Extensions.ToHSV(ci);
                 (float rh, float rs, _) = Color4Extensions.ToHSV(rank);
-                return Color4Extensions.FromHSV(rh, rs * 0.2f, v);
+                return Color4Extensions.FromHSV(rh, rs * 0.3f, v * 1.1f);
             }
 
             topLayerContent?.FadeOut(content_fade_duration).Expire();

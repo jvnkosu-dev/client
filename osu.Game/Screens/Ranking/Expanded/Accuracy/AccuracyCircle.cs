@@ -215,6 +215,9 @@ namespace osu.Game.Screens.Ranking.Expanded.Accuracy
 
             this.ScaleTo(0).Then().ScaleTo(1, APPEAR_DURATION, Easing.OutQuint);
 
+            if (!withFlair)
+                accuracyCircle.Colour = OsuColour.ForRank(score.Rank);
+
             if (withFlair)
             {
                 const double swoosh_pre_delay = 443f;
@@ -307,6 +310,7 @@ namespace osu.Game.Screens.Ranking.Expanded.Accuracy
                                 {
                                     var dink = badgeNum < badges.Count - 1 ? badgeTickSound : badgeMaxSound;
 
+                                    accuracyCircle.FadeColour(OsuColour.ForRank(badge.Rank), 100, Easing.InOutSine); // TODO: nicer animations
                                     dink!.FrequencyTo(1 + badgeNum++ * 0.05);
                                     dink!.Play();
                                 });
