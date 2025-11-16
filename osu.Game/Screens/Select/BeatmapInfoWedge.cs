@@ -163,6 +163,7 @@ namespace osu.Game.Screens.Select
             private FillFlowContainer infoLabelContainer;
             private Container bpmLabelContainer;
             private Container lengthLabelContainer;
+            private Container performanceLabelContainer;
 
             private readonly WorkingBeatmap working;
             private readonly RulesetInfo ruleset;
@@ -344,9 +345,11 @@ namespace osu.Game.Screens.Select
                     settingChangeTracker?.Dispose();
 
                     refreshBPMAndLengthLabel();
+                    refreshPerformanceLabel();
 
                     settingChangeTracker = new ModSettingChangeTracker(m.NewValue);
                     settingChangeTracker.SettingChanged += _ => refreshBPMAndLengthLabel();
+                    settingChangeTracker.SettingChanged += _ => refreshPerformanceLabel();
                 }, true);
             }
 
@@ -385,7 +388,11 @@ namespace osu.Game.Screens.Select
                             AutoSizeAxes = Axes.Both,
                             Spacing = new Vector2(20, 0),
                             Children = playableBeatmap.GetStatistics().Select(s => new InfoLabel(s)).ToArray()
-                        }
+                        },
+                        performanceLabelContainer = new Container
+                        {
+                            AutoSizeAxes = Axes.Both
+                        },
                     };
                 }
                 catch (Exception e)
@@ -427,6 +434,27 @@ namespace osu.Game.Screens.Select
                     CreateIcon = () => new BeatmapStatisticIcon(BeatmapStatisticsIconType.Length),
                     Content = hitLength.ToFormattedDuration().ToString(),
                 });
+            }
+
+            private void refreshPerformanceLabel()
+            {
+                var beatmap = working.Beatmap;
+
+                if (beatmap == null || performanceLabelContainer == null)
+                    return;
+
+                var diff = difficultyCache.GetBindableDifficulty(beatmap.BeatmapInfo);
+                diff.BindValueChanged(d =>
+                {
+                    float perf = (float?)d.NewValue.PerformanceAttributes?.Total ?? 0.0f;
+                    string disp = $"{Math.Round(perf, 1)} pp";
+                    performanceLabelContainer.Child = new InfoLabel(new BeatmapStatistic
+                    {
+                        Name = "Max PP",
+                        CreateIcon = () => new BeatmapStatisticIcon(BeatmapStatisticsIconType.Accuracy),
+                        Content = disp
+                    });
+                }, true);
             }
 
             private Drawable getMapper(BeatmapMetadata metadata)
