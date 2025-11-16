@@ -27,9 +27,11 @@ namespace osu.Game.Screens.SelectV2
             private readonly FillFlowContainer<StatisticDifficulty> statisticsFlow;
             private readonly GridContainer tinyStatisticsGrid;
 
-            private IReadOnlyList<StatisticDifficulty.Data> statistics = Array.Empty<StatisticDifficulty.Data>();
+            public bool ForceTiny { get; set; } = false;
 
-            public IReadOnlyList<StatisticDifficulty.Data> Statistics
+            private IEnumerable<StatisticDifficulty.Data> statistics = Array.Empty<StatisticDifficulty.Data>();
+
+            public IEnumerable<StatisticDifficulty.Data> Statistics
             {
                 get => statistics;
                 set
@@ -137,7 +139,7 @@ namespace osu.Game.Screens.SelectV2
                     return;
 
                 float flowWidth = statisticsFlow[0].Width * statisticsFlow.Count + statisticsFlow.Spacing.X * (statisticsFlow.Count - 1);
-                bool tiny = !autoSize && DrawWidth < flowWidth - 20;
+                bool tiny = !autoSize && DrawWidth < flowWidth - 20 || ForceTiny;
 
                 if (displayedTinyStatistics != tiny)
                 {
@@ -180,8 +182,8 @@ namespace osu.Game.Screens.SelectV2
                 if (statisticsFlow.Select(s => s.Value.Label)
                                   .SequenceEqual(statistics.Select(s => s.Label)))
                 {
-                    for (int i = 0; i < statistics.Count; i++)
-                        statisticsFlow[i].Value = statistics[i];
+                    for (int i = 0; i < statistics.Count(); i++)
+                        statisticsFlow[i].Value = statistics.ToArray()[i];
                 }
                 else
                 {

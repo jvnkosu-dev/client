@@ -12,6 +12,7 @@ using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Logging;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.Drawables;
 using osu.Game.Configuration;
@@ -233,6 +234,7 @@ namespace osu.Game.Screens.SelectV2
 
             private void updateDisplay()
             {
+                countStatisticsDisplay.ForceTiny = true;
                 cancellationSource?.Cancel();
                 cancellationSource = new CancellationTokenSource();
 
@@ -293,8 +295,22 @@ namespace osu.Game.Screens.SelectV2
 
                 Ruleset rulesetInstance = ruleset.Value.CreateInstance();
 
+                var workingBeatmap = beatmap.Value;
+                var diff = difficultyCache.GetBindableDifficulty(workingBeatmap.BeatmapInfo);
+
+                float perf = 0.0f;
                 var displayAttributes = rulesetInstance.GetBeatmapAttributesForDisplay(beatmap.Value.BeatmapInfo, mods.Value).ToList();
-                difficultyStatisticsDisplay.Statistics = displayAttributes.Select(a => new StatisticDifficulty.Data(a)).ToList();
+                difficultyStatisticsDisplay.Statistics = displayAttributes.Select(a => new StatisticDifficulty.Data(a))
+                                                                          .Prepend(new StatisticDifficulty.Data("Max PP", perf, perf, perf));
+
+                // at first, performance points won't be available, so we'd have to update them later
+                diff.BindValueChanged(d =>
+                {
+                    perf = (float)Math.Round((float?)d.NewValue.PerformanceAttributes?.Total ?? 0f, 1); // yikes
+                    var arr = difficultyStatisticsDisplay.Statistics.ToArray();
+                    arr[0] = new StatisticDifficulty.Data("Max PP", perf, perf, perf);
+                    difficultyStatisticsDisplay.Statistics = arr.AsEnumerable();
+                });
             });
 
             protected override void Update()
