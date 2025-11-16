@@ -70,9 +70,7 @@ namespace osu.Game.Rulesets.UI
         {
             rulesetKeyBindingContainer = createRulesetKeyBindingContainer(ruleset, variant, unique);
 
-            InternalChild = KeyBindingContainer =
-                rulesetKeyBindingContainer
-                    .WithChild(content = new Container { RelativeSizeAxes = Axes.Both });
+            InternalChild = KeyBindingContainer = CreateKeyBindingContainer(ruleset, variant, unique).WithChild(content = new Container { RelativeSizeAxes = Axes.Both });
         }
 
         [BackgroundDependencyLoader(true)]
