@@ -84,9 +84,12 @@ Please bear with us as we continue to improve the game for you!");
         public static LocalisableString GreetingNotification => new TranslatableString(getKey(@"greeting_notification"), @"Welcome to jvnkosu!");
 
         /// <summary>
-        /// "Failed to load backgrounds!\nCheck your internet connection"
+        /// "Failed to load backgrounds!
+        /// Please check your internet connection"
         /// </summary>
-        public static LocalisableString SeasonalBackgroundsFail => new TranslatableString(getKey(@"seasonal_backgrounds_fail"), @"Failed to load backgrounds!\nCheck your internet connection"); // TODO: implement l10n in osu-resources
+        public static LocalisableString SeasonalBackgroundsFail => new TranslatableString(getKey(@"seasonal_backgrounds_fail"),
+        @"Failed to load backgrounds!
+Please check your internet connection"); // TODO: implement l10n in osu-resources
 
         /// <summary>
         /// "Successfully refreshed background categories!"

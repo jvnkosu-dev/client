@@ -15,9 +15,9 @@ namespace osu.Game.Localisation
         public static LocalisableString HeaderTitle => new TranslatableString(getKey(@"header_title"), @"settings");
 
         /// <summary>
-        /// "change the way game behaves"
+        /// "change the way your game behaves"
         /// </summary>
-        public static LocalisableString HeaderDescription => new TranslatableString(getKey(@"header_description"), @"change the way game behaves");
+        public static LocalisableString HeaderDescription => new TranslatableString(getKey(@"header_description"), @"change the way your game behaves");
 
         private static string getKey(string key) => $"{prefix}:{key}";
     }
