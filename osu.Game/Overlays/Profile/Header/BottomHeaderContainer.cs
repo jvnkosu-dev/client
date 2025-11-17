@@ -78,12 +78,13 @@ namespace osu.Game.Overlays.Profile.Header
 
         private void updateDisplay(APIUser? user)
         {
+            var cutoffDate = new DateTime(2025, 8, 25);
             topLinkContainer.Clear();
             bottomLinkContainer.Clear();
 
             if (user == null) return;
 
-            if (user.JoinDate.ToUniversalTime().Year < 2008)
+            if (user.JoinDate.ToUniversalTime().Date < cutoffDate)
                 topLinkContainer.AddText(UsersStrings.ShowFirstMembers);
             else
             {
