@@ -75,6 +75,11 @@ namespace osu.Game.Overlays.Profile.Sections.Recent
                     icon.Colour = Color4.White;
                     break;
 
+                case RecentActivityType.RankRetracted:
+                    icon.Icon = FontAwesome.Solid.Ban;
+                    icon.Colour = colours.Red1;
+                    break;
+
                 case RecentActivityType.UserSupportAgain:
                     icon.Icon = FontAwesome.Solid.Heart;
                     icon.Colour = colours.Pink;
