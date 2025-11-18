@@ -41,18 +41,17 @@ namespace osu.Game.Utils
         {
             this.game = game;
 
-            if (!game.IsDeployedBuild || !game.CreateEndpoints().WebsiteUrl.EndsWith(@".ppy.sh", StringComparison.Ordinal))
+            if (!game.IsDeployedBuild || !game.CreateEndpoints().WebsiteUrl.EndsWith(@".jvnko.boats", StringComparison.Ordinal))
                 return;
 
             sentrySession = SentrySdk.Init(options =>
             {
-                options.Dsn = "https://ad9f78529cef40ac874afb95a9aca04e@sentry.ppy.sh/2";
+                options.Dsn = "https://8b67571746af4a07a09558574c7e2227@satellite.jvnko.boats/1";
                 options.AutoSessionTracking = true;
                 options.IsEnvironmentUser = false;
                 options.IsGlobalModeEnabled = true;
                 options.CacheDirectoryPath = storage?.GetFullPath(string.Empty);
-                // The reported release needs to match version as reported to Sentry in .github/workflows/sentry-release.yml
-                options.Release = $"osu@{game.Version.Split('-').First()}";
+                options.Release = $"jvnkosu@{game.Version.Split('-').First()}";
             });
 
             Logger.NewEntry += processLogEntry;
