@@ -177,7 +177,7 @@ namespace osu.Game.Seasonal
                         welcomeText.FadeIn().OnComplete(t => t.Text = "");
 
                     using (BeginDelayedSequence(getTimeForBeat(-10)))
-                        welcomeText.FadeIn().OnComplete(t => t.Text = "merry osumas!");
+                        welcomeText.FadeIn().OnComplete(t => t.Text = "and happy new year!");
 
                     using (BeginDelayedSequence(getTimeForBeat(-9)))
                     {

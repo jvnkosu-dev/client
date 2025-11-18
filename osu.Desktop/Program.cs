@@ -44,7 +44,7 @@ namespace osu.Desktop
 
                 // While .NET 8 only supports Windows 10 and above, running on Windows 7/8.1 may still work. We are limited by realm currently, as they choose to only support 8.1 and higher.
                 // See https://www.mongodb.com/docs/realm/sdk/dotnet/compatibility/
-                if (windowsVersion.Major < 6 || (windowsVersion.Major == 6 && windowsVersion.Minor <= 2))
+                if (windowsVersion.Major < 6)
                 {
                     unsafe
                     {
@@ -53,11 +53,24 @@ namespace osu.Desktop
                         // We could also better detect compatibility mode if required:
                         // https://stackoverflow.com/questions/10744651/how-i-can-detect-if-my-application-is-running-under-compatibility-mode#comment58183249_10744730
                         SDL3.SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags.SDL_MESSAGEBOX_ERROR,
-                            "Your operating system is too old to run osu!"u8,
-                            "This version of osu! requires at least Windows 8.1 to run.\n"u8
-                            + "Please upgrade your operating system or consider using an older version of osu!.\n\n"u8
-                            + "If you are running a newer version of windows, please check you don't have \"Compatibility mode\" turned on for osu!"u8, null);
+                            "Your operating system is too old to run this game!"u8,
+                            "This version of the game requires at least Windows 8.1 to run reliably.\n"u8
+                            + "You may try to run it on Windows 8 or older, but it's not guaranteed to actually work.\n\n"u8
+                            + "Please upgrade your operating system or consider using an older game version.\n\n"u8
+                            + "If you are running a newer version of Windows, please check you don't have \"Compatibility mode\" turned on for the game's executable."u8, null);
                         return;
+                    }
+                }
+
+                if (windowsVersion.Major == 6 && windowsVersion.Minor <= 2)
+                {
+                    unsafe
+                    {
+                        SDL3.SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags.SDL_MESSAGEBOX_WARNING,
+                            "Your operating system is too old to run this game!"u8,
+                            "While the version of Windows you're using may be able to launch it, it's likely to work unreliably and crash.\n"u8
+                            + "Please upgrade your operating system or consider using an older game version.\n\n"u8
+                            + "If you are running a newer version of Windows, please check you don't have \"Compatibility mode\" turned on for the game's executable."u8, null);
                     }
                 }
             }
