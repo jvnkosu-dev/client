@@ -14,6 +14,7 @@ using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Utils;
 using osu.Game.Audio;
 using osu.Game.Graphics;
+using osu.Game.Online.Leaderboards;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Scoring;
@@ -215,8 +216,10 @@ namespace osu.Game.Screens.Ranking.Expanded.Accuracy
 
             this.ScaleTo(0).Then().ScaleTo(1, APPEAR_DURATION, Easing.OutQuint);
 
-            if (!withFlair)
-                accuracyCircle.Colour = OsuColour.ForRank(score.Rank);
+            accuracyCircle.Colour = DrawableRank.GetRankLetterColour(ScoreRank.F); // default for failed scores
+
+            if (!withFlair && score.Rank != ScoreRank.F)
+                accuracyCircle.Colour = OsuColour.ForRank(score.Rank).Lighten(0.125f);
 
             if (withFlair)
             {

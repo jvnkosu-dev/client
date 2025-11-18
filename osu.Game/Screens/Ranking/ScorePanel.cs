@@ -16,6 +16,7 @@ using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
 using osu.Framework.Utils;
 using osu.Game.Graphics;
+using osu.Game.Online.Leaderboards;
 using osu.Game.Scoring;
 using osu.Game.Screens.Ranking.Contracted;
 using osu.Game.Screens.Ranking.Expanded;
@@ -248,10 +249,15 @@ namespace osu.Game.Screens.Ranking
             ColourInfo getColour(ColourInfo info)
             {
                 var ci = info.AverageColour;
+                (_, _, float v) = Color4Extensions.ToHSV(ci);
+
                 var rank = (ColourInfo)OsuColour.ForRank(Score.Rank);
-                (float _, float _, float v) = Color4Extensions.ToHSV(ci);
                 (float rh, float rs, _) = Color4Extensions.ToHSV(rank);
-                return Color4Extensions.FromHSV(rh, rs * 0.3f, v * 1.1f);
+
+                if (Score.Rank != ScoreRank.F)
+                    return Color4Extensions.FromHSV(rh, rs * 0.3f, v * 1.1f);
+                else
+                    return Color4Extensions.FromHSV(rh, rs, v * 0.45f);
             }
 
             topLayerContent?.FadeOut(content_fade_duration).Expire();
