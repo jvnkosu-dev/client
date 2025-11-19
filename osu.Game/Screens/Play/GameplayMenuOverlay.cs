@@ -23,6 +23,7 @@ using osu.Game.Input.Bindings;
 using osuTK;
 using osuTK.Graphics;
 using osu.Game.Localisation;
+using osu.Game.Resources.Localisation.Web;
 using osu.Game.Utils;
 using System.Runtime.InteropServices;
 
@@ -256,7 +257,7 @@ namespace osu.Game.Screens.Play
             if (gameplayState != null)
             {
                 playInfoText.NewLine();
-                playInfoText.AddText(SongSelectStrings.Accuracy);
+                playInfoText.AddText(BeatmapsetsStrings.ShowScoreboardHeadersAccuracy);
                 playInfoText.AddText(": ");
                 playInfoText.AddText(gameplayState!.ScoreProcessor.Accuracy.Value.FormatAccuracy(), cp => cp.Font = cp.Font.With(weight: FontWeight.Bold));
             }
