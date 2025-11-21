@@ -6,7 +6,7 @@
   </PropertyGroup>
   <PropertyGroup Label="Nuget">
     <Title>jvnkosu!</Title>
-    <PackageId>ppy.osu.Game</PackageId>
+    <PackageId>jvnkosu.Client</PackageId>
     <Version>0.0.0</Version>
     <PackageIcon>icon.png</PackageIcon>
     <IsPackable>true</IsPackable>

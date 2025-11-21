@@ -1,8 +1,10 @@
-name: Update osu-web mod definitions
+name: Update osu-web mod definitions (DO NOT USE YET!!!!!)
 on:
-  push:
-    tags:
-      - '*'
+  workflow_dispatch:
+  # push:
+  #   tags:
+  #     - '*'
+
 
 permissions:
   contents: read # to fetch code (actions/checkout)
