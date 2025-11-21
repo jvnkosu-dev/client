@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleIdentifier</key>
-	<string>sh.ppy.osulazer</string>
+	<string>boats.jvnko.osu.ios</string>
 	<key>CFBundleName</key>
-	<string>osu!</string>
+	<string>jvnkosu!</string>
 	<key>CFBundleDisplayName</key>
-	<string>osu!</string>
+	<string>jvnkosu!</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>MinimumOSVersion</key>
