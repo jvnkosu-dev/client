@@ -206,12 +206,25 @@ namespace osu.Game.Database
             if (!Filename.EndsWith(realm_extension, StringComparison.Ordinal))
                 Filename += realm_extension;
 
-// TODO: fix
-// #if DEBUG
+            // since I'm an idiot, I will have to suffer
+#if DEBUG
             if (!DebugUtils.IsNUnitRunning)
                 applyFilenameSchemaSuffix(ref Filename);
-// #endif
-
+#endif
+#if !DEBUG
+            // in the lazer. straight up "migrating it". and by "it", haha, well. let's just say. My realm .
+            string altFilename = filename;
+            applyFilenameSchemaSuffix(ref altFilename); // it also migrates older versions automagically!
+            if (storage.Exists(altFilename) && !storage.Exists(Filename))
+            {
+                using (var previous = storage.GetStream(altFilename))
+                using (var current = storage.CreateFileSafely(Filename))
+                {
+                    Logger.Log($@"Migrating production build DB: {altFilename} -> {Filename}");
+                    previous.CopyTo(current);
+                }
+            }
+#endif
             // `prepareFirstRealmAccess()` triggers the first `getRealmInstance` call, which will implicitly run realm migrations and bring the schema up-to-date.
             using (var realm = prepareFirstRealmAccess())
                 cleanupPendingDeletions(realm);

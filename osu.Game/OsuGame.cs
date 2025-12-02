@@ -17,6 +17,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Bindables;
 using osu.Framework.Configuration;
+using osu.Framework.Development;
 using osu.Framework.Extensions.IEnumerableExtensions;
 using osu.Framework.Extensions.TypeExtensions;
 using osu.Framework.Graphics;
@@ -1185,8 +1186,8 @@ namespace osu.Game
                 Margin = new MarginPadding(5),
             }, topMostOverlayContent.Add);
 
-            // if (!IsDeployedBuild) // we're going to have the "developer build" banner for a while
-            loadComponentSingleFile(devBuildBanner = new DevBuildBanner(), ScreenContainer.Add);
+            if (!IsDeployedBuild && DebugUtils.IsDebugBuild)
+                loadComponentSingleFile(devBuildBanner = new DevBuildBanner(), ScreenContainer.Add);
 
             loadComponentSingleFile(osuLogo, _ =>
             {
