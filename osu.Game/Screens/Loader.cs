@@ -49,7 +49,7 @@ namespace osu.Game.Screens
         {
             // Headless tests run too fast to load non-circles intros correctly.
             // They will hit the "audio can't play" notification and cause random test failures.
-            if (SeasonalUIConfig.ENABLED && !DebugUtils.IsNUnitRunning)
+            if (SeasonalUIConfig.ENABLED && !DebugUtils.IsNUnitRunning && introSequence != IntroSequence.None)
                 return new IntroChristmas(createMainMenu);
 
             if (introSequence == IntroSequence.Random)
@@ -62,6 +62,9 @@ namespace osu.Game.Screens
 
                 case IntroSequence.Welcome:
                     return new IntroWelcome(createMainMenu);
+
+                case IntroSequence.None:
+                    return new IntroNone(createMainMenu);
 
                 default:
                     return new IntroTriangles(createMainMenu);

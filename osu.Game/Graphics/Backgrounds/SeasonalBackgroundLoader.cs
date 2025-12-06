@@ -33,6 +33,7 @@ namespace osu.Game.Graphics.Backgrounds
         [Resolved]
         private IAPIProvider api { get; set; }
 
+        private readonly IBindable<APIState> apiState = new Bindable<APIState>();
         private Bindable<bool> useSeasonalBackgrounds;
         private Bindable<string> selectedCategory;
         private Bindable<APISeasonalBackgrounds> currentBackgrounds;
@@ -40,6 +41,7 @@ namespace osu.Game.Graphics.Backgrounds
         private int currentBackgroundIndex;
 
         private bool shouldShowCustomBackgrounds => useSeasonalBackgrounds.Value;
+        private bool shouldFetchCustomBackgrounds = false;
 
         [BackgroundDependencyLoader]
         private void load(OsuConfigManager config, SessionStatics sessionStatics)
@@ -54,6 +56,9 @@ namespace osu.Game.Graphics.Backgrounds
 
             if (shouldShowCustomBackgrounds)
                 fetchCategories(true);
+
+            apiState.BindTo(api.State);
+            apiState.BindValueChanged(d => shouldFetchCustomBackgrounds = d.NewValue == APIState.Online, true);
         }
 
         /// <summary>
@@ -116,18 +121,13 @@ namespace osu.Game.Graphics.Backgrounds
                 BackgroundChanged?.Invoke();
             };
 
-            request.Failure += exception =>
-            {
-                OnLoadFailure?.Invoke(exception);
-            };
-
             api.PerformAsync(request);
         }
 
-        public Background LoadNextBackground()
+        public SeasonalBackground LoadNextBackground()
         {
-            if (!shouldShowCustomBackgrounds || currentBackgrounds.Value?.Backgrounds?.Any() != true)
-                return null;
+            if (!shouldShowCustomBackgrounds || !shouldFetchCustomBackgrounds || currentBackgrounds.Value?.Backgrounds?.Any() != true)
+                return (SeasonalBackground)(new Background($@"Menu/menu-background-{RNG.Next(1, 9)}"));
 
             var backgrounds = currentBackgrounds.Value.Backgrounds;
             currentBackgroundIndex = (currentBackgroundIndex + 1) % backgrounds.Count;

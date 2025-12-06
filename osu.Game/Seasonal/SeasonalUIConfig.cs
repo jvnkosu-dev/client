@@ -11,11 +11,11 @@ namespace osu.Game.Seasonal
     /// </summary>
     public static class SeasonalUIConfig
     {
-        public static readonly bool ENABLED = false;
+        public static readonly bool ENABLED = true;
 
-        public static readonly Color4 PRIMARY_COLOUR_1 = Color4Extensions.FromHex(@"D32F2F");
+        public static readonly Color4 PRIMARY_COLOUR_1 = Color4Extensions.FromHex(@"8400FF");
 
-        public static readonly Color4 PRIMARY_COLOUR_2 = Color4Extensions.FromHex(@"388E3C");
+        public static readonly Color4 PRIMARY_COLOUR_2 = Color4Extensions.FromHex(@"B34CF0");
 
         public static readonly Color4 AMBIENT_COLOUR_1 = Color4Extensions.FromHex(@"FFFFCC");
 
