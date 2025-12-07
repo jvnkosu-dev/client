@@ -29,6 +29,14 @@ namespace osu.Game.Rulesets.Mods
 
         private Action? triggerFailureDelegate;
 
+        // NOTE: when processing serialized replays with both these values enabled, only `Exit`'s value is applied.
+        // I guess that's reasonable and doesn't break much.
+        public ModFailCondition()
+        {
+            Restart.BindValueChanged(d => { if (d.NewValue) Exit.Value = false; });
+            Exit.BindValueChanged(d => { if (d.NewValue) Restart.Value = false; });
+        }
+
         public void ApplyToHealthProcessor(HealthProcessor healthProcessor)
         {
             triggerFailureDelegate = healthProcessor.TriggerFailure;

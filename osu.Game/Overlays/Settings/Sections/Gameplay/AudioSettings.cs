@@ -13,6 +13,9 @@ namespace osu.Game.Overlays.Settings.Sections.Gameplay
     {
         protected override LocalisableString Header => GameplaySettingsStrings.AudioHeader;
 
+        private SettingsCheckbox alwaysPlayFirst = null!;
+        private SettingsCheckbox alwaysPlay = null!;
+
         [BackgroundDependencyLoader]
         private void load(OsuConfigManager config, OsuConfigManager osuConfig)
         {
@@ -26,13 +29,23 @@ namespace osu.Game.Overlays.Settings.Sections.Gameplay
                     KeyboardStep = 0.01f,
                     DisplayAsPercentage = true
                 },
-                new SettingsCheckbox
+                alwaysPlayFirst = new SettingsCheckbox
                 {
                     ClassicDefault = false,
                     LabelText = GameplaySettingsStrings.AlwaysPlayFirstComboBreak,
                     Current = config.GetBindable<bool>(OsuSetting.AlwaysPlayFirstComboBreak)
+                },
+                alwaysPlay = new SettingsCheckbox
+                {
+                    ClassicDefault = false,
+                    LabelText = "Always play combo break sound",
+                    Current = config.GetBindable<bool>(OsuSetting.AlwaysPlayComboBreak)
                 }
             };
+            alwaysPlay.Current.BindValueChanged(d =>
+            {
+                alwaysPlayFirst.Current.Disabled = d.NewValue;
+            }, true);
         }
     }
 }

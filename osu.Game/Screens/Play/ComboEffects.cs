@@ -21,6 +21,8 @@ namespace osu.Game.Screens.Play
 
         private Bindable<bool> alwaysPlayFirst;
 
+        private Bindable<bool> alwaysPlay;
+
         private double? firstBreakTime;
 
         public ComboEffects(ScoreProcessor processor)
@@ -33,6 +35,7 @@ namespace osu.Game.Screens.Play
         {
             InternalChild = comboBreakSample = new SkinnableSound(new SampleInfo("Gameplay/combobreak"));
             alwaysPlayFirst = config.GetBindable<bool>(OsuSetting.AlwaysPlayFirstComboBreak);
+            alwaysPlay = config.GetBindable<bool>(OsuSetting.AlwaysPlayComboBreak);
         }
 
         protected override void LoadComplete()
@@ -56,7 +59,7 @@ namespace osu.Game.Screens.Play
             if (gameplayClock.IsRewinding)
                 return;
 
-            if (combo.NewValue == 0 && (combo.OldValue > 20 || (alwaysPlayFirst.Value && firstBreakTime == null)))
+            if (combo.NewValue == 0 && (combo.OldValue > 20 || (alwaysPlayFirst.Value && firstBreakTime == null) || alwaysPlay.Value))
             {
                 firstBreakTime = gameplayClock.CurrentTime;
 

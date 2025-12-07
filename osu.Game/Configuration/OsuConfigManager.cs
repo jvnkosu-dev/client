@@ -158,6 +158,7 @@ namespace osu.Game.Configuration
             SetDefault(OsuSetting.ReplayPlaybackControlsExpanded, true);
             SetDefault(OsuSetting.GameplayLeaderboard, true);
             SetDefault(OsuSetting.AlwaysPlayFirstComboBreak, true);
+            SetDefault(OsuSetting.AlwaysPlayComboBreak, false);
 
             SetDefault(OsuSetting.FloatingComments, false);
 
@@ -369,6 +370,7 @@ namespace osu.Game.Configuration
         GameplayLeaderboard,
         PositionalHitsoundsLevel,
         AlwaysPlayFirstComboBreak,
+        AlwaysPlayComboBreak,
         FloatingComments,
         HUDVisibilityMode,
 
