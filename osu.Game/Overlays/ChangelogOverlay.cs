@@ -84,8 +84,12 @@ namespace osu.Game.Overlays
 
             performAfterFetch(() =>
             {
-                string versionPart = version.Split('-')[0];
-                string updateStream = version.Split('-')[1];
+                string[] versionIdentifier = version.Split('-');
+
+                string versionPart = versionIdentifier[0];
+                string updateStream = versionIdentifier.Length >= 2
+                                      ? versionIdentifier[1]
+                                      : "lazer"; // let's assume it's lazer by default, seems like the most sane option
 
                 var build = builds.Find(b => b.Version == versionPart && b.UpdateStream.Name == updateStream)
                             ?? Streams.Find(s => s.Name == updateStream)?.LatestBuild;
