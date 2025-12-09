@@ -261,11 +261,11 @@ namespace osu.Game.Overlays.Volume
                 if (displayVolume >= 0.995f)
                 {
                     text.Text = "100";
-                    maxGlow.EffectColour = meterColour.Opacity(2f);
+                    maxGlow.EffectColour = meterColour.Opacity(5f);
                 }
                 else
                 {
-                    maxGlow.EffectColour = Color4.Transparent;
+                    maxGlow.EffectColour = meterColour.Opacity((float)displayVolume * 3f);
                     text.Text = intValue.ToString(CultureInfo.CurrentCulture);
                 }
 
