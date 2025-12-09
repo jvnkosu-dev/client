@@ -214,7 +214,7 @@ namespace osu.Game.Database
 #if !DEBUG
             // in the lazer. straight up "migrating it". and by "it", haha, well. let's just say. My realm .
             string altFilename = filename;
-            applyFilenameSchemaSuffix(ref altFilename); // it also migrates older versions automagically! (sorry, I only used that word for irony...)
+            applyFilenameSchemaSuffix(ref altFilename);
             if (storage.Exists(altFilename) && !storage.Exists(Filename))
             {
                 using (var previous = storage.GetStream(altFilename))
@@ -222,6 +222,7 @@ namespace osu.Game.Database
                 {
                     Logger.Log($@"Migrating production build DB: {altFilename} -> {Filename}");
                     previous.CopyTo(current);
+                    Logger.Log("Sucessfully migrated local database!", level: LogLevel.Important);
                 }
             }
 #endif

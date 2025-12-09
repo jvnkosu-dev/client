@@ -122,7 +122,6 @@ namespace osu.Game.Screens.Play
                         },
 
                         // XXX: I have mixed feeling about this, but it works at least
-                        // TODO: check if we're in the editor to avoid some... weird bugs on score import
                         (OnQuitReplay != null)
                             ? new ShearedButton
                             {
