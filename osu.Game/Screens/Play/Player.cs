@@ -998,13 +998,10 @@ namespace osu.Game.Screens.Play
                 PauseOverlay.Hide();
 
             bool exitOnFail = GameplayState.Mods.OfType<IApplicableFailExit>().Any(m => m.ExitOnFail)
-                                && Score.ScoreInfo.User.Username == config.Get<string>(OsuSetting.Username); // TODO: do more concrete checks
+                                && Score.ScoreInfo.User.Username == config.Get<string>(OsuSetting.Username)
+                                && this is SoloPlayer;
             if (exitOnFail)
-            {
-                // game.AttemptExit();
-                game.Exit();
-            }
-
+                game.Exit(); // we're done here
 
             bool restartOnFail = GameplayState.Mods.OfType<IApplicableFailOverride>().Any(m => m.RestartOnFail);
             if (!restartOnFail)
