@@ -519,7 +519,7 @@ namespace osu.Game.Screens.Play
                         Retries = RestartCount,
                         OnRetry = () => Restart(),
                         OnQuit = () => PerformExitWithConfirmation(),
-                        OnQuitReplay = () => PerformExitReplay()
+                        OnQuitReplay = (this is not SoloPlayer) ? null : PerformExitReplay
                     },
                 },
             };
