@@ -255,19 +255,16 @@ namespace osu.Game.Overlays.Volume
                 bool intVolumeChanged = intValue != displayVolumeInt;
 
                 displayVolumeInt = intValue;
-
-                text.WireframeTemplate = new string('#', intValue.ToString().Length);
+ 
+                text.WireframeTemplate = new string('#', intValue.ToString(CultureInfo.CurrentCulture).Length);
+                text.Text = intValue.ToString(CultureInfo.CurrentCulture);
 
                 if (displayVolume >= 0.995f)
-                {
-                    text.Text = "100";
                     maxGlow.EffectColour = meterColour.Opacity(5f);
-                }
+                else if (displayVolume < 0.01f)
+                    maxGlow.EffectColour = meterColour.Opacity(0f);
                 else
-                {
-                    maxGlow.EffectColour = meterColour.Opacity((float)displayVolume * 3f);
-                    text.Text = intValue.ToString(CultureInfo.CurrentCulture);
-                }
+                    maxGlow.EffectColour = meterColour.Opacity((float)displayVolume * 3f + 1f);
 
                 volumeCircle.Progress = displayVolume * 0.75f;
                 volumeCircleGlow.Progress = displayVolume * 0.75f;
