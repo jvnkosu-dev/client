@@ -105,7 +105,7 @@ namespace osu.Game.Screens.SelectV2
                         new ShearAligningWrapper(statusPill = new BeatmapSetOnlineStatusPill
                         {
                             Shear = -OsuGame.SHEAR,
-                            ShowUnknownStatus = true,
+                            ShowUnknownStatus = working is not DummyWorkingBeatmap,
                             TextSize = OsuFont.Style.Caption1.Size,
                             TextPadding = new MarginPadding { Horizontal = 6, Vertical = 1 },
                         }),
