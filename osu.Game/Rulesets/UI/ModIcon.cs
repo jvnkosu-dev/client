@@ -159,8 +159,9 @@ namespace osu.Game.Rulesets.UI
                             Origin = Anchor.Centre,
                             Anchor = Anchor.Centre,
                             Alpha = 0,
-                            Font = OsuFont.Numeric.With(size: 22f, weight: FontWeight.Black),
-                            UseFullGlyphHeight = false,
+                            Font = OsuFont.TorusAlternate.With(size: 36, weight: FontWeight.SemiBold),
+                            Margin = new MarginPadding { Bottom = 5 },
+                            UseFullGlyphHeight = true,
                             Text = mod.Acronym
                         },
                         modIcon = new SpriteIcon

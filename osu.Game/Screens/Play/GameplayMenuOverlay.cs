@@ -121,7 +121,7 @@ namespace osu.Game.Screens.Play
                             },
                         },
 
-                        // XXX: I have mixed feeling about this, but it works at least
+                        // XXX: I have mixed feelings about this, but it works at least
                         (OnQuitReplay != null)
                             ? new ShearedButton
                             {

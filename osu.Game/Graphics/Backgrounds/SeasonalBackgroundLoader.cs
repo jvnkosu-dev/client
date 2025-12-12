@@ -124,10 +124,10 @@ namespace osu.Game.Graphics.Backgrounds
             api.PerformAsync(request);
         }
 
-        public SeasonalBackground LoadNextBackground()
+        public Background LoadNextBackground()
         {
             if (!shouldShowCustomBackgrounds || !shouldFetchCustomBackgrounds || currentBackgrounds.Value?.Backgrounds?.Any() != true)
-                return (SeasonalBackground)(new Background($@"Menu/menu-background-{RNG.Next(1, 9)}"));
+                return new Background($@"Menu/menu-background-{RNG.Next(1, 9)}");
 
             var backgrounds = currentBackgrounds.Value.Backgrounds;
             currentBackgroundIndex = (currentBackgroundIndex + 1) % backgrounds.Count;

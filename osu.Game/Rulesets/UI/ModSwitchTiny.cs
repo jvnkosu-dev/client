@@ -91,11 +91,12 @@ namespace osu.Game.Rulesets.UI
                             Anchor = Anchor.Centre,
                             Origin = Anchor.Centre,
                             Shadow = false,
-                            Font = OsuFont.Numeric.With(size: 24, weight: FontWeight.Black),
+                            Font = OsuFont.TorusAlternate.With(size: 36, weight: FontWeight.Bold),
                             Text = mod.Acronym,
                             Margin = new MarginPadding
                             {
-                                Top = 4
+                                Top = 3,
+                                Bottom = 6
                             }
                         },
                     },
