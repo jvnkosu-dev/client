@@ -148,7 +148,13 @@ namespace osu.Desktop
 
             var iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(GetType(), "lazer.ico");
             if (iconStream != null)
-                host.Window.SetIconFromStream(iconStream);
+                try
+                {
+                    host.Window.SetIconFromStream(iconStream);
+                }
+                catch
+                {
+                }
 
             host.Window.Title = Name;
         }
