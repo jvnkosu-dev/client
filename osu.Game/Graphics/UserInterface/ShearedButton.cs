@@ -60,7 +60,7 @@ namespace osu.Game.Graphics.UserInterface
         }
 
         [Resolved]
-        protected OverlayColourProvider ColourProvider { get; private set; } = null!;
+        protected OverlayColourProvider? ColourProvider { get; private set; } = null!;
 
         private readonly Box background;
         private readonly OsuSpriteText text;
@@ -190,9 +190,9 @@ namespace osu.Game.Graphics.UserInterface
 
         private void updateState()
         {
-            var colourDark = darkerColour ?? ColourProvider.Background3;
-            var colourLight = lighterColour ?? ColourProvider.Background1;
-            var colourContent = textColour ?? ColourProvider.Content1;
+            var colourDark = darkerColour ?? ColourProvider?.Background3 ?? Colour4.DarkGray;
+            var colourLight = lighterColour ?? ColourProvider?.Background1 ?? Colour4.LightGray;
+            var colourContent = textColour ?? ColourProvider?.Content1 ?? Colour4.White;
 
             if (!Enabled.Value)
             {

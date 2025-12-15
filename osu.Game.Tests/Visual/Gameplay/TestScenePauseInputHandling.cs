@@ -80,7 +80,7 @@ namespace osu.Game.Tests.Visual.Gameplay
             KeyCounter counter = null!;
 
             loadPlayer(() => new OsuRuleset());
-            AddStep("get key counter", () => counter = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterActionTrigger<OsuAction> actionTrigger && actionTrigger.Action == OsuAction.LeftButton));
+            AddStep("get key counter", () => counter = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterBindingTrigger<OsuAction> actionTrigger && actionTrigger.Action == OsuAction.LeftButton));
             checkKey(() => counter, 0, false);
 
             AddStep("press Z", () => InputManager.PressKey(Key.Z));
@@ -117,7 +117,7 @@ namespace osu.Game.Tests.Visual.Gameplay
             KeyCounter counter = null!;
 
             loadPlayer(() => new ManiaRuleset());
-            AddStep("get key counter", () => counter = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterActionTrigger<ManiaAction> actionTrigger && actionTrigger.Action == ManiaAction.Key4));
+            AddStep("get key counter", () => counter = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterBindingTrigger<ManiaAction> actionTrigger && actionTrigger.Action == ManiaAction.Key4));
             checkKey(() => counter, 0, false);
 
             AddStep("press space", () => InputManager.PressKey(Key.Space));
@@ -150,8 +150,8 @@ namespace osu.Game.Tests.Visual.Gameplay
             KeyCounter counterX = null!;
 
             loadPlayer(() => new OsuRuleset());
-            AddStep("get key counter Z", () => counterZ = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterActionTrigger<OsuAction> actionTrigger && actionTrigger.Action == OsuAction.LeftButton));
-            AddStep("get key counter X", () => counterX = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterActionTrigger<OsuAction> actionTrigger && actionTrigger.Action == OsuAction.RightButton));
+            AddStep("get key counter Z", () => counterZ = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterBindingTrigger<OsuAction> actionTrigger && actionTrigger.Action == OsuAction.LeftButton));
+            AddStep("get key counter X", () => counterX = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterBindingTrigger<OsuAction> actionTrigger && actionTrigger.Action == OsuAction.RightButton));
 
             AddStep("press Z", () => InputManager.PressKey(Key.Z));
             AddStep("pause", () => Player.Pause());
@@ -184,7 +184,7 @@ namespace osu.Game.Tests.Visual.Gameplay
             KeyCounter counter = null!;
 
             loadPlayer(() => new ManiaRuleset());
-            AddStep("get key counter", () => counter = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterActionTrigger<ManiaAction> actionTrigger && actionTrigger.Action == ManiaAction.Key4));
+            AddStep("get key counter", () => counter = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterBindingTrigger<ManiaAction> actionTrigger && actionTrigger.Action == ManiaAction.Key4));
 
             AddStep("press space", () => InputManager.PressKey(Key.Space));
             AddStep("pause", () => Player.Pause());
@@ -204,8 +204,8 @@ namespace osu.Game.Tests.Visual.Gameplay
             KeyCounter counterX = null!;
 
             loadPlayer(() => new OsuRuleset());
-            AddStep("get key counter Z", () => counterZ = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterActionTrigger<OsuAction> actionTrigger && actionTrigger.Action == OsuAction.LeftButton));
-            AddStep("get key counter X", () => counterX = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterActionTrigger<OsuAction> actionTrigger && actionTrigger.Action == OsuAction.RightButton));
+            AddStep("get key counter Z", () => counterZ = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterBindingTrigger<OsuAction> actionTrigger && actionTrigger.Action == OsuAction.LeftButton));
+            AddStep("get key counter X", () => counterX = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterBindingTrigger<OsuAction> actionTrigger && actionTrigger.Action == OsuAction.RightButton));
 
             AddStep("press Z", () => InputManager.PressKey(Key.Z));
             AddStep("pause", () => Player.Pause());
@@ -247,7 +247,7 @@ namespace osu.Game.Tests.Visual.Gameplay
             KeyCounter counter = null!;
 
             loadPlayer(() => new ManiaRuleset());
-            AddStep("get key counter", () => counter = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterActionTrigger<ManiaAction> actionTrigger && actionTrigger.Action == ManiaAction.Key4));
+            AddStep("get key counter", () => counter = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterBindingTrigger<ManiaAction> actionTrigger && actionTrigger.Action == ManiaAction.Key4));
 
             AddStep("press space", () => InputManager.PressKey(Key.Space));
             checkKey(() => counter, 1, true);
@@ -271,7 +271,7 @@ namespace osu.Game.Tests.Visual.Gameplay
             KeyCounter counter = null!;
 
             loadPlayer(() => new OsuRuleset());
-            AddStep("get key counter", () => counter = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterActionTrigger<OsuAction> actionTrigger && actionTrigger.Action == OsuAction.LeftButton));
+            AddStep("get key counter", () => counter = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterBindingTrigger<OsuAction> actionTrigger && actionTrigger.Action == OsuAction.LeftButton));
 
             AddStep("pause", () => Player.Pause());
             AddStep("resume", () => Player.Resume());
@@ -297,7 +297,7 @@ namespace osu.Game.Tests.Visual.Gameplay
             KeyCounter counter = null!;
 
             loadPlayer(() => new OsuRuleset());
-            AddStep("get key counter", () => counter = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterActionTrigger<OsuAction> actionTrigger && actionTrigger.Action == OsuAction.LeftButton));
+            AddStep("get key counter", () => counter = this.ChildrenOfType<KeyCounter>().Single(k => k.Trigger is KeyCounterBindingTrigger<OsuAction> actionTrigger && actionTrigger.Action == OsuAction.LeftButton));
 
             AddStep("press Z", () => InputManager.PressKey(Key.Z));
             AddAssert("circle hit", () => Player.ScoreProcessor.HighestCombo.Value, () => Is.EqualTo(1));

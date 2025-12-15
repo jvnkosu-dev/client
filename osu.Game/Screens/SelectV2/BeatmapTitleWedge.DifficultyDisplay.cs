@@ -308,7 +308,7 @@ namespace osu.Game.Screens.SelectV2
                 {
                     perf = (float)Math.Round((float?)d.NewValue.PerformanceAttributes?.Total ?? 0f, 1); // yikes
                     var arr = difficultyStatisticsDisplay.Statistics.ToArray();
-                    arr[0] = new StatisticDifficulty.Data("Max PP", perf, perf, perf);
+                    if (arr.Length >= 1) arr[0] = new StatisticDifficulty.Data("Max PP", perf, perf, perf);
                     difficultyStatisticsDisplay.Statistics = arr.AsEnumerable();
                 });
             });

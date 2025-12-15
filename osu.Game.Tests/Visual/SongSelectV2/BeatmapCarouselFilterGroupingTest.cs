@@ -214,7 +214,7 @@ namespace osu.Game.Tests.Visual.SongSelectV2
             assertGroup(results, 3, "Pending", pendingBeatmap.Beatmaps, ref total);
             assertGroup(results, 4, "Graveyard", graveyardBeatmap.Beatmaps, ref total);
             assertGroup(results, 5, "Local", localBeatmap.Beatmaps, ref total);
-            assertGroup(results, 6, "Unknown", noneBeatmap.Beatmaps, ref total);
+            assertGroup(results, 6, "Offline", noneBeatmap.Beatmaps, ref total);
             assertGroup(results, 7, "Loved", lovedBeatmap.Beatmaps, ref total);
             assertTotal(results, total);
         }

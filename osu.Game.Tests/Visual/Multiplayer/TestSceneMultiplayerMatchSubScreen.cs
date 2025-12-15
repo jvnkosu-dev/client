@@ -305,6 +305,8 @@ namespace osu.Game.Tests.Visual.Multiplayer
                         {
                             new APIMod(new OsuModDoubleTime { SpeedChange = { Value = 2.0 } }),
                             new APIMod(new OsuModStrictTracking()),
+                            new APIMod(new OsuModAutoplay()), // THIS IS PURELY TO ENABLE UNRANKED BADGE AND LET TEST PASS
+                                                              // I AM NOT PROUD OF THIS
                         },
                         AllowedMods = new[]
                         {

@@ -39,7 +39,7 @@ namespace osu.Game.Tests.Online
             Assert.NotNull(converted);
             Assert.That(converted, Is.TypeOf(typeof(UnknownMod)));
             Assert.That(converted.Type, Is.EqualTo(ModType.System));
-            Assert.That(converted.Acronym, Is.EqualTo("WNG??"));
+            Assert.That(converted.Acronym, Is.EqualTo("WNG!"));
         }
 
         [Test]

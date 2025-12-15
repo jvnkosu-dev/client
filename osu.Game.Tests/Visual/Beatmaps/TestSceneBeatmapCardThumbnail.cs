@@ -32,7 +32,7 @@ namespace osu.Game.Tests.Visual.Beatmaps
             AddStep("create thumbnail", () =>
             {
                 var beatmapSet = CreateAPIBeatmapSet(Ruleset.Value);
-                beatmapSet.OnlineID = 241526; // ID hardcoded to ensure that the preview track exists online.
+                beatmapSet.OnlineID = 1; // ID hardcoded to ensure that the preview track exists online.
 
                 Child = thumbnail = new BeatmapCardThumbnail(beatmapSet, beatmapSet)
                 {

@@ -642,7 +642,7 @@ namespace osu.Game.Tests.Visual.Gameplay
             [BackgroundDependencyLoader]
             private void load()
             {
-                if (!AllowLoad.Wait(TimeSpan.FromSeconds(10)))
+                if (!AllowLoad.Wait(TimeSpan.FromSeconds(30)))
                     throw new TimeoutException();
             }
         }

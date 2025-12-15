@@ -1,7 +1,7 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-#nullable disable
+#nullable enable
 
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
@@ -19,19 +19,22 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
     {
         protected override LocalisableString Header => UserInterfaceStrings.MainMenuHeader;
 
-        [Resolved]
-        private SeasonalBackgroundLoader backgroundLoader { get; set; }
+        // TODO: refactor seasonal bg code to the way it was before options were introduced
+        private SeasonalBackgroundLoader? backgroundLoader = null!;
 
-        private IBindable<APIUser> user;
+        private IBindable<APIUser> user = null!;
 
-        private SettingsEnumDropdown<BackgroundSource> backgroundSourceDropdown;
+        private SettingsEnumDropdown<BackgroundSource> backgroundSourceDropdown = null!;
 
-        private Bindable<bool> useSeasonalBackgrounds;
+        private Bindable<bool> useSeasonalBackgrounds = null!;
 
         [BackgroundDependencyLoader]
-        private void load(OsuConfigManager config, IAPIProvider api)
+        private void load(OsuConfigManager config, IAPIProvider api, SeasonalBackgroundLoader? backgroundLoader)
         {
             user = api.LocalUser.GetBoundCopy();
+
+            this.backgroundLoader = backgroundLoader;
+
             useSeasonalBackgrounds = config.GetBindable<bool>(OsuSetting.UseSeasonalBackgroundsV2);
 
             var backgroundToggle = new SettingsCheckbox
@@ -50,17 +53,17 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
             var refreshButton = new SettingsButton
             {
                 Text = UserInterfaceStrings.SeasonalBackgroundsRefresh,
-                Action = () => backgroundLoader.RefreshCategories()
+                Action = () => backgroundLoader?.RefreshCategories()
             };
 
             // TODO: the category dropdown disappear if no backgrounds (e.g. when first enabling the setting)
             refreshButton.CanBeShown.BindTo(useSeasonalBackgrounds);
             categoryDropdown.CanBeShown.BindTo(useSeasonalBackgrounds);
             useSeasonalBackgrounds.BindValueChanged(
-                _ => backgroundLoader.RefreshCategories(true)
+                _ => backgroundLoader?.RefreshCategories(true)
             );
 
-            backgroundLoader.AvailableCategories.BindValueChanged(categories => categoryDropdown.Items = categories.NewValue, true);
+            backgroundLoader?.AvailableCategories.BindValueChanged(categories => categoryDropdown.Items = categories.NewValue, true);
 
             Children = new Drawable[]
             {

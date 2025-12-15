@@ -225,7 +225,7 @@ namespace osu.Game.Tests.Online
                 public override Live<BeatmapSetInfo>? ImportModel(BeatmapSetInfo item, ArchiveReader? archive = null, ImportParameters parameters = default,
                                                                   CancellationToken cancellationToken = default)
                 {
-                    if (!testBeatmapManager.AllowImport.Wait(TimeSpan.FromSeconds(10), cancellationToken))
+                    if (!testBeatmapManager.AllowImport.Wait(TimeSpan.FromSeconds(30), cancellationToken))
                         throw new TimeoutException("Timeout waiting for import to be allowed.");
 
                     return testBeatmapManager.CurrentImport = base.ImportModel(item, archive, parameters, cancellationToken);

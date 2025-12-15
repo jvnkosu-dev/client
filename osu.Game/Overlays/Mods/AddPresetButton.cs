@@ -54,9 +54,9 @@ namespace osu.Game.Overlays.Mods
 
         protected override void UpdateActiveState()
         {
-            DarkerColour = Active.Value ? colours.Orange1 : ColourProvider.Background3;
-            LighterColour = Active.Value ? colours.Orange0 : ColourProvider.Background1;
-            TextColour = Active.Value ? ColourProvider.Background6 : ColourProvider.Content1;
+            DarkerColour = Active.Value ? colours.Orange1 : ColourProvider?.Background3 ?? Colour4.DarkGray;
+            LighterColour = Active.Value ? colours.Orange0 : ColourProvider?.Background1 ?? Colour4.LightGray;
+            TextColour = Active.Value ? ColourProvider?.Background6 ?? Colour4.Black : ColourProvider?.Content1 ?? Colour4.Gray;
 
             if (Active.Value)
                 this.ShowPopover();

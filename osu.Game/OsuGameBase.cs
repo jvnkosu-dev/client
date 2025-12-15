@@ -81,7 +81,7 @@ namespace osu.Game
         public const string GAME_NAME = "jvnkosu!";
 #endif
 
-        public const string OSU_PROTOCOL = "jnvkosu://";
+        public const string OSU_PROTOCOL = "jvnkosu://";
 
         /// <summary>
         /// The filename of the main client database.

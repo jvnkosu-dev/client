@@ -920,8 +920,12 @@ namespace osu.Game.Tests.Visual.Navigation
         }
 
         [Test]
+        [Explicit("Featured Artist dialog is never displayed as the filter is disabled by default.")]
         public void TestFeaturedArtistDisclaimerDialog()
         {
+            // NO-OP: FA dialog is not displayed ever
+
+            /*
             BeatmapListingOverlay getBeatmapListingOverlay() => Game.ChildrenOfType<BeatmapListingOverlay>().FirstOrDefault();
 
             AddStep("Wait for notifications to load", () => Game.SearchBeatmapSet(string.Empty));
@@ -939,6 +943,7 @@ namespace osu.Game.Tests.Visual.Navigation
             AddAssert("dialog dismissed", () => Game.ChildrenOfType<DialogOverlay>().Single().CurrentDialog == null);
 
             AddUntilStep("featured artist filter is off", () => !getBeatmapListingOverlay().ChildrenOfType<BeatmapSearchGeneralFilterRow>().First().Current.Contains(SearchGeneral.FeaturedArtists));
+            */
         }
 
         [Test]

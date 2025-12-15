@@ -99,7 +99,7 @@ namespace osu.Game.Tests.Visual.SongSelectV2
         [Test]
         public void TestUnrankedBadge()
         {
-            AddStep(@"Add unranked mod", () => changeMods(new[] { new OsuModDeflate() }));
+            AddStep(@"Add unranked mod", () => changeMods(new[] { new OsuModAutoplay() }));
             AddUntilStep("Unranked badge shown", () => footerButtonMods.ChildrenOfType<FooterButtonMods.UnrankedBadge>().Single().Alpha == 1);
             AddStep(@"Clear selected mod", () => changeMods(Array.Empty<Mod>()));
             AddUntilStep("Unranked badge not shown", () => footerButtonMods.ChildrenOfType<FooterButtonMods.UnrankedBadge>().Single().Alpha == 0);

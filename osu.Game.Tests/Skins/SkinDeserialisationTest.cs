@@ -81,6 +81,8 @@ namespace osu.Game.Tests.Skins
             "Archives/modified-argon-20250809.osk",
             // Covers "Argon" judgement counter
             "Archives/modified-argon-20250308.osk",
+            // Covers "Argon" clicks/s counter, longest combo counter, skinnable SR display and beatmap status pill
+            "Archives/modified-argon-20251215-jvnkosu.osk",
         };
 
         /// <summary>
