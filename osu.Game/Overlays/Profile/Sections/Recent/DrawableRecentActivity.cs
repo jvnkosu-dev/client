@@ -189,6 +189,13 @@ namespace osu.Game.Overlays.Profile.Sections.Recent
                     addText($" ({getRulesetName()})");
                     break;
 
+                case RecentActivityType.RankRetracted:
+                    addUserLink();
+                    addText("'s score on ");
+                    addBeatmapLink();
+                    addText($" has been retracted ({getRulesetName()})");
+                    break;
+
                 case RecentActivityType.UserSupportAgain:
                     addUserLink();
                     addText(" has once again chosen to support osu! - thanks for your generosity!");

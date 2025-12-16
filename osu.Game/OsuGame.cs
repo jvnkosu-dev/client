@@ -17,6 +17,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Bindables;
 using osu.Framework.Configuration;
+using osu.Framework.Development;
 using osu.Framework.Extensions.IEnumerableExtensions;
 using osu.Framework.Extensions.TypeExtensions;
 using osu.Framework.Graphics;
@@ -32,7 +33,6 @@ using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Framework.Screens;
 using osu.Framework.Threading;
-using osu.Game.Audio;
 using osu.Game.Beatmaps;
 using osu.Game.Collections;
 using osu.Game.Configuration;
@@ -67,6 +67,7 @@ using osu.Game.Screens.Edit;
 using osu.Game.Screens.Footer;
 using osu.Game.Screens.Menu;
 using osu.Game.Screens.OnlinePlay.DailyChallenge;
+using osu.Game.Screens.OnlinePlay.Matchmaking.Queue;
 using osu.Game.Screens.OnlinePlay.Multiplayer;
 using osu.Game.Screens.OnlinePlay.Playlists;
 using osu.Game.Screens.Play;
@@ -81,6 +82,7 @@ using osu.Game.Utils;
 using osuTK;
 using osuTK.Graphics;
 using Sentry;
+using IntroScreen = osu.Game.Screens.Menu.IntroScreen;
 using MatchType = osu.Game.Online.Rooms.MatchType;
 
 namespace osu.Game
@@ -171,11 +173,8 @@ namespace osu.Game
         [Cached]
         private readonly ScreenshotManager screenshotManager = new ScreenshotManager();
 
-        // --- Õ¿ÿ» ÕŒ¬€≈  ŒÃœŒÕ≈Õ“€ ---
         [Cached]
-        private readonly SeasonalBackgroundLoader backgroundLoader;
-        [Cached]
-        private readonly WelcomeMusicManager musicManager;
+        private SeasonalBackgroundLoader seasonalBackgroundLoader;
 
         protected SentryLogger SentryLogger;
 
@@ -195,19 +194,14 @@ namespace osu.Game
         /// </summary>
         public readonly IBindable<OverlayActivation> OverlayActivationMode = new Bindable<OverlayActivation>();
 
-        /// <summary>
-        /// Whether the back button is currently displayed.
-        /// </summary>
-        private readonly IBindable<bool> backButtonVisibility = new BindableBool();
-
         IBindable<LocalUserPlayingState> ILocalUserPlayInfo.PlayingState => UserPlayingState;
 
         protected readonly Bindable<LocalUserPlayingState> UserPlayingState = new Bindable<LocalUserPlayingState>();
 
         protected OsuScreenStack ScreenStack;
 
-        protected BackButton BackButton;
-        protected ScreenFooter ScreenFooter;
+        protected BackButton BackButton => screenStackFooter.BackButton;
+        protected ScreenFooter ScreenFooter => screenStackFooter.Footer;
 
         protected SettingsOverlay Settings;
 
@@ -239,6 +233,8 @@ namespace osu.Game
 
         private RealmDetachedBeatmapStore detachedBeatmapStore;
 
+        private ScreenStackFooter screenStackFooter;
+
         private readonly string[] args;
 
         private readonly List<OsuFocusedOverlayContainer> focusedOverlays = new List<OsuFocusedOverlayContainer>();
@@ -257,12 +253,6 @@ namespace osu.Game
 
         public OsuGame(string[] args = null)
         {
-            // --- —Œ«ƒ¿≈Ã Õ¿ÿ»  ŒÃœŒÕ≈Õ“€ » œŒƒœ»—€¬¿≈Ã—ﬂ Õ¿ —Œ¡€“»ﬂ ---
-            backgroundLoader = new SeasonalBackgroundLoader();
-            backgroundLoader.OnLoadFailure += handleBackgroundLoadFailure;
-            backgroundLoader.OnCategoriesRefreshed += handleCategoriesRefreshed;
-            musicManager = new WelcomeMusicManager();
-
             this.args = args;
 
             Logger.NewEntry += forwardGeneralLogToNotifications;
@@ -277,6 +267,8 @@ namespace osu.Game
                     tabletLogNotifyOnError = true;
                 }, true);
             });
+
+            initializeSeasonalBackgrounds();
         }
 
         #region IOverlayManager
@@ -415,17 +407,6 @@ namespace osu.Game
                 }
             }
         }
-        private void handleCategoriesRefreshed()
-        {
-            Schedule(() =>
-            {
-                Notifications?.Post(new SimpleNotification
-                {
-                    Text = "—ÔËÒÓÍ Í‡ÚÂ„ÓËÈ ÙÓÌÓ‚ Ó·ÌÓ‚ÎÂÌ.",
-                    Icon = FontAwesome.Solid.CheckCircle
-                });
-            });
-        }
 
         [BackgroundDependencyLoader]
         private void load()
@@ -476,8 +457,7 @@ namespace osu.Game
             IsActive.BindValueChanged(active => updateActiveState(active.NewValue), true);
 
             Audio.AddAdjustment(AdjustableProperty.Volume, inactiveVolumeFade);
-            dependencies.CacheAs(musicManager);
-            Add(musicManager);
+
             SelectedMods.BindValueChanged(modsChanged);
             Beatmap.BindValueChanged(beatmapChanged, true);
             configUserActivity.BindValueChanged(_ => updateWindowTitle());
@@ -953,7 +933,7 @@ namespace osu.Game
 
         protected virtual Loader CreateLoader() => new Loader();
 
-        protected virtual UpdateManager CreateUpdateManager() => new NoActionUpdateManager();
+        protected virtual UpdateManager CreateUpdateManager() => new UpdateManager();
 
         /// <summary>
         /// Adjust the globally applied <see cref="DrawSizePreservingFillContainer.TargetDrawSize"/> in every <see cref="ScalingContainer"/>.
@@ -1156,12 +1136,6 @@ namespace osu.Game
                             {
                                 backReceptor = new ScreenFooter.BackReceptor(),
                                 ScreenStack = new OsuScreenStack { RelativeSizeAxes = Axes.Both },
-                                BackButton = new BackButton(backReceptor)
-                                {
-                                    Anchor = Anchor.BottomLeft,
-                                    Origin = Anchor.BottomLeft,
-                                    Action = handleBackButton,
-                                },
                                 logoContainer = new Container { RelativeSizeAxes = Axes.Both },
                                 // TODO: what is this? why is this?
                                 // TODO: this is being screen scaled even though it's probably AN OVERLAY.
@@ -1174,7 +1148,7 @@ namespace osu.Game
                                 {
                                     Depth = -1,
                                     RelativeSizeAxes = Axes.Both,
-                                    Child = ScreenFooter = new ScreenFooter(backReceptor)
+                                    Child = screenStackFooter = new ScreenStackFooter(ScreenStack, backReceptor)
                                     {
                                         // TODO: this is really really weird and should not exist.
                                         RequestLogoInFront = inFront => ScreenContainer.ChangeChildDepth(logoContainer, inFront ? float.MinValue : 0),
@@ -1212,8 +1186,8 @@ namespace osu.Game
                 Margin = new MarginPadding(5),
             }, topMostOverlayContent.Add);
 
-            // if (!IsDeployedBuild) // we're going to have the "developer build" banner for a while
-            loadComponentSingleFile(devBuildBanner = new DevBuildBanner(), ScreenContainer.Add);
+            if (!IsDeployedBuild && DebugUtils.IsDebugBuild)
+                loadComponentSingleFile(devBuildBanner = new DevBuildBanner(), ScreenContainer.Add);
 
             loadComponentSingleFile(osuLogo, _ =>
             {
@@ -1258,7 +1232,7 @@ namespace osu.Game
 
             loadComponentSingleFile(screenshotManager, Add);
 
-            loadComponentSingleFile(backgroundLoader, Add);
+            loadComponentSingleFile(seasonalBackgroundLoader, Add);
 
             // dependency on notification overlay, dependent by settings overlay
             loadComponentSingleFile(CreateUpdateManager(), Add, true);
@@ -1293,16 +1267,12 @@ namespace osu.Game
             }, rightFloatingOverlayContent.Add, true);
 
             loadComponentSingleFile(new AccountCreationOverlay(), topMostOverlayContent.Add, true);
-
-            var dialogOverlay = new DialogOverlay();
-            dependencies.CacheAs<IDialogOverlay>(dialogOverlay);
-            dependencies.Cache(dialogOverlay);
-            loadComponentSingleFile(dialogOverlay, topMostOverlayContent.Add);
-
+            loadComponentSingleFile<IDialogOverlay>(new DialogOverlay(), topMostOverlayContent.Add, true);
             loadComponentSingleFile(new MedalOverlay(), topMostOverlayContent.Add);
 
             loadComponentSingleFile(new BackgroundDataStoreProcessor(), Add);
             loadComponentSingleFile<BeatmapStore>(detachedBeatmapStore = new RealmDetachedBeatmapStore(), Add, true);
+            loadComponentSingleFile(new QueueController(), Add, true);
 
             Add(externalLinkOpener = new ExternalLinkOpener());
             Add(new MusicKeyBindingHandler());
@@ -1354,30 +1324,10 @@ namespace osu.Game
                 if (mode.NewValue != OverlayActivation.All) CloseAllOverlays();
             };
 
-            backButtonVisibility.ValueChanged += visible =>
-            {
-                if (visible.NewValue)
-                    BackButton.Show();
-                else
-                    BackButton.Hide();
-            };
-
             // Importantly, this should be run after binding PostNotification to the import handlers so they can present the import after game startup.
             handleStartupImport();
         }
 
-        private void handleBackgroundLoadFailure(Exception exception)
-        {
-            Schedule(() =>
-            {
-                Notifications?.Post(new SimpleErrorNotification
-                {
-                    Text = ButtonSystemStrings.SeasonalBackgroundsFail,
-                    Icon = FontAwesome.Solid.ExclamationTriangle,
-                    Transient = true
-                });
-            });
-        }
         private void handleBackButton()
         {
             // TODO: this is SUPER SUPER bad.
@@ -1513,6 +1463,40 @@ namespace osu.Game
                 tabletLogNotifyOnWarning = false;
             }
         }
+
+        private void initializeSeasonalBackgrounds()
+        {
+            seasonalBackgroundLoader = new SeasonalBackgroundLoader();
+            seasonalBackgroundLoader.OnCategoriesRefreshed += handleCategoriesRefreshed;
+            seasonalBackgroundLoader.OnLoadFailure += handleBackgroundLoadFailure;
+        }
+
+        private void handleCategoriesRefreshed()
+        {
+            Schedule(() =>
+            {
+                Notifications?.Post(new SimpleNotification
+                {
+                    Text = ButtonSystemStrings.SeasonalBackgroundsRefreshed,
+                    Icon = FontAwesome.Solid.CheckCircle,
+                    Transient = true
+                });
+            });
+        }
+
+        private void handleBackgroundLoadFailure(Exception exception)
+        {
+            Schedule(() =>
+            {
+                Notifications?.Post(new SimpleErrorNotification
+                {
+                    Text = ButtonSystemStrings.SeasonalBackgroundsFail,
+                    Icon = FontAwesome.Solid.ExclamationTriangle,
+                    Transient = true
+                });
+            });
+        }
+
 
         private Task asyncLoadStream;
 
@@ -1746,12 +1730,13 @@ namespace osu.Game
             {
                 case IntroScreen intro:
                     introScreen = intro;
-                    SimpleNotification notification = new SimpleNotification
-                    {
-                        Text = ButtonSystemStrings.GreetingNotification,
-                        Transient = true,
-                    };
-                    Notifications?.Post(notification);
+                    // SimpleNotification notification = new SimpleNotification
+                    // {
+                    //     Text = ButtonSystemStrings.GreetingNotification,
+                    //     Transient = true,
+                    //     PopInSampleName = "",
+                    // };
+                    // Notifications?.Post(notification);
                     devBuildBanner?.Show();
                     break;
 
@@ -1771,13 +1756,12 @@ namespace osu.Game
 
             if (current != null)
             {
-                backButtonVisibility.UnbindFrom(current.BackButtonVisibility);
                 OverlayActivationMode.UnbindFrom(current.OverlayActivationMode);
                 configUserActivity.UnbindFrom(current.Activity);
             }
 
             // Bind to new screen.
-            if (newScreen != null)
+            if (newScreen is OsuScreen newOsuScreen)
             {
                 OverlayActivationMode.BindTo(newScreen.OverlayActivationMode);
                 configUserActivity.BindTo(newScreen.Activity);
@@ -1789,45 +1773,6 @@ namespace osu.Game
                     CloseAllOverlays();
                 else
                     Toolbar.Show();
-
-                var newOsuScreen = (OsuScreen)newScreen;
-
-                if (newScreen.ShowFooter)
-                {
-                    // the legacy back button should never display while the new footer is in use, as it
-                    // contains its own local back button.
-                    ((BindableBool)backButtonVisibility).Value = false;
-
-                    BackButton.Hide();
-                    ScreenFooter.Show();
-
-                    if (newOsuScreen.IsLoaded)
-                        updateFooterButtons();
-                    else
-                    {
-                        // ensure the current buttons are immediately disabled on screen change (so they can't be pressed).
-                        ScreenFooter.SetButtons(Array.Empty<ScreenFooterButton>());
-
-                        newOsuScreen.OnLoadComplete += _ => updateFooterButtons();
-                    }
-
-                    void updateFooterButtons()
-                    {
-                        var buttons = newScreen.CreateFooterButtons();
-
-                        newOsuScreen.LoadComponentsAgainstScreenDependencies(buttons);
-
-                        ScreenFooter.SetButtons(buttons);
-                        ScreenFooter.Show();
-                    }
-                }
-                else
-                {
-                    backButtonVisibility.BindTo(newScreen.BackButtonVisibility);
-
-                    ScreenFooter.SetButtons(Array.Empty<ScreenFooterButton>());
-                    ScreenFooter.Hide();
-                }
 
                 skinEditor.SetTarget(newOsuScreen);
             }

@@ -21,6 +21,7 @@ using osu.Framework.Platform;
 using osu.Framework.Threading;
 using osu.Framework.Utils;
 using osu.Game.Audio;
+using osu.Game.Configuration;
 using osu.Game.Database;
 using osu.Game.IO;
 using osu.Game.Overlays.Notifications;
@@ -64,6 +65,8 @@ namespace osu.Game.Skinning
 
         private Skin trianglesSkin { get; }
 
+        private Skin retroSkin { get; }
+
         public override bool PauseImports
         {
             get => base.PauseImports;
@@ -74,7 +77,7 @@ namespace osu.Game.Skinning
             }
         }
 
-        public SkinManager(Storage storage, RealmAccess realm, GameHost host, IResourceStore<byte[]> resources, AudioManager audio, Scheduler scheduler)
+        public SkinManager(Storage storage, RealmAccess realm, GameHost host, IResourceStore<byte[]> resources, AudioManager audio, Scheduler scheduler, OsuConfigManager config)
             : base(storage, realm)
         {
             this.audio = audio;
@@ -84,13 +87,14 @@ namespace osu.Game.Skinning
 
             userFiles = new StorageBackedResourceStore(storage.GetStorageForDirectory("files"));
 
-            skinImporter = new SkinImporter(storage, realm, this)
+            skinImporter = new SkinImporter(storage, realm, this, config)
             {
                 PostNotification = obj => PostNotification?.Invoke(obj),
             };
 
             var defaultSkins = new[]
             {
+                retroSkin = new RetroSkin(this),
                 DefaultClassicSkin = new DefaultLegacySkin(this),
                 trianglesSkin = new TrianglesSkin(this),
                 argonSkin = new ArgonSkin(this),
@@ -369,6 +373,9 @@ namespace osu.Game.Skinning
             {
                 if (guid == SkinInfo.CLASSIC_SKIN)
                     skinInfo = DefaultClassicSkin.SkinInfo;
+
+                if (guid == SkinInfo.RETRO_SKIN)
+                    skinInfo = retroSkin.SkinInfo;
             }
 
             CurrentSkinInfo.Value = skinInfo ?? trianglesSkin.SkinInfo;

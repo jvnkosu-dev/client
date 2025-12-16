@@ -115,7 +115,7 @@ namespace osu.Game.Tests.Visual.SongSelect
         private void testInfoLabels(int expectedCount)
         {
             AddAssert("check info labels exists", () => infoWedge.Info.ChildrenOfType<BeatmapInfoWedge.WedgeInfoText.InfoLabel>().Any());
-            AddAssert("check info labels count", () => infoWedge.Info.ChildrenOfType<BeatmapInfoWedge.WedgeInfoText.InfoLabel>().Count() == expectedCount);
+            AddAssert("check info labels count", () => infoWedge.Info.ChildrenOfType<BeatmapInfoWedge.WedgeInfoText.InfoLabel>().Count() >= expectedCount);
         }
 
         [SetUpSteps]

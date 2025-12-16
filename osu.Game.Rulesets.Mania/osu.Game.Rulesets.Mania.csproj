@@ -8,7 +8,7 @@
 
   <PropertyGroup Label="Nuget">
     <Title>osu!mania (ruleset)</Title>
-    <PackageId>ppy.osu.Game.Rulesets.Mania</PackageId>
+    <PackageId>jvnkosu.Client.Rulesets.Mania</PackageId>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 

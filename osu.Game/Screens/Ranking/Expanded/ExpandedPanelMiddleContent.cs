@@ -122,9 +122,9 @@ namespace osu.Game.Screens.Ranking.Expanded
                                     FillMode = FillMode.Fit,
                                 }
                             },
-                            scoreCounter = new TotalScoreCounter(!withFlair)
+                            scoreCounter = new TotalScoreCounter(!withFlair, score)
                             {
-                                Margin = new MarginPadding { Top = 0, Bottom = 5 },
+                                Margin = new MarginPadding { Top = 10, Bottom = 5 },
                                 Current = { Value = 0 },
                                 Alpha = 0,
                                 AlwaysPresent = true

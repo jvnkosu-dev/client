@@ -39,6 +39,7 @@ using osu.Game.Screens.Edit;
 using osu.Game.Screens.OnlinePlay.DailyChallenge;
 using osu.Game.Screens.OnlinePlay.Multiplayer;
 using osu.Game.Screens.OnlinePlay.Playlists;
+using osu.Game.Screens.Select;
 using osu.Game.Screens.SelectV2;
 using osu.Game.Seasonal;
 using osuTK;
@@ -105,7 +106,7 @@ namespace osu.Game.Screens.Menu
         private ParallaxContainer buttonsContainer;
         private SongTicker songTicker;
         private Container logoTarget;
-        /*private OnlineMenuBanner onlineMenuBanner;*/
+        private OnlineMenuBanner onlineMenuBanner;
         private MenuTipDisplay menuTipDisplay;
         private FillFlowContainer bottomElementsFlow;
         private SupporterDisplay supporterDisplay;
@@ -118,12 +119,15 @@ namespace osu.Game.Screens.Menu
         [CanBeNull]
         private IDisposable logoProxy;
 
+        private Bindable<bool> forceSSV1;
+
         [BackgroundDependencyLoader(true)]
         private void load(BeatmapListingOverlay beatmapListing, SettingsOverlay settings, OsuConfigManager config, SessionStatics statics, AudioManager audio)
         {
             holdDelay = config.GetBindable<double>(OsuSetting.UIHoldActivationDelay);
             loginDisplayed = statics.GetBindable<bool>(Static.LoginOverlayDisplayed);
             showMobileDisclaimer = config.GetBindable<bool>(OsuSetting.ShowMobileDisclaimer);
+            forceSSV1 = config.GetBindable<bool>(OsuSetting.ForceLegacySongSelect);
 
             if (host.CanExit)
             {
@@ -159,6 +163,7 @@ namespace osu.Game.Screens.Menu
                             },
                             OnSolo = loadSongSelect,
                             OnMultiplayer = () => this.Push(new Multiplayer()),
+                            OnMatchmaking = joinOrLeaveMatchmakingQueue,
                             OnPlaylists = () => this.Push(new Playlists()),
                             OnDailyChallenge = room =>
                             {
@@ -198,12 +203,12 @@ namespace osu.Game.Screens.Menu
                         {
                             Anchor = Anchor.TopCentre,
                             Origin = Anchor.TopCentre,
-                        }
-                        /*onlineMenuBanner = new OnlineMenuBanner
+                        },
+                        onlineMenuBanner = new OnlineMenuBanner
                         {
                             Anchor = Anchor.TopCentre,
                             Origin = Anchor.TopCentre,
-                        }*/
+                        }
                     }
                 },
                 supporterDisplay = new SupporterDisplay
@@ -224,12 +229,12 @@ namespace osu.Game.Screens.Menu
                     case ButtonSystemState.Initial:
                     case ButtonSystemState.Exit:
                         ApplyToBackground(b => b.FadeColour(OsuColour.Gray(baseDim), 500, Easing.OutSine));
-                        /*onlineMenuBanner.State.Value = Visibility.Hidden;*/
+                        onlineMenuBanner.State.Value = Visibility.Hidden;
                         break;
 
                     default:
                         ApplyToBackground(b => b.FadeColour(OsuColour.Gray(baseDim * 0.8f), 500, Easing.OutSine));
-                        /*onlineMenuBanner.State.Value = Visibility.Visible;*/
+                        onlineMenuBanner.State.Value = Visibility.Visible;
                         break;
                 }
             };
@@ -479,7 +484,9 @@ namespace osu.Game.Screens.Menu
         {
         }
 
-        private void loadSongSelect() => this.Push(new SoloSongSelect());
+        private void loadSongSelect() => this.Push(forceSSV1.Value ? new PlaySongSelect() : new SoloSongSelect());
+
+        private void joinOrLeaveMatchmakingQueue() => this.Push(new OnlinePlay.Matchmaking.Intro.ScreenIntro());
 
         private partial class MobileDisclaimerDialog : PopupDialog
         {

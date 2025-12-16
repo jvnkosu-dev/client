@@ -15,7 +15,7 @@ namespace osu.Game.Online.API.Requests
         {
         }
 
-        public GetSeasonalBackgroundsRequest(string? category)
+        public GetSeasonalBackgroundsRequest(string? category = null)
         {
             this.category = category;
         }

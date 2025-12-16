@@ -8,6 +8,7 @@ namespace osu.Game.Configuration
         Circles,
         Welcome,
         Triangles,
+        None,
         Random
     }
 }

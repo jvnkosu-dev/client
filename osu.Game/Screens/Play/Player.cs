@@ -154,7 +154,7 @@ namespace osu.Game.Screens.Play
 
         private BreakTracker breakTracker;
 
-        private SkipOverlay skipIntroOverlay;
+        protected SkipOverlay SkipIntroOverlay { get; private set; }
         private SkipOverlay skipOutroOverlay;
 
         protected ScoreProcessor ScoreProcessor { get; private set; }
@@ -200,6 +200,8 @@ namespace osu.Game.Screens.Play
         protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
             => dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
 
+        private OsuConfigManager config;
+
         protected override void LoadComplete()
         {
             base.LoadComplete();
@@ -226,12 +228,13 @@ namespace osu.Game.Screens.Play
         [BackgroundDependencyLoader(true)]
         private void load(OsuConfigManager config, OsuGameBase game, CancellationToken cancellationToken)
         {
+            this.config = config;
             var gameplayMods = Mods.Value.Select(m => m.DeepClone()).ToArray();
 
             if (gameplayMods.Any(m => m is UnknownMod))
             {
                 Logger.Log("Gameplay was started with an unknown mod applied.", level: LogLevel.Important);
-                return;
+                // return;
             }
 
             if (Beatmap.Value is DummyWorkingBeatmap)
@@ -320,7 +323,7 @@ namespace osu.Game.Screens.Play
                     OnRetry = Configuration.AllowUserInteraction ? () => Restart() : null,
                     OnQuit = () => PerformExitWithConfirmation(),
                 },
-                new HotkeyExitOverlay
+                exitOverlay = new HotkeyExitOverlay
                 {
                     Action = () =>
                     {
@@ -338,7 +341,7 @@ namespace osu.Game.Screens.Play
             {
                 rulesetSkinProvider.AddRange(new Drawable[]
                 {
-                    new HotkeyRetryOverlay
+                    retryOverlay = new HotkeyRetryOverlay
                     {
                         Action = () =>
                         {
@@ -500,10 +503,10 @@ namespace osu.Game.Screens.Play
                     },
                     // display the cursor above some HUD elements.
                     DrawableRuleset.Cursor?.CreateProxy() ?? new Container(),
-                    skipIntroOverlay = new SkipOverlay(DrawableRuleset.GameplayStartTime)
+                    SkipIntroOverlay = CreateSkipOverlay(DrawableRuleset.GameplayStartTime).With(o =>
                     {
-                        RequestSkip = performUserRequestedSkip
-                    },
+                        o.RequestSkip = RequestIntroSkip;
+                    }),
                     skipOutroOverlay = new SkipOverlay(GameplayState.Storyboard.LatestEventTime ?? 0)
                     {
                         RequestSkip = () => progressToResults(false),
@@ -516,18 +519,21 @@ namespace osu.Game.Screens.Play
                         Retries = RestartCount,
                         OnRetry = () => Restart(),
                         OnQuit = () => PerformExitWithConfirmation(),
+                        OnQuitReplay = (this is not SoloPlayer) ? null : PerformExitReplay
                     },
                 },
             };
 
             if (!Configuration.AllowSkipping || !DrawableRuleset.AllowGameplayOverlays)
             {
-                skipIntroOverlay.Expire();
+                SkipIntroOverlay.Expire();
                 skipOutroOverlay.Expire();
             }
 
             return container;
         }
+
+        protected virtual SkipOverlay CreateSkipOverlay(double startTime) => new SkipOverlay(startTime);
 
         private void onBreakTimeChanged(ValueChangedEvent<bool> isBreakTime)
         {
@@ -701,13 +707,36 @@ namespace osu.Game.Screens.Play
             return true;
         }
 
-        private void performUserRequestedSkip()
+        // XXX: replays saved from pause screen, when played back, will continue playing past the point player quits
+        // unfixable because it's not possible to manually trigger a failure in a way that would be recorded (w/o using a mod)
+        protected void PerformExitReplay()
+        {
+            // manually triggering a failure in a messy manner to avoid score submission
+            GameplayClockContainer.Stop();
+            GameplayState.HasFailed = true;
+            updateGameplayState();
+            ConcludeFailedScore(Score);
+
+            prepareAndImportScoreAsync(true);
+            PerformExit();
+        }
+
+        protected virtual void RequestIntroSkip()
+        {
+            PerformIntroSkip();
+        }
+
+        /// <summary>
+        /// Skip forward to the next valid skip point.
+        /// </summary>
+        /// <param name="fullLength"><c>true</c> to skip as close to gameplay as possible, or <c>false</c> to skip only to the next valid skip point.</param>
+        protected void PerformIntroSkip(bool fullLength = false)
         {
             // user requested skip
             // disable sample playback to stop currently playing samples and perform skip
             samplePlaybackDisabled.Value = true;
 
-            (GameplayClockContainer as MasterGameplayClockContainer)?.Skip();
+            (GameplayClockContainer as MasterGameplayClockContainer)?.Skip(fullLength);
 
             // return samplePlaybackDisabled.Value to what is defined by the beatmap's current state
             updateSampleDisabledState();
@@ -968,6 +997,12 @@ namespace osu.Game.Screens.Play
             if (PauseOverlay.State.Value == Visibility.Visible)
                 PauseOverlay.Hide();
 
+            bool exitOnFail = GameplayState.Mods.OfType<IApplicableFailExit>().Any(m => m.ExitOnFail)
+                                && Score.ScoreInfo.User.Username == config.Get<string>(OsuSetting.Username)
+                                && this is SoloPlayer;
+            if (exitOnFail)
+                game.Exit(); // we're done here
+
             bool restartOnFail = GameplayState.Mods.OfType<IApplicableFailOverride>().Any(m => m.RestartOnFail);
             if (!restartOnFail)
                 failAnimationContainer.Start();
@@ -1021,6 +1056,9 @@ namespace osu.Game.Screens.Play
         protected PauseOverlay PauseOverlay { get; private set; }
 
         private double? lastPauseActionTime;
+
+        private HotkeyRetryOverlay retryOverlay;
+        private HotkeyExitOverlay exitOverlay;
 
         protected bool PauseCooldownActive =>
             PlayingState.Value == LocalUserPlayingState.Playing && lastPauseActionTime.HasValue && GameplayClockContainer.CurrentTime < lastPauseActionTime + PauseCooldownDuration;
@@ -1153,12 +1191,18 @@ namespace osu.Game.Screens.Play
             GameplayClockContainer.Reset(startClock: true);
 
             if (Configuration.AutomaticallySkipIntro)
-                skipIntroOverlay.SkipWhenReady();
+                SkipIntroOverlay.SkipWhenReady();
         }
 
         public override void OnSuspending(ScreenTransitionEvent e)
         {
+            Debug.Assert(!ValidForResume);
+
             screenSuspension?.RemoveAndDisposeImmediately();
+
+            // If these are not disposed, audio volume dimming can get stuck.
+            retryOverlay?.RemoveAndDisposeImmediately();
+            exitOverlay?.RemoveAndDisposeImmediately();
 
             fadeOut();
             base.OnSuspending(e);

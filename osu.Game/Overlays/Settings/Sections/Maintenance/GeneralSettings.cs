@@ -8,6 +8,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Localisation;
 using osu.Framework.Platform;
 using osu.Framework.Screens;
+using osu.Game.Configuration;
 using osu.Game.Localisation;
 using osu.Game.Screens;
 using osu.Game.Screens.Import;
@@ -22,13 +23,19 @@ namespace osu.Game.Overlays.Settings.Sections.Maintenance
         private ISystemFileSelector? selector;
 
         [BackgroundDependencyLoader]
-        private void load(OsuGameBase game, GameHost host, IPerformFromScreenRunner? performer)
+        private void load(OsuGameBase game, GameHost host, IPerformFromScreenRunner? performer, OsuConfigManager config)
         {
             if ((selector = host.CreateSystemFileSelector(game.HandledExtensions.ToArray())) != null)
                 selector.Selected += f => Task.Run(() => game.Import(f.FullName));
 
             AddRange(new Drawable[]
             {
+                new SettingsCheckbox
+                {
+                    LabelText = "Delete archives on import",
+                    Current = config.GetBindable<bool>(OsuSetting.DeleteImportedArchives),
+                    ClassicDefault = true
+                },
                 new SettingsButton
                 {
                     Text = DebugSettingsStrings.ImportFiles,
@@ -44,7 +51,7 @@ namespace osu.Game.Overlays.Settings.Sections.Maintenance
                 {
                     Text = DebugSettingsStrings.RunLatencyCertifier,
                     Action = () => performer?.PerformFromScreen(menu => menu.Push(new LatencyCertifierScreen()))
-                }
+                },
             });
         }
     }

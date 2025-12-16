@@ -329,6 +329,7 @@ namespace osu.Game.Overlays.Mods
             yield return createModColumnContent(ModType.Automation);
             yield return createModColumnContent(ModType.Conversion);
             yield return createModColumnContent(ModType.Fun);
+            yield return createModColumnContent(ModType.Special);
         }
 
         private ColumnDimContainer createModColumnContent(ModType modType)
@@ -437,7 +438,9 @@ namespace osu.Game.Overlays.Mods
 
             foreach (var modState in AllAvailableMods)
             {
-                var matchingSelectedMod = SelectedMods.Value.SingleOrDefault(selected => selected.GetType() == modState.Mod.GetType());
+                // BUG: when trying to switch ruleset in a multiplayer room this was previously throwing an InvalidOperationException.
+                // If it still throws, then I guess it's not good
+                var matchingSelectedMod = SelectedMods.Value.FirstOrDefault(selected => selected.GetType() == modState.Mod.GetType());
 
                 if (matchingSelectedMod != null)
                 {

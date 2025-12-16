@@ -21,9 +21,9 @@ jobs:
         uses: getsentry/action-release@v1
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ppy
-          SENTRY_PROJECT: osu
-          SENTRY_URL: https://sentry.ppy.sh/
+          SENTRY_ORG: jvnkosu
+          SENTRY_PROJECT: client
+          SENTRY_URL: https://satellite.jvnko.boats/
         with:
           environment: production
-          version: osu@${{ github.ref_name }}
+          version: jvnkosu@${{ github.ref_name }}

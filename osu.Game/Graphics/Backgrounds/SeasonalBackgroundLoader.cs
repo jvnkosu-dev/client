@@ -33,19 +33,21 @@ namespace osu.Game.Graphics.Backgrounds
         [Resolved]
         private IAPIProvider api { get; set; }
 
-        private Bindable<SeasonalBackgroundMode> backgroundMode;
+        private readonly IBindable<APIState> apiState = new Bindable<APIState>();
+        private Bindable<bool> useSeasonalBackgrounds;
         private Bindable<string> selectedCategory;
         private Bindable<APISeasonalBackgrounds> currentBackgrounds;
 
         private int currentBackgroundIndex;
 
-        private bool shouldShowCustomBackgrounds => backgroundMode.Value != SeasonalBackgroundMode.Never;
+        private bool shouldShowCustomBackgrounds => useSeasonalBackgrounds.Value;
+        private bool shouldFetchCustomBackgrounds = false;
 
         [BackgroundDependencyLoader]
         private void load(OsuConfigManager config, SessionStatics sessionStatics)
         {
-            backgroundMode = config.GetBindable<SeasonalBackgroundMode>(OsuSetting.SeasonalBackgroundMode);
-            backgroundMode.BindValueChanged(_ => BackgroundChanged?.Invoke());
+            useSeasonalBackgrounds = config.GetBindable<bool>(OsuSetting.UseSeasonalBackgroundsV2);
+            useSeasonalBackgrounds.BindValueChanged(_ => BackgroundChanged?.Invoke());
 
             selectedCategory = config.GetBindable<string>(OsuSetting.BackgroundCategory);
             selectedCategory.BindValueChanged(_ => fetchBackgroundsForSelectedCategory());
@@ -53,18 +55,21 @@ namespace osu.Game.Graphics.Backgrounds
             currentBackgrounds = sessionStatics.GetBindable<APISeasonalBackgrounds>(Static.SeasonalBackgrounds);
 
             if (shouldShowCustomBackgrounds)
-                fetchCategories();
+                fetchCategories(true);
+
+            apiState.BindTo(api.State);
+            apiState.BindValueChanged(d => shouldFetchCustomBackgrounds = d.NewValue == APIState.Online, true);
         }
 
         /// <summary>
         /// Public method to trigger a refresh of categories from the UI.
         /// </summary>
-        public void RefreshCategories()
+        public void RefreshCategories(bool ignoreSuccess = false)
         {
-            fetchCategories();
+            fetchCategories(ignoreSuccess);
         }
 
-        private void fetchCategories()
+        private void fetchCategories(bool ignoreSuccess = false)
         {
             if (!shouldShowCustomBackgrounds) return;
 
@@ -74,20 +79,28 @@ namespace osu.Game.Graphics.Backgrounds
             {
                 var serverCategories = response.Categories ?? Enumerable.Empty<string>();
 
-                AvailableCategories.Value = new[] { "Default" }.Concat(serverCategories)
-                                                               .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                AvailableCategories.Value = serverCategories.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+                if (!AvailableCategories.Value.Any())
+                {
+                    selectedCategory.Value = "";
+                    return; // we don't have any categories!!!
+                }
 
                 if (!AvailableCategories.Value.Contains(selectedCategory.Value))
-                    selectedCategory.Value = "Default";
-                else
-                    fetchBackgroundsForSelectedCategory();
+                    selectedCategory.Value = AvailableCategories.Value.Contains("Default")
+                    ? "Default"
+                    : AvailableCategories.Value.ElementAt(0);
 
-                OnCategoriesRefreshed?.Invoke();
+                fetchBackgroundsForSelectedCategory();
+
+                if (!ignoreSuccess)
+                    OnCategoriesRefreshed?.Invoke();
             };
 
             request.Failure += exception =>
             {
-                AvailableCategories.Value = new[] { "Не удалось загрузить..." };
+                AvailableCategories.Value = Array.Empty<string>();
                 OnLoadFailure?.Invoke(exception);
             };
 
@@ -97,13 +110,6 @@ namespace osu.Game.Graphics.Backgrounds
         private void fetchBackgroundsForSelectedCategory()
         {
             if (!shouldShowCustomBackgrounds) return;
-
-            if (AvailableCategories.Value.Count() == 1 && AvailableCategories.Value.First().Contains("Не удалось"))
-            {
-                currentBackgrounds.Value = new APISeasonalBackgrounds { Backgrounds = new List<APISeasonalBackground>() };
-                BackgroundChanged?.Invoke();
-                return;
-            }
 
             string categoryToFetch = selectedCategory.Value == "Default" ? null : selectedCategory.Value;
             var request = new GetSeasonalBackgroundsRequest(categoryToFetch);
@@ -115,18 +121,13 @@ namespace osu.Game.Graphics.Backgrounds
                 BackgroundChanged?.Invoke();
             };
 
-            request.Failure += exception =>
-            {
-                OnLoadFailure?.Invoke(exception);
-            };
-
             api.PerformAsync(request);
         }
 
         public Background LoadNextBackground()
         {
-            if (!shouldShowCustomBackgrounds || currentBackgrounds.Value?.Backgrounds?.Any() != true)
-                return null;
+            if (!shouldShowCustomBackgrounds || !shouldFetchCustomBackgrounds || currentBackgrounds.Value?.Backgrounds?.Any() != true)
+                return new Background($@"Menu/menu-background-{RNG.Next(1, 9)}");
 
             var backgrounds = currentBackgrounds.Value.Backgrounds;
             currentBackgroundIndex = (currentBackgroundIndex + 1) % backgrounds.Count;

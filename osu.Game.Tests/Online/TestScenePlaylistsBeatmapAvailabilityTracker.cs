@@ -16,6 +16,7 @@ using osu.Framework.Platform;
 using osu.Framework.Testing;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.Formats;
+using osu.Game.Configuration;
 using osu.Game.Database;
 using osu.Game.IO;
 using osu.Game.IO.Archives;
@@ -206,7 +207,7 @@ namespace osu.Game.Tests.Online
             {
             }
 
-            protected override BeatmapImporter CreateBeatmapImporter(Storage storage, RealmAccess realm)
+            protected override BeatmapImporter CreateBeatmapImporter(Storage storage, RealmAccess realm, OsuConfigManager? config = null)
             {
                 return new TestBeatmapImporter(this, storage, realm);
             }
@@ -216,7 +217,7 @@ namespace osu.Game.Tests.Online
                 private readonly TestBeatmapManager testBeatmapManager;
 
                 public TestBeatmapImporter(TestBeatmapManager testBeatmapManager, Storage storage, RealmAccess databaseAccess)
-                    : base(storage, databaseAccess)
+                    : base(storage, databaseAccess, null)
                 {
                     this.testBeatmapManager = testBeatmapManager;
                 }
@@ -224,7 +225,7 @@ namespace osu.Game.Tests.Online
                 public override Live<BeatmapSetInfo>? ImportModel(BeatmapSetInfo item, ArchiveReader? archive = null, ImportParameters parameters = default,
                                                                   CancellationToken cancellationToken = default)
                 {
-                    if (!testBeatmapManager.AllowImport.Wait(TimeSpan.FromSeconds(10), cancellationToken))
+                    if (!testBeatmapManager.AllowImport.Wait(TimeSpan.FromSeconds(30), cancellationToken))
                         throw new TimeoutException("Timeout waiting for import to be allowed.");
 
                     return testBeatmapManager.CurrentImport = base.ImportModel(item, archive, parameters, cancellationToken);

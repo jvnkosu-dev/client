@@ -106,7 +106,7 @@ namespace osu.Game.Tests.Visual.Editing
             setUpEditor(new OsuRuleset().RulesetInfo);
             AddAssert("is osu! ruleset", () => editorBeatmap.BeatmapInfo.Ruleset.Equals(new OsuRuleset().RulesetInfo));
 
-            AddStep("jump to encoded link", () => Game.HandleLink("osu://edit/00:14:142%20(1)"));
+            AddStep("jump to encoded link", () => Game.HandleLink("jvnkosu://edit/00:14:142%20(1)"));
 
             AddUntilStep("wait for seek", () => editorClock.SeekingOrStopped.Value);
 

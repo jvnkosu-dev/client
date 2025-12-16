@@ -134,10 +134,12 @@ namespace osu.Game.Tests.Mods
 
             var mod = (OsuModDifficultyAdjust)apiMod.ToMod(ruleset);
 
+            // WARNING: this only makes sense for debug builds which have very extended limits
+            // release builds still use sane values
             Assert.Multiple(() =>
             {
-                Assert.That(mod.CircleSize.Value, Is.GreaterThanOrEqualTo(0).And.LessThanOrEqualTo(11));
-                Assert.That(mod.ApproachRate.Value, Is.GreaterThanOrEqualTo(-10).And.LessThanOrEqualTo(11));
+                Assert.That(mod.CircleSize.Value, Is.GreaterThanOrEqualTo(-250).And.LessThanOrEqualTo(13));
+                Assert.That(mod.ApproachRate.Value, Is.GreaterThanOrEqualTo(-250).And.LessThanOrEqualTo(13));
             });
         }
 

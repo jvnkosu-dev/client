@@ -49,7 +49,7 @@
     <PackageProjectUrl>https://github.com/ppy/osu</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ppy/osu</RepositoryUrl>
     <PackageReleaseNotes>Automated release.</PackageReleaseNotes>
-    <Company>ppy Pty Ltd</Company>
+    <Company>ppy Pty Ltd, jvnkosu! team</Company>
     <Copyright>Copyright (c) 2025 ppy Pty Ltd</Copyright>
     <PackageTags>osu game</PackageTags>
   </PropertyGroup>

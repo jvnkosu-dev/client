@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - '*'
+  workflow_dispatch:
 
 jobs:
   notify_pending_production_deploy:
@@ -12,7 +13,7 @@ jobs:
       - name: Submit pending deployment notification
         run: |
           export TITLE="Pending osu Production Deployment: $GITHUB_REF_NAME"
-          export URL="https://github.com/ppy/osu/actions/runs/$GITHUB_RUN_ID"
+          export URL="https://github.com/jvnkosu-dev/client/actions/runs/$GITHUB_RUN_ID"
           export DESCRIPTION="Awaiting approval for building NuGet packages for tag $GITHUB_REF_NAME:
           [View Workflow Run]($URL)"
           export ACTOR_ICON="https://avatars.githubusercontent.com/u/$GITHUB_ACTOR_ID"

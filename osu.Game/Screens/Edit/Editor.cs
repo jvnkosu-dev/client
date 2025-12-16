@@ -40,6 +40,7 @@ using osu.Game.Localisation;
 using osu.Game.Online.API;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Overlays;
+using osu.Game.Overlays.Dialog;
 using osu.Game.Overlays.Notifications;
 using osu.Game.Overlays.OSD;
 using osu.Game.Rulesets;
@@ -1312,6 +1313,8 @@ namespace osu.Game.Screens.Edit
                 yield return upload;
             }
 
+            yield return new EditorMenuItem("Remove all online IDs", MenuItemType.Destructive, anonymizeBeatmap);
+
             if (editorBeatmap.BeatmapInfo.OnlineID > 0)
             {
                 yield return new OsuMenuItemSpacer();
@@ -1394,6 +1397,41 @@ namespace osu.Game.Screens.Edit
             }
 
             void startSubmission() => this.Push(new BeatmapSubmissionScreen());
+        }
+
+        private void anonymizeBeatmap()
+        {
+            dialogOverlay.Push(new ConfirmDialog(
+                "Really remove online IDs?", () => attemptAsyncMutationOperation(anonymizeMaps))
+            );
+
+            Task anonymizeMaps()
+            {
+                var maps = editorBeatmap.BeatmapInfo.BeatmapSet.Beatmaps;
+                foreach (BeatmapInfo map in maps)
+                {
+                    try
+                    {
+                        map.OnlineID = -1;
+                        map.BeatmapSet.OnlineID = -1;
+                        map.ResetOnlineInfo(true);
+                        beatmapManager.Save(
+                            map,
+                            beatmapManager.GetWorkingBeatmap(map, true).Beatmap,
+                            editorBeatmap.BeatmapSkin
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error(ex, ex.Message);
+                        notifications?.Post(new SimpleErrorNotification { Text = "Failed to update beatmap difficulty!\nCheck logs for details" });
+                        throw; // we don't want to handle it further, task will do it for us
+                    }
+                }
+                updateLastSavedHash();
+                onScreenDisplay?.Display(new BeatmapEditorToast("Online IDs removed", editorBeatmap.BeatmapInfo.GetDisplayTitle()));
+                return Task.CompletedTask;
+            }
         }
 
         private void exportBeatmap(bool legacy)

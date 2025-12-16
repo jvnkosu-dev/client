@@ -770,6 +770,9 @@ namespace osu.Game.Users
         [Description("Samoa")]
         WS,
 
+        [Description("Gensokyo")]
+        XG,
+
         [Description("Kosovo")]
         XK,
 

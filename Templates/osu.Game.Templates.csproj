@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <PackageType>Template</PackageType>
-    <PackageId>ppy.osu.Game.Templates</PackageId>
+    <PackageId>jvnkosu.Client.Templates</PackageId>
     <Title>osu! templates</Title>
     <Authors>ppy Pty Ltd</Authors>
     <PackageLicenseUrl>https://github.com/ppy/osu/blob/master/LICENCE</PackageLicenseUrl>

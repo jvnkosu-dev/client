@@ -53,8 +53,8 @@ namespace osu.Desktop.Windows
 
         private static readonly UriAssociation[] uri_associations =
         {
-            new UriAssociation(@"osu", WindowsAssociationManagerStrings.OsuProtocol, Icons.Lazer),
-            new UriAssociation(@"osump", WindowsAssociationManagerStrings.OsuMultiplayer, Icons.Lazer),
+            new UriAssociation(@"jvnkosu", WindowsAssociationManagerStrings.OsuProtocol, Icons.Lazer),
+            new UriAssociation(@"jvnkosump", WindowsAssociationManagerStrings.OsuMultiplayer, Icons.Lazer),
         };
 
         /// <summary>

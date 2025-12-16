@@ -8,6 +8,7 @@ using osu.Framework.Configuration;
 using osu.Framework.Configuration.Tracking;
 using osu.Framework.Extensions;
 using osu.Framework.Extensions.LocalisationExtensions;
+using osu.Framework.Graphics;
 using osu.Framework.Localisation;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps.Drawables.Cards;
@@ -41,6 +42,8 @@ namespace osu.Game.Configuration
             SetDefault(OsuSetting.Ruleset, string.Empty);
             SetDefault(OsuSetting.Skin, SkinInfo.ARGON_SKIN.ToString());
 
+            SetDefault(OsuSetting.MenuCookieColor, Colour4.FromHex(@"8400FF"));
+
             SetDefault(OsuSetting.BeatmapDetailTab, BeatmapDetailTab.Local);
             SetDefault(OsuSetting.BeatmapLeaderboardSortMode, LeaderboardSortMode.Score);
             SetDefault(OsuSetting.BeatmapDetailModsFilter, false);
@@ -59,12 +62,13 @@ namespace osu.Game.Configuration
             SetDefault(OsuSetting.ChatDisplayHeight, ChatOverlay.DEFAULT_HEIGHT, 0.2f, 1f, 0.01f);
 
             SetDefault(OsuSetting.BeatmapListingCardSize, BeatmapCardSize.Normal);
-            SetDefault(OsuSetting.BeatmapListingFeaturedArtistFilter, true);
+            SetDefault(OsuSetting.BeatmapListingFeaturedArtistFilter, false);
 
             SetDefault(OsuSetting.ProfileCoverExpanded, true);
 
             SetDefault(OsuSetting.ToolbarClockDisplayMode, ToolbarClockDisplayMode.Full);
 
+            SetDefault(OsuSetting.ForceLegacySongSelect, false);
             SetDefault(OsuSetting.SongSelectBackgroundBlur, false);
 
             // Online settings
@@ -154,6 +158,7 @@ namespace osu.Game.Configuration
             SetDefault(OsuSetting.ReplayPlaybackControlsExpanded, true);
             SetDefault(OsuSetting.GameplayLeaderboard, true);
             SetDefault(OsuSetting.AlwaysPlayFirstComboBreak, true);
+            SetDefault(OsuSetting.AlwaysPlayComboBreak, false);
 
             SetDefault(OsuSetting.FloatingComments, false);
 
@@ -194,8 +199,11 @@ namespace osu.Game.Configuration
 
             SetDefault(OsuSetting.MenuBackgroundSource, BackgroundSource.Skin);
             SetDefault(OsuSetting.SeasonalBackgroundMode, SeasonalBackgroundMode.Never);
+            SetDefault(OsuSetting.UseSeasonalBackgroundsV2, true);
 
             SetDefault(OsuSetting.DiscordRichPresence, DiscordRichPresenceMode.Full);
+
+            SetDefault(OsuSetting.DeleteImportedArchives, true);
 
             SetDefault(OsuSetting.EditorDim, 0.25f, 0f, 0.75f, 0.25f);
             SetDefault(OsuSetting.EditorWaveformOpacity, 0.25f, 0f, 1f, 0.25f);
@@ -213,8 +221,6 @@ namespace osu.Game.Configuration
             SetDefault(OsuSetting.MultiplayerShowInProgressFilter, true);
 
             SetDefault(OsuSetting.LastProcessedMetadataId, -1);
-            SetDefault(OsuSetting.WelcomeMusicMode, WelcomeMusicMode.Default);
-            SetDefault(OsuSetting.WelcomeMusicCategory, "Default");
 
             SetDefault(OsuSetting.ComboColourNormalisationAmount, 0.2f, 0f, 1f, 0.01f);
             SetDefault(OsuSetting.UserOnlineStatus, UserStatus.Online);
@@ -364,6 +370,7 @@ namespace osu.Game.Configuration
         GameplayLeaderboard,
         PositionalHitsoundsLevel,
         AlwaysPlayFirstComboBreak,
+        AlwaysPlayComboBreak,
         FloatingComments,
         HUDVisibilityMode,
 
@@ -384,8 +391,6 @@ namespace osu.Game.Configuration
         AudioOffset,
 
         VolumeInactive,
-        WelcomeMusicMode,
-        WelcomeMusicCategory,
         MenuMusic,
         MenuVoice,
         MenuTips,
@@ -409,6 +414,7 @@ namespace osu.Game.Configuration
         ChatDisplayHeight,
         BeatmapListingCardSize,
         ToolbarClockDisplayMode,
+        ForceLegacySongSelect,
         SongSelectBackgroundBlur,
         Version,
         ShowFirstRunSetup,
@@ -416,6 +422,7 @@ namespace osu.Game.Configuration
         Skin,
         ScreenshotFormat,
         ScreenshotCaptureMenuCursor,
+        MenuCookieColor,
         BeatmapSkins,
         BeatmapColours,
         BeatmapHitsounds,
@@ -440,11 +447,13 @@ namespace osu.Game.Configuration
         MenuBackgroundSource,
         GameplayDisableWinKey,
         SeasonalBackgroundMode,
+        UseSeasonalBackgroundsV2, // TODO: add migrations
         BackgroundCategory,
         EditorWaveformOpacity,
         EditorShowHitMarkers,
         EditorAutoSeekOnPlacement,
         DiscordRichPresence,
+        DeleteImportedArchives,
 
         ShowOnlineExplicitContent,
         LastProcessedMetadataId,

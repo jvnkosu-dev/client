@@ -159,7 +159,7 @@ namespace osu.Game.Tests.Visual.Multiplayer
             AddStep("check request received", () =>
             {
                 multiplayerClient.Verify(m => m.SendMatchRequest(It.Is<StartMatchCountdownRequest>(req =>
-                    req.Duration == TimeSpan.FromSeconds(10)
+                    req.Duration == TimeSpan.FromSeconds(30)
                 )), Times.Once);
             });
         }
@@ -181,7 +181,7 @@ namespace osu.Game.Tests.Visual.Multiplayer
             AddStep("check request received", () =>
             {
                 multiplayerClient.Verify(m => m.SendMatchRequest(It.Is<StartMatchCountdownRequest>(req =>
-                    req.Duration == TimeSpan.FromSeconds(10)
+                    req.Duration == TimeSpan.FromSeconds(30)
                 )), Times.Once);
             });
 

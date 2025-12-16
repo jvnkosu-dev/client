@@ -68,17 +68,6 @@ namespace osu.Game.Updater
                 // make sure the release stream setting matches the build which was just run.
                 if (FixedReleaseStream != null)
                     config.SetValue(OsuSetting.ReleaseStream, FixedReleaseStream.Value);
-
-                // nope, doesn't matter, we're already not official
-                // // notify the user if they're using a build that is not officially sanctioned.
-                // if (RuntimeInfo.EntryAssembly.GetCustomAttribute<OfficialBuildAttribute>() == null)
-                //     Notifications.Post(new SimpleNotification { Text = NotificationsStrings.NotOfficialBuild });
-            }
-            else
-            {
-                // log that this is not an official build, for if users build their own game without an assembly version.
-                // this is only logged because a notification would be too spammy in local test builds.
-                Logger.Log(NotificationsStrings.NotOfficialBuild.ToString());
             }
 
             // debug / local compilations will reset to a non-release string.

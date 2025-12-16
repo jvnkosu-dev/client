@@ -1,19 +1,17 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-#nullable disable
+#nullable enable
 
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Localisation;
-using osu.Game.Audio;
 using osu.Game.Configuration;
 using osu.Game.Graphics.Backgrounds;
 using osu.Game.Localisation;
 using osu.Game.Online.API;
 using osu.Game.Online.API.Requests.Responses;
-using osu.Game.Overlays.Dialog;
 
 namespace osu.Game.Overlays.Settings.Sections.UserInterface
 {
@@ -21,110 +19,58 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
     {
         protected override LocalisableString Header => UserInterfaceStrings.MainMenuHeader;
 
-        [Resolved]
-        private SeasonalBackgroundLoader backgroundLoader { get; set; }
-        [Resolved]
+        // TODO: refactor seasonal bg code to the way it was before options were introduced
+        private SeasonalBackgroundLoader? backgroundLoader = null!;
 
-        private WelcomeMusicManager musicManager { get; set; }
-        [Resolved]
-        private DialogOverlay dialogOverlay { get; set; }
+        private IBindable<APIUser> user = null!;
 
-        private IBindable<APIUser> user;
-        private SettingsEnumDropdown<BackgroundSource> backgroundSourceDropdown;
+        private SettingsEnumDropdown<BackgroundSource> backgroundSourceDropdown = null!;
+
+        private Bindable<bool> useSeasonalBackgrounds = null!;
 
         [BackgroundDependencyLoader]
-        private void load(OsuConfigManager config, IAPIProvider api)
+        private void load(OsuConfigManager config, IAPIProvider api, SeasonalBackgroundLoader? backgroundLoader)
         {
-            AutoSizeAxes = Axes.Y;
-
             user = api.LocalUser.GetBoundCopy();
 
-            var backgroundModeBindable = config.GetBindable<SeasonalBackgroundMode>(OsuSetting.SeasonalBackgroundMode);
-            var enabledProxyBindable = new Bindable<bool>();
-            backgroundModeBindable.BindValueChanged(mode => enabledProxyBindable.Value = mode.NewValue == SeasonalBackgroundMode.Always, true);
-            enabledProxyBindable.BindValueChanged(enabled => backgroundModeBindable.Value = enabled.NewValue ? SeasonalBackgroundMode.Always : SeasonalBackgroundMode.Never);
+            this.backgroundLoader = backgroundLoader;
+
+            useSeasonalBackgrounds = config.GetBindable<bool>(OsuSetting.UseSeasonalBackgroundsV2);
 
             var backgroundToggle = new SettingsCheckbox
             {
                 LabelText = UserInterfaceStrings.UseSeasonalBackgrounds,
-                Current = enabledProxyBindable
+                Current = config.GetBindable<bool>(OsuSetting.UseSeasonalBackgroundsV2),
+                ClassicDefault = true
             };
+
             var categoryDropdown = new SettingsDropdown<string>
             {
                 LabelText = UserInterfaceStrings.SeasonalBackgroundsCategories,
                 Current = config.GetBindable<string>(OsuSetting.BackgroundCategory)
             };
+
             var refreshButton = new SettingsButton
             {
                 Text = UserInterfaceStrings.SeasonalBackgroundsRefresh,
-                Action = () => backgroundLoader.RefreshCategories()
-            };
-            backgroundLoader.AvailableCategories.BindValueChanged(categories => categoryDropdown.Items = categories.NewValue, true);
-            backgroundModeBindable.BindValueChanged(mode =>
-            {
-                if (mode.NewValue == SeasonalBackgroundMode.Always)
-                {
-                    categoryDropdown.Show();
-                    refreshButton.Show();
-                }
-                else
-                {
-                    categoryDropdown.Hide();
-                    refreshButton.Hide();
-                }
-            }, true);
-
-            var musicModeDropdown = new SettingsEnumDropdown<WelcomeMusicMode>
-            {
-                LabelText = "Музыкальное приветствие",
-                Current = config.GetBindable<WelcomeMusicMode>(OsuSetting.WelcomeMusicMode)
+                Action = () => backgroundLoader?.RefreshCategories()
             };
 
-            var musicCategoryDropdown = new SettingsDropdown<string>
-            {
-                LabelText = "Категория музыки",
-                Current = config.GetBindable<string>(OsuSetting.WelcomeMusicCategory)
-            };
+            // TODO: the category dropdown disappear if no backgrounds (e.g. when first enabling the setting)
+            refreshButton.CanBeShown.BindTo(useSeasonalBackgrounds);
+            categoryDropdown.CanBeShown.BindTo(useSeasonalBackgrounds);
+            useSeasonalBackgrounds.BindValueChanged(
+                _ => backgroundLoader?.RefreshCategories(true)
+            );
 
-            var refreshMusicButton = new SettingsButton
-            {
-                Text = "Обновить категории музыки",
-                Action = () => musicManager.RefreshCategories()
-            };
-
-            musicModeDropdown.Current.BindValueChanged(mode =>
-            {
-                if (mode.NewValue == WelcomeMusicMode.Custom)
-                {
-                    musicCategoryDropdown.Show();
-                    refreshMusicButton.Show();
-                }
-                else
-                {
-                    musicCategoryDropdown.Hide();
-                    refreshMusicButton.Hide();
-                }
-            }, true);
-
-            musicCategoryDropdown.Current.BindValueChanged(category =>
-            {
-                if (category.OldValue != null &&
-                    musicModeDropdown.Current.Value == WelcomeMusicMode.Custom &&
-                    !category.OldValue.Equals(category.NewValue))
-                {
-                    dialogOverlay.Push(new ConfirmDialog("Для применения этой настройки требуется перезапуск.",
-                        () => musicManager.RequestRestart()));
-                }
-            });
-
-            musicManager.AvailableCategories.BindValueChanged(categories => musicCategoryDropdown.Items = categories.NewValue, true);
+            backgroundLoader?.AvailableCategories.BindValueChanged(categories => categoryDropdown.Items = categories.NewValue, true);
 
             Children = new Drawable[]
             {
                 new SettingsCheckbox
                 {
                     LabelText = UserInterfaceStrings.ShowMenuTips,
-                    Current = config.GetBindable<bool>(OsuSetting.MenuTips)
+                    Current = config.GetBindable<bool>(OsuSetting.MenuTips),
                 },
                 new SettingsCheckbox
                 {
@@ -138,9 +84,6 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
                     LabelText = UserInterfaceStrings.OsuMusicTheme,
                     Current = config.GetBindable<bool>(OsuSetting.MenuMusic)
                 },
-                musicModeDropdown,
-                musicCategoryDropdown,
-                refreshMusicButton,
                 new SettingsEnumDropdown<IntroSequence>
                 {
                     LabelText = UserInterfaceStrings.IntroSequence,
@@ -154,6 +97,12 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
                 backgroundToggle,
                 categoryDropdown,
                 refreshButton,
+                new SettingsColour
+                {
+                    LabelText = UserInterfaceStrings.LogoColour,
+                    Current = config.GetBindable<Colour4>(OsuSetting.MenuCookieColor),
+                    ClassicDefault = Colour4.FromHex(@"ff66ba"),
+                },
             };
         }
 

@@ -33,6 +33,7 @@ namespace osu.Game.Online.API.Requests
         Medal,
         Rank,
         RankLost,
+        RankRetracted,
         UserSupportAgain,
         UserSupportFirst,
         UserSupportGift,

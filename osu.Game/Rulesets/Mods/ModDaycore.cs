@@ -6,6 +6,7 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Localisation;
 using osu.Game.Configuration;
+using osu.Game.Graphics;
 using osu.Game.Overlays.Settings;
 
 namespace osu.Game.Rulesets.Mods
@@ -14,16 +15,21 @@ namespace osu.Game.Rulesets.Mods
     {
         public override string Name => "Daycore";
         public override string Acronym => "DC";
-        public override IconUsage? Icon => null;
+        public override IconUsage? Icon => OsuIcon.ModDaycore;
         public override ModType Type => ModType.DifficultyReduction;
         public override LocalisableString Description => "Whoaaaaa...";
-        public override bool Ranked => UsesDefaultConfiguration;
+        public override bool Ranked => true;
 
         [SettingSource("Speed decrease", "The actual decrease to apply", SettingControlType = typeof(MultiplierSettingsSlider))]
         public override BindableNumber<double> SpeedChange { get; } = new BindableDouble(0.75)
         {
+#if !DEBUG
             MinValue = 0.5,
             MaxValue = 0.99,
+#else
+            MinValue = 0.1,
+            MaxValue = 0.99,
+#endif
             Precision = 0.01,
         };
 

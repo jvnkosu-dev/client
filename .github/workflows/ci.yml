@@ -1,4 +1,10 @@
-on: [push, pull_request]
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+
+
 name: Continuous Integration
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -33,7 +39,7 @@ jobs:
           key: inspectcode-${{ hashFiles('.config/dotnet-tools.json', '.github/workflows/ci.yml', 'osu.sln*', 'osu*.slnf', '.editorconfig', '.globalconfig', 'CodeAnalysis/*', '**/*.csproj', '**/*.props') }}
 
       - name: Dotnet code style
-        run: dotnet build -c Debug -warnaserror osu.Desktop.slnf -p:EnforceCodeStyleInBuild=true
+        run: dotnet build -c Debug -warnaserror osu.Desktop.slnf
 
       - name: CodeFileSanity
         run: |
@@ -148,9 +154,7 @@ jobs:
       # https://github.com/dotnet/macios/issues/19157
       # https://github.com/actions/runner-images/issues/12758
       - name: Use Xcode 16.4
-        run: |
-          sudo xcode-select -switch /Applications/Xcode_16.4.app
-          xcodebuild -downloadPlatform iOS
+        run: sudo xcode-select -switch /Applications/Xcode_16.4.app
 
       - name: Build
         run: dotnet build -c Debug osu.iOS.slnf

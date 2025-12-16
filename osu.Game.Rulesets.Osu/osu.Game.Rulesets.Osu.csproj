@@ -8,7 +8,7 @@
 
   <PropertyGroup Label="Nuget">
     <Title>osu! (ruleset)</Title>
-    <PackageId>ppy.osu.Game.Rulesets.Osu</PackageId>
+    <PackageId>jvnkosu.Client.Rulesets.Osu</PackageId>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 

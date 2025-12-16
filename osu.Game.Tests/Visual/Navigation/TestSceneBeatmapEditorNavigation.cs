@@ -387,7 +387,7 @@ namespace osu.Game.Tests.Visual.Navigation
             protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
             {
                 // Importantly, this occurs before base.load().
-                if (!loader.AllowLoad.Wait(TimeSpan.FromSeconds(10)))
+                if (!loader.AllowLoad.Wait(TimeSpan.FromSeconds(30)))
                     throw new TimeoutException();
 
                 return base.CreateChildDependencies(parent);

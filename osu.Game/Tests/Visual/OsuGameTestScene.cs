@@ -195,6 +195,7 @@ namespace osu.Game.Tests.Visual
             {
                 base.Update();
 
+                // when running in visual tests and the window loses focus, we generally don't want the game to pause.
                 ((Bindable<bool>)IsActive).Value = true;
             }
         }
@@ -205,18 +206,7 @@ namespace osu.Game.Tests.Visual
 
             private partial class TestShaderPrecompiler : ShaderPrecompiler
             {
-                // Старый код, который больше не работает:
-                // protected override bool AllLoaded => true;
-
-                // НОВЫЙ, ПРАВИЛЬНЫЙ КОД:
-                [BackgroundDependencyLoader]
-                private void load()
-                {
-                    // Этот "фальшивый" компилятор не должен ничего делать.
-                    // Мы сразу же вызываем Expire(), чтобы он считался "загруженным" (IsLoaded станет true).
-                    // Это позволит нашему основному Loader'у продолжить работу, как и было задумано.
-                    Expire();
-                }
+                protected override bool AllLoaded => true;
             }
         }
     }

@@ -22,6 +22,8 @@ using osu.Game.Input.Bindings;
 using osuTK;
 using osuTK.Graphics;
 using osu.Game.Localisation;
+using osu.Game.Resources.Localisation.Web;
+using osu.Game.Utils;
 
 namespace osu.Game.Screens.Play
 {
@@ -39,6 +41,7 @@ namespace osu.Game.Screens.Play
         public Action? OnResume { get; init; }
         public Action? OnRetry { get; init; }
         public Action? OnQuit { get; init; }
+        public Action? OnQuitReplay { get; init; }
 
         /// <summary>
         /// Action that is invoked when <see cref="GlobalAction.Back"/> is triggered.
@@ -89,7 +92,7 @@ namespace osu.Game.Screens.Play
                     RelativeSizeAxes = Axes.X,
                     AutoSizeAxes = Axes.Y,
                     Direction = FillDirection.Vertical,
-                    Spacing = new Vector2(0, 50),
+                    Spacing = new Vector2(0, 25),
                     Origin = Anchor.Centre,
                     Anchor = Anchor.Centre,
                     Children = new Drawable[]
@@ -117,6 +120,20 @@ namespace osu.Game.Screens.Play
                                 Radius = 50
                             },
                         },
+
+                        // XXX: I have mixed feelings about this, but it works at least
+                        (OnQuitReplay != null)
+                            ? new ShearedButton
+                            {
+                                Text = "Quit and save replay",
+                                Origin = Anchor.TopCentre,
+                                Anchor = Anchor.TopCentre,
+                                Height = 32,
+                                Colour = colours.PurpleLight,
+                                Action = () => OnQuitReplay.Invoke()
+                            }
+                            : [],
+
                         playInfoText = new OsuTextFlowContainer(cp => cp.Font = OsuFont.GetFont(size: 18))
                         {
                             Origin = Anchor.TopCentre,
@@ -230,6 +247,14 @@ namespace osu.Game.Screens.Play
                 playInfoText.NewLine();
                 playInfoText.AddText(GameplayMenuOverlayStrings.SongProgress);
                 playInfoText.AddText($"{progress}%", cp => cp.Font = cp.Font.With(weight: FontWeight.Bold));
+            }
+
+            if (gameplayState != null)
+            {
+                playInfoText.NewLine();
+                playInfoText.AddText(BeatmapsetsStrings.ShowScoreboardHeadersAccuracy);
+                playInfoText.AddText(": ");
+                playInfoText.AddText(gameplayState!.ScoreProcessor.Accuracy.Value.FormatAccuracy(), cp => cp.Font = cp.Font.With(weight: FontWeight.Bold));
             }
         }
 

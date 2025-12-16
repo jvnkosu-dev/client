@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Collections.Generic;
+using System.Numerics;
 using osu.Framework.Audio;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics.Sprites;
@@ -16,16 +17,21 @@ namespace osu.Game.Rulesets.Mods
     {
         public override string Name => "Half Time";
         public override string Acronym => "HT";
-        public override IconUsage? Icon => OsuIcon.ModHalftime;
+        public override IconUsage? Icon => OsuIcon.ModHalfTime;
         public override ModType Type => ModType.DifficultyReduction;
         public override LocalisableString Description => "Less zoom...";
-        public override bool Ranked => SpeedChange.IsDefault;
+        public override bool Ranked => true;
 
         [SettingSource("Speed decrease", "The actual decrease to apply", SettingControlType = typeof(MultiplierSettingsSlider))]
         public override BindableNumber<double> SpeedChange { get; } = new BindableDouble(0.75)
         {
+#if !DEBUG
             MinValue = 0.5,
             MaxValue = 0.99,
+#else
+            MinValue = 0.1,
+            MaxValue = 0.99,
+#endif
             Precision = 0.01,
         };
 

@@ -4,6 +4,7 @@
 using osu.Framework.Allocation;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Extensions.LocalisationExtensions;
+using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
@@ -43,45 +44,63 @@ namespace osu.Game.Screens.Ranking.Expanded.Statistics
                 RelativeSizeAxes = Axes.X,
                 AutoSizeAxes = Axes.Y,
                 Direction = FillDirection.Vertical,
-                Children = new[]
+                Children = new Drawable[]
                 {
-                    new CircularContainer
+                    new Container
                     {
                         RelativeSizeAxes = Axes.X,
-                        Height = 12,
+                        AutoSizeAxes = Axes.Y,
                         Masking = true,
+                        CornerRadius = 8f,
                         Children = new Drawable[]
                         {
                             new Box
                             {
                                 RelativeSizeAxes = Axes.Both,
-                                Colour = Color4Extensions.FromHex("#222")
+                                Colour = Color4Extensions.FromHex("#2222229f"),
                             },
-                            HeaderText = new OsuSpriteText
+                            new FillFlowContainer
                             {
-                                Anchor = Anchor.Centre,
-                                Origin = Anchor.Centre,
-                                Font = OsuFont.Torus.With(size: 12, weight: FontWeight.SemiBold),
-                                Text = header.ToUpper(),
+                                Anchor = Anchor.TopLeft,
+                                RelativeSizeAxes = Axes.X,
+                                AutoSizeAxes = Axes.Y,
+                                Direction = FillDirection.Vertical,
+                                Children = new Drawable[]
+                                {
+                                    HeaderText = new OsuSpriteText
+                                    {
+                                        Anchor = Anchor.TopCentre,
+                                        Origin = Anchor.TopCentre,
+                                        Font = OsuFont.Torus.With(size: 12, weight: FontWeight.SemiBold),
+                                        Text = header.ToUpper(),
+                                    },
+                                    content = CreateContent().With(d =>
+                                    {
+                                        d.Origin = Anchor.TopCentre;
+                                        d.Anchor = Anchor.TopCentre;
+                                        d.Alpha = 0;
+                                        d.AlwaysPresent = true;
+                                    }),
+                                }
                             }
                         }
                     },
-                    new Container
-                    {
-                        Anchor = Anchor.TopCentre,
-                        Origin = Anchor.TopCentre,
-                        AutoSizeAxes = Axes.Both,
-                        Children = new[]
-                        {
-                            content = CreateContent().With(d =>
-                            {
-                                d.Anchor = Anchor.TopCentre;
-                                d.Origin = Anchor.TopCentre;
-                                d.Alpha = 0;
-                                d.AlwaysPresent = true;
-                            }),
-                        }
-                    }
+                    // new Container
+                    // {
+                    //     Anchor = Anchor.TopCentre,
+                    //     Origin = Anchor.TopCentre,
+                    //     AutoSizeAxes = Axes.Both,
+                    //     Children = new[]
+                    //     {
+                    //         content = CreateContent().With(d =>
+                    //         {
+                    //             d.Anchor = Anchor.TopCentre;
+                    //             d.Origin = Anchor.TopCentre;
+                    //             d.Alpha = 0;
+                    //             d.AlwaysPresent = true;
+                    //         }),
+                    //     }
+                    // }
                 }
             };
         }

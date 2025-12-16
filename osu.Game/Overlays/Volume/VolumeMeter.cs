@@ -25,6 +25,7 @@ using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Input.Bindings;
+using osu.Game.Screens.Play.HUD;
 using osuTK;
 using osuTK.Graphics;
 
@@ -44,7 +45,7 @@ namespace osu.Game.Overlays.Volume
         private readonly Color4 meterColour;
         private readonly string name;
 
-        private OsuSpriteText text;
+        private ArgonCounterTextComponent text { get; set; }
         private BufferedContainer maxGlow;
 
         private Container selectedGlowContainer;
@@ -199,12 +200,7 @@ namespace osu.Game.Overlays.Volume
                                 Radius = 10,
                             }
                         },
-                        maxGlow = (text = new OsuSpriteText
-                        {
-                            Anchor = Anchor.Centre,
-                            Origin = Anchor.Centre,
-                            Font = OsuFont.Numeric.With(size: 0.16f * CircleSize)
-                        }).WithEffect(new GlowEffect
+                        maxGlow = (text = new ArgonCounterTextComponent(Anchor.Centre)).WithEffect(new GlowEffect
                         {
                             Colour = Color4.Transparent,
                             PadExtent = true,
@@ -239,6 +235,8 @@ namespace osu.Game.Overlays.Volume
 
             Bindable.BindValueChanged(volume => { this.TransformTo(nameof(DisplayVolume), volume.NewValue, 400, Easing.OutQuint); }, true);
 
+            text.Scale = new Vector2(0.9f);
+            text.WireframeOpacity.BindTo(new BindableFloat(0.5f));
             bgProgress.Progress = 0.75f;
         }
 
@@ -257,17 +255,16 @@ namespace osu.Game.Overlays.Volume
                 bool intVolumeChanged = intValue != displayVolumeInt;
 
                 displayVolumeInt = intValue;
+ 
+                text.WireframeTemplate = new string('#', intValue.ToString(CultureInfo.CurrentCulture).Length);
+                text.Text = intValue.ToString(CultureInfo.CurrentCulture);
 
                 if (displayVolume >= 0.995f)
-                {
-                    text.Text = "MAX";
-                    maxGlow.EffectColour = meterColour.Opacity(2f);
-                }
+                    maxGlow.EffectColour = meterColour.Opacity(5f);
+                else if (displayVolume < 0.01f)
+                    maxGlow.EffectColour = meterColour.Opacity(0f);
                 else
-                {
-                    maxGlow.EffectColour = Color4.Transparent;
-                    text.Text = intValue.ToString(CultureInfo.CurrentCulture);
-                }
+                    maxGlow.EffectColour = meterColour.Opacity((float)displayVolume * 3f + 1f);
 
                 volumeCircle.Progress = displayVolume * 0.75f;
                 volumeCircleGlow.Progress = displayVolume * 0.75f;

@@ -5,6 +5,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
 using osu.Framework.Bindables;
+using osu.Framework.Graphics;
 
 namespace osu.Game.Graphics.UserInterface
 {
@@ -63,9 +64,9 @@ namespace osu.Game.Graphics.UserInterface
 
         protected virtual void UpdateActiveState()
         {
-            DarkerColour = Active.Value ? ColourProvider.Highlight1 : ColourProvider.Background3;
-            LighterColour = Active.Value ? ColourProvider.Colour0 : ColourProvider.Background1;
-            TextColour = Active.Value ? ColourProvider.Background6 : ColourProvider.Content1;
+            DarkerColour = Active.Value ? ColourProvider?.Highlight1 ?? Colour4.Gray : ColourProvider?.Background3 ?? Colour4.DimGray;
+            LighterColour = Active.Value ? ColourProvider?.Colour0 ?? Colour4.AliceBlue : ColourProvider?.Background1 ?? Colour4.LightGray;
+            TextColour = Active.Value ? ColourProvider?.Background6 ?? Colour4.Black : ColourProvider?.Content1 ?? Colour4.DarkGray;
         }
 
         private void playSample()

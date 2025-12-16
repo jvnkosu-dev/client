@@ -230,6 +230,11 @@ namespace osu.Game.Rulesets.Osu
                         new ModScoreV2(),
                     };
 
+                case ModType.Special:
+#if DEBUG
+                    return Array.Empty<Mod>();
+#endif
+
                 default:
                     return Array.Empty<Mod>();
             }
@@ -249,7 +254,11 @@ namespace osu.Game.Rulesets.Osu
 
         public override string ShortName => SHORT_NAME;
 
+#if !DEBUG
         public override string PlayingVerb => "Clicking circles";
+#else
+        public override string PlayingVerb => "Debugging circles";
+#endif
 
         public override RulesetSettingsSubsection CreateSettings() => new OsuSettingsSubsection(this);
 

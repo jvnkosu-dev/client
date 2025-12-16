@@ -19,7 +19,7 @@ namespace osu.Game.Beatmaps
         LocallyModified = -4,
 
         [LocalisableDescription(typeof(SongSelectStrings), nameof(SongSelectStrings.StatusUnknown))]
-        [Description("Unknown")]
+        [Description("Offline")]
         None = -3,
 
         [LocalisableDescription(typeof(BeatmapsetsStrings), nameof(BeatmapsetsStrings.ShowStatusGraveyard))]

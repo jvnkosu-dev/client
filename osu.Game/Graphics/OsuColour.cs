@@ -129,7 +129,7 @@ namespace osu.Game.Graphics
             switch (status)
             {
                 case BeatmapOnlineStatus.None:
-                    return Color4.RosyBrown;
+                    return Color4.AliceBlue;
 
                 case BeatmapOnlineStatus.LocallyModified:
                     return Color4.OrangeRed;
@@ -183,6 +183,9 @@ namespace osu.Game.Graphics
                 case ModType.System:
                     return Yellow;
 
+                case ModType.Special:
+                    return Orange2;
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(modType), modType, "Unknown mod type");
             }
@@ -231,7 +234,7 @@ namespace osu.Game.Graphics
         /// Retrieves colour for a <see cref="RankingTier"/>.
         /// See https://www.figma.com/file/YHWhp9wZ089YXgB7pe6L1k/Tier-Colours
         /// </summary>
-        public ColourInfo ForRankingTier(RankingTier tier)
+        public static ColourInfo ForRankingTier(RankingTier tier)
         {
             switch (tier)
             {

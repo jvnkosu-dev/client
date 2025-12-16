@@ -15,7 +15,7 @@ namespace osu.Game.Rulesets.Mods
     {
         public override string Name => "Autoplay";
         public override string Acronym => "AT";
-        public override IconUsage? Icon => OsuIcon.ModAuto;
+        public override IconUsage? Icon => OsuIcon.ModAutoplay;
         public override ModType Type => ModType.Automation;
         public override LocalisableString Description => "Watch a perfect automated play through the song.";
         public override double ScoreMultiplier => 1;
@@ -23,6 +23,8 @@ namespace osu.Game.Rulesets.Mods
         public sealed override bool UserPlayable => false;
         public sealed override bool ValidForMultiplayer => false;
         public sealed override bool ValidForMultiplayerAsFreeMod => false;
+        public override bool Ranked => false;
+
 
         public override Type[] IncompatibleMods => new[] { typeof(ModCinema), typeof(ModRelax), typeof(ModAdaptiveSpeed), typeof(ModTouchDevice) };
 
