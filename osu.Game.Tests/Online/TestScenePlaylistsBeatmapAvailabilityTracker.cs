@@ -28,6 +28,7 @@ using osu.Game.Screens.OnlinePlay;
 using osu.Game.Screens.OnlinePlay.Playlists;
 using osu.Game.Tests.Resources;
 using osu.Game.Tests.Visual;
+using Realms;
 
 namespace osu.Game.Tests.Online
 {
@@ -229,6 +230,14 @@ namespace osu.Game.Tests.Online
                         throw new TimeoutException("Timeout waiting for import to be allowed.");
 
                     return testBeatmapManager.CurrentImport = base.ImportModel(item, archive, parameters, cancellationToken);
+                }
+
+                protected override void PostImport(BeatmapSetInfo model, Realm realm, ImportParameters parameters)
+                {
+                    foreach (var beatmap in model.Beatmaps)
+                        beatmap.OnlineMD5Hash = beatmap.MD5Hash;
+
+                    base.PostImport(model, realm, parameters);
                 }
             }
         }

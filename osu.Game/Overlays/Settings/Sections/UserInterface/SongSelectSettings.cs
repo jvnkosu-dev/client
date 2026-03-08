@@ -2,9 +2,12 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Localisation;
 using osu.Game.Configuration;
+using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Localisation;
 using osu.Game.Overlays.Mods.Input;
 
@@ -14,46 +17,59 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
     {
         protected override LocalisableString Header => UserInterfaceStrings.SongSelectHeader;
 
+        private readonly Bindable<SettingsNote.Data?> selectV1Gone = new Bindable<SettingsNote.Data?>();
+
         [BackgroundDependencyLoader]
         private void load(OsuConfigManager config)
         {
+            selectV1Gone.Value = new SettingsNote.Data("SelectV1 has been fully removed from upstream code base.\nAt this time, we cannot bring it back.", SettingsNote.Type.Warning);
+            Bindable<bool> selectV1 = config.GetBindable<bool>(OsuSetting.ForceLegacySongSelect);
+            selectV1.Disabled = true;
+
             Children = new Drawable[]
             {
-                new SettingsCheckbox
+                new SettingsItemV2(new FormCheckBox
                 {
-                    LabelText = UserInterfaceStrings.ForceLegacySongSelect,
-                    Current = config.GetBindable<bool>(OsuSetting.ForceLegacySongSelect),
-                    ClassicDefault = false
+                    Caption = UserInterfaceStrings.ForceLegacySongSelect,
+                    Current = selectV1,
+                })
+                {
+                    Note = { BindTarget = selectV1Gone }
                 },
-                new SettingsCheckbox
+                new SettingsItemV2(new FormCheckBox
                 {
-                    LabelText = UserInterfaceStrings.ShowConvertedBeatmaps,
+                    Caption = UserInterfaceStrings.ShowConvertedBeatmaps,
                     Current = config.GetBindable<bool>(OsuSetting.ShowConvertedBeatmaps),
+                })
+                {
                     Keywords = new[] { "converts", "converted" }
                 },
-                new SettingsEnumDropdown<RandomSelectAlgorithm>
+                new SettingsItemV2(new FormEnumDropdown<RandomSelectAlgorithm>
                 {
-                    LabelText = UserInterfaceStrings.RandomSelectionAlgorithm,
+                    Caption = UserInterfaceStrings.RandomSelectionAlgorithm,
                     Current = config.GetBindable<RandomSelectAlgorithm>(OsuSetting.RandomSelectAlgorithm),
-                },
-                new SettingsEnumDropdown<ModSelectHotkeyStyle>
+                }),
+                new SettingsItemV2(new FormEnumDropdown<ModSelectHotkeyStyle>
                 {
-                    LabelText = UserInterfaceStrings.ModSelectHotkeyStyle,
+                    Caption = UserInterfaceStrings.ModSelectHotkeyStyle,
                     Current = config.GetBindable<ModSelectHotkeyStyle>(OsuSetting.ModSelectHotkeyStyle),
-                    ClassicDefault = ModSelectHotkeyStyle.Classic
-                },
-                new SettingsCheckbox
+                })
                 {
-                    LabelText = UserInterfaceStrings.ModSelectTextSearchStartsActive,
+                    ApplyClassicDefault = c => ((IHasCurrentValue<ModSelectHotkeyStyle>)c).Current.Value = ModSelectHotkeyStyle.Classic,
+                },
+                new SettingsItemV2(new FormCheckBox
+                {
+                    Caption = UserInterfaceStrings.ModSelectTextSearchStartsActive,
                     Current = config.GetBindable<bool>(OsuSetting.ModSelectTextSearchStartsActive),
-                    ClassicDefault = false
-                },
-                new SettingsCheckbox
+                })
                 {
-                    LabelText = GameplaySettingsStrings.BackgroundBlur,
+                    ApplyClassicDefault = c => ((IHasCurrentValue<bool>)c).Current.Value = false,
+                },
+                new SettingsItemV2(new FormCheckBox
+                {
+                    Caption = GameplaySettingsStrings.BackgroundBlur,
                     Current = config.GetBindable<bool>(OsuSetting.SongSelectBackgroundBlur),
-                    ClassicDefault = false,
-                }
+                }),
             };
         }
     }

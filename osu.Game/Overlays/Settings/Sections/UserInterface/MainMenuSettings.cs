@@ -9,6 +9,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Localisation;
 using osu.Game.Configuration;
 using osu.Game.Graphics.Backgrounds;
+using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Localisation;
 using osu.Game.Online.API;
 using osu.Game.Online.API.Requests.Responses;
@@ -24,9 +25,11 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
 
         private IBindable<APIUser> user = null!;
 
-        private SettingsEnumDropdown<BackgroundSource> backgroundSourceDropdown = null!;
+        // private SettingsEnumDropdown<BackgroundSource> backgroundSourceDropdown = null!;
 
         private Bindable<bool> useSeasonalBackgrounds = null!;
+
+        private readonly Bindable<SettingsNote.Data?> backgroundSourceNote = new Bindable<SettingsNote.Data?>();
 
         [BackgroundDependencyLoader]
         private void load(OsuConfigManager config, IAPIProvider api, SeasonalBackgroundLoader? backgroundLoader)
@@ -37,20 +40,19 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
 
             useSeasonalBackgrounds = config.GetBindable<bool>(OsuSetting.UseSeasonalBackgroundsV2);
 
-            var backgroundToggle = new SettingsCheckbox
+            var backgroundToggle = new FormCheckBox
             {
-                LabelText = UserInterfaceStrings.UseSeasonalBackgrounds,
+                Caption = UserInterfaceStrings.UseSeasonalBackgrounds,
                 Current = config.GetBindable<bool>(OsuSetting.UseSeasonalBackgroundsV2),
-                ClassicDefault = true
             };
 
-            var categoryDropdown = new SettingsDropdown<string>
+            var categoryDropdown = new FormDropdown<string>
             {
-                LabelText = UserInterfaceStrings.SeasonalBackgroundsCategories,
+                Caption = UserInterfaceStrings.SeasonalBackgroundsCategories,
                 Current = config.GetBindable<string>(OsuSetting.BackgroundCategory)
             };
 
-            var refreshButton = new SettingsButton
+            var refreshButton = new SettingsButtonV2
             {
                 Text = UserInterfaceStrings.SeasonalBackgroundsRefresh,
                 Action = () => backgroundLoader?.RefreshCategories()
@@ -58,44 +60,53 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
 
             // TODO: the category dropdown disappear if no backgrounds (e.g. when first enabling the setting)
             refreshButton.CanBeShown.BindTo(useSeasonalBackgrounds);
-            categoryDropdown.CanBeShown.BindTo(useSeasonalBackgrounds);
+
             useSeasonalBackgrounds.BindValueChanged(
-                _ => backgroundLoader?.RefreshCategories(true)
+                d =>
+                {
+                    backgroundLoader?.RefreshCategories(true);
+                    categoryDropdown.Current.Disabled = !d.NewValue;
+                },
+                true
             );
 
             backgroundLoader?.AvailableCategories.BindValueChanged(categories => categoryDropdown.Items = categories.NewValue, true);
 
             Children = new Drawable[]
             {
-                new SettingsCheckbox
+                new SettingsItemV2(new FormCheckBox
                 {
-                    LabelText = UserInterfaceStrings.ShowMenuTips,
-                    Current = config.GetBindable<bool>(OsuSetting.MenuTips),
-                },
-                new SettingsCheckbox
+                    Caption = UserInterfaceStrings.ShowMenuTips,
+                    Current = config.GetBindable<bool>(OsuSetting.MenuTips)
+                }),
+                new SettingsItemV2(new FormCheckBox
                 {
-                    Keywords = new[] { "intro", "welcome" },
-                    LabelText = UserInterfaceStrings.InterfaceVoices,
+                    Caption = UserInterfaceStrings.InterfaceVoices,
                     Current = config.GetBindable<bool>(OsuSetting.MenuVoice)
-                },
-                new SettingsCheckbox
+                })
                 {
                     Keywords = new[] { "intro", "welcome" },
-                    LabelText = UserInterfaceStrings.OsuMusicTheme,
+                },
+                new SettingsItemV2(new FormCheckBox
+                {
+                    Caption = UserInterfaceStrings.OsuMusicTheme,
                     Current = config.GetBindable<bool>(OsuSetting.MenuMusic)
-                },
-                new SettingsEnumDropdown<IntroSequence>
+                })
                 {
-                    LabelText = UserInterfaceStrings.IntroSequence,
+                    Keywords = new[] { "intro", "welcome" },
+                },
+                new SettingsItemV2(new FormEnumDropdown<IntroSequence>
+                {
+                    Caption = UserInterfaceStrings.IntroSequence,
                     Current = config.GetBindable<IntroSequence>(OsuSetting.IntroSequence),
-                },
-                backgroundSourceDropdown = new SettingsEnumDropdown<BackgroundSource>
+                }),
+                new SettingsItemV2(new FormEnumDropdown<BackgroundSource>
                 {
-                    LabelText = UserInterfaceStrings.BackgroundSource,
+                    Caption = UserInterfaceStrings.BackgroundSource,
                     Current = config.GetBindable<BackgroundSource>(OsuSetting.MenuBackgroundSource),
-                },
-                backgroundToggle,
-                categoryDropdown,
+                }),
+                new SettingsItemV2(backgroundToggle),
+                new SettingsItemV2(categoryDropdown),
                 refreshButton,
                 new SettingsColour
                 {
@@ -103,6 +114,11 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
                     Current = config.GetBindable<Colour4>(OsuSetting.MenuCookieColor),
                     ClassicDefault = Colour4.FromHex(@"ff66ba"),
                 },
+                new SettingsItemV2(new FormEnumDropdown<SeasonalBackgroundMode>
+                {
+                    Caption = UserInterfaceStrings.SeasonalBackgrounds,
+                    Current = config.GetBindable<SeasonalBackgroundMode>(OsuSetting.SeasonalBackgroundMode),
+                })
             };
         }
 
@@ -113,9 +129,9 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
             user.BindValueChanged(u =>
             {
                 if (u.NewValue?.IsSupporter != true)
-                    backgroundSourceDropdown.SetNoticeText(UserInterfaceStrings.NotSupporterNote, true);
+                    backgroundSourceNote.Value = new SettingsNote.Data(UserInterfaceStrings.NotSupporterNote, SettingsNote.Type.Informational);
                 else
-                    backgroundSourceDropdown.ClearNoticeText();
+                    backgroundSourceNote.Value = null;
             }, true);
         }
     }

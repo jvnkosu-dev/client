@@ -19,6 +19,7 @@ using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input.Events;
+using osu.Framework.Localisation;
 using osu.Framework.Threading;
 using osu.Framework.Utils;
 using osu.Game.Graphics;
@@ -43,7 +44,7 @@ namespace osu.Game.Overlays.Volume
         protected readonly float CircleSize;
 
         private readonly Color4 meterColour;
-        private readonly string name;
+        private readonly LocalisableString name;
 
         private ArgonCounterTextComponent text { get; set; }
         private BufferedContainer maxGlow;
@@ -76,7 +77,7 @@ namespace osu.Game.Overlays.Volume
 
         private const float transition_length = 500;
 
-        public VolumeMeter(string name, float circleSize, Color4 meterColour)
+        public VolumeMeter(LocalisableString name, float circleSize, Color4 meterColour)
         {
             CircleSize = circleSize;
             this.meterColour = meterColour;
@@ -317,6 +318,8 @@ namespace osu.Game.Overlays.Volume
         private void resetAcceleration() => accelerationModifier = 1;
 
         private float dragDelta;
+
+        protected override bool OnMouseDown(MouseDownEvent e) => true; // handle to prevent drawables behind from potentially receiving the mouse down
 
         protected override bool OnDragStart(DragStartEvent e)
         {

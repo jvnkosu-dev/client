@@ -5,6 +5,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Localisation;
 using osu.Game.Configuration;
+using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Localisation;
 
 namespace osu.Game.Overlays.Settings.Sections.Gameplay
@@ -13,39 +14,47 @@ namespace osu.Game.Overlays.Settings.Sections.Gameplay
     {
         protected override LocalisableString Header => GameplaySettingsStrings.AudioHeader;
 
-        private SettingsCheckbox alwaysPlayFirst = null!;
-        private SettingsCheckbox alwaysPlay = null!;
+        private FormCheckBox alwaysPlayFirst = null!;
+        private FormCheckBox alwaysPlay = null!;
 
         [BackgroundDependencyLoader]
         private void load(OsuConfigManager config, OsuConfigManager osuConfig)
         {
+            alwaysPlayFirst = new FormCheckBox
+            {
+                Caption = GameplaySettingsStrings.AlwaysPlayFirstComboBreak,
+                Current = config.GetBindable<bool>(OsuSetting.AlwaysPlayFirstComboBreak)
+            };
+
+            alwaysPlay = new FormCheckBox
+            {
+                Caption = "Always play combo break sound",
+                Current = config.GetBindable<bool>(OsuSetting.AlwaysPlayComboBreak)
+            };
+
             Children = new Drawable[]
             {
-                new SettingsSlider<float>
+                new SettingsItemV2(new FormSliderBar<float>
                 {
-                    LabelText = AudioSettingsStrings.PositionalLevel,
-                    Keywords = new[] { @"positional", @"balance" },
+                    Caption = AudioSettingsStrings.PositionalLevel,
                     Current = osuConfig.GetBindable<float>(OsuSetting.PositionalHitsoundsLevel),
                     KeyboardStep = 0.01f,
                     DisplayAsPercentage = true
-                },
-                alwaysPlayFirst = new SettingsCheckbox
+                })
                 {
-                    ClassicDefault = false,
-                    LabelText = GameplaySettingsStrings.AlwaysPlayFirstComboBreak,
-                    Current = config.GetBindable<bool>(OsuSetting.AlwaysPlayFirstComboBreak)
+                    Keywords = new[] { @"positional", @"balance" },
                 },
-                alwaysPlay = new SettingsCheckbox
-                {
-                    ClassicDefault = false,
-                    LabelText = "Always play combo break sound",
-                    Current = config.GetBindable<bool>(OsuSetting.AlwaysPlayComboBreak)
-                }
+
+                new SettingsItemV2(alwaysPlayFirst),
+                new SettingsItemV2(alwaysPlay)
             };
-            alwaysPlay.Current.BindValueChanged(d =>
-            {
-                alwaysPlayFirst.Current.Disabled = d.NewValue;
-            }, true);
+            alwaysPlay.Current.BindValueChanged(
+                d =>
+                {
+                    alwaysPlayFirst.Current.Disabled = d.NewValue;
+                },
+                true
+            );
         }
     }
 }

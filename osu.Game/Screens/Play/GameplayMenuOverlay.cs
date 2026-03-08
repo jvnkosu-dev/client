@@ -24,6 +24,7 @@ using osuTK.Graphics;
 using osu.Game.Localisation;
 using osu.Game.Resources.Localisation.Web;
 using osu.Game.Utils;
+using osu.Game.Overlays.Settings;
 
 namespace osu.Game.Screens.Play
 {
@@ -123,16 +124,23 @@ namespace osu.Game.Screens.Play
 
                         // XXX: I have mixed feelings about this, but it works at least
                         (OnQuitReplay != null)
-                            ? new ShearedButton
+                            ? new SettingsButtonV2 // probably not a good idea
                             {
                                 Text = "Quit and save replay",
                                 Origin = Anchor.TopCentre,
                                 Anchor = Anchor.TopCentre,
                                 Height = 32,
                                 Colour = colours.PurpleLight,
-                                Action = () => OnQuitReplay.Invoke()
+                                Action = () => OnQuitReplay.Invoke(),
+                                RelativeSizeAxes = Axes.X
                             }
-                            : [],
+                            : new OsuSpriteText
+                            {
+                                Text = "",
+                                Origin = Anchor.TopCentre,
+                                Anchor = Anchor.TopCentre,
+                                Font = OsuFont.GetFont(size: 18),
+                            },
 
                         playInfoText = new OsuTextFlowContainer(cp => cp.Font = OsuFont.GetFont(size: 18))
                         {

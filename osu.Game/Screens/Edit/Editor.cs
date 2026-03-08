@@ -425,7 +425,7 @@ namespace osu.Game.Screens.Edit
                                             },
                                             new OsuMenuItemSpacer(),
                                             new BackgroundDimMenuItem(editorBackgroundDim),
-                                            new ToggleMenuItem("Show storyboard")
+                                            new ToggleMenuItem(EditorStrings.ShowStoryboard)
                                             {
                                                 State = { BindTarget = editorShowStoryboard },
                                             },
@@ -481,7 +481,7 @@ namespace osu.Game.Screens.Edit
         [Resolved]
         private MusicController musicController { get; set; }
 
-        protected override BackgroundScreen CreateBackground() => new EditorBackgroundScreen();
+        protected override BackgroundScreen CreateBackground() => new EditorBackgroundScreen(editorBeatmap);
 
         protected override void LoadComplete()
         {
@@ -1332,8 +1332,9 @@ namespace osu.Game.Screens.Edit
         {
             var exportItems = new List<MenuItem>
             {
-                new EditorMenuItem(EditorStrings.ExportForEditing, MenuItemType.Standard, () => exportBeatmap(false)),
-                new EditorMenuItem(EditorStrings.ExportForCompatibility, MenuItemType.Standard, () => exportBeatmap(true)),
+                new EditorMenuItem(EditorStrings.ExportForEditing, MenuItemType.Standard, () => runExport(manager => manager.Export(Beatmap.Value.BeatmapSetInfo))),
+                new EditorMenuItem(EditorStrings.ExportForCompatibility, MenuItemType.Standard, () => runExport(manager => manager.ExportLegacy(Beatmap.Value.BeatmapSetInfo))),
+                new EditorMenuItem(EditorStrings.ExportGuestDifficulty, MenuItemType.Standard, () => runExport(manager => manager.ExportLegacy(Beatmap.Value.BeatmapInfo))),
             };
 
             return new EditorMenuItem(CommonStrings.Export) { Items = exportItems };
@@ -1434,7 +1435,7 @@ namespace osu.Game.Screens.Edit
             }
         }
 
-        private void exportBeatmap(bool legacy)
+        private void runExport(Func<BeatmapManager, Task> exportAction)
         {
             if (HasUnsavedChanges)
             {
@@ -1443,20 +1444,12 @@ namespace osu.Game.Screens.Edit
                     if (!Save())
                         return Task.CompletedTask;
 
-                    return runExport();
+                    return exportAction.Invoke(beatmapManager);
                 })));
             }
             else
             {
-                attemptAsyncMutationOperation(runExport);
-            }
-
-            Task runExport()
-            {
-                if (legacy)
-                    return beatmapManager.ExportLegacy(Beatmap.Value.BeatmapSetInfo);
-                else
-                    return beatmapManager.Export(Beatmap.Value.BeatmapSetInfo);
+                attemptAsyncMutationOperation(() => exportAction(beatmapManager));
             }
         }
 
@@ -1665,8 +1658,9 @@ namespace osu.Game.Screens.Edit
         private partial class BeatmapEditorToast : Toast
         {
             public BeatmapEditorToast(LocalisableString value, string beatmapDisplayName)
-                : base(InputSettingsStrings.EditorSection, value, beatmapDisplayName)
+                : base(InputSettingsStrings.EditorSection, value)
             {
+                ExtraText = beatmapDisplayName;
             }
         }
 

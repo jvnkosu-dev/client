@@ -36,7 +36,8 @@ namespace osu.Game.Overlays.Settings.Sections.Maintenance
                     Current = config.GetBindable<bool>(OsuSetting.DeleteImportedArchives),
                     ClassicDefault = true
                 },
-                new SettingsButton
+
+                new SettingsButtonV2
                 {
                     Text = DebugSettingsStrings.ImportFiles,
                     Action = () =>
@@ -47,7 +48,7 @@ namespace osu.Game.Overlays.Settings.Sections.Maintenance
                             performer?.PerformFromScreen(menu => menu.Push(new FileImportScreen()));
                     },
                 },
-                new SettingsButton
+                new SettingsButtonV2
                 {
                     Text = DebugSettingsStrings.RunLatencyCertifier,
                     Action = () => performer?.PerformFromScreen(menu => menu.Push(new LatencyCertifierScreen()))
