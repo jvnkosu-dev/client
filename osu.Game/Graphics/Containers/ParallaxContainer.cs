@@ -25,6 +25,7 @@ namespace osu.Game.Graphics.Containers
         public float ParallaxAmount = DEFAULT_PARALLAX_AMOUNT;
 
         private Bindable<bool> parallaxEnabled;
+        private Bindable<float> parallaxStrength;
 
         private const float parallax_duration = 100;
 
@@ -58,12 +59,21 @@ namespace osu.Game.Graphics.Containers
                     content.Scale = new Vector2(1 + Math.Abs(ParallaxAmount));
                 }
             };
+
+            parallaxStrength = config.GetBindable<float>(OsuSetting.ParallaxStrength);
         }
 
         protected override void LoadComplete()
         {
             base.LoadComplete();
             input = GetContainingInputManager();
+
+            parallaxStrength?.BindValueChanged(
+                d =>
+                {
+                    ParallaxAmount = DEFAULT_PARALLAX_AMOUNT * parallaxStrength.Value;
+                }, true
+            );
         }
 
         protected override void Update()
@@ -76,6 +86,8 @@ namespace osu.Game.Graphics.Containers
 
                 if (input.CurrentState.Mouse != null)
                 {
+                    ParallaxAmount = DEFAULT_PARALLAX_AMOUNT * parallaxStrength.Value;
+
                     var sizeDiv2 = DrawSize / 2;
 
                     Vector2 relativeAmount = ToLocalSpace(input.CurrentState.Mouse.Position) - sizeDiv2;

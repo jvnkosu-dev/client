@@ -18,6 +18,20 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
         [BackgroundDependencyLoader]
         private void load(OsuConfigManager config)
         {
+            FormCheckBox parallaxEnabled = new FormCheckBox
+            {
+                Caption = UserInterfaceStrings.Parallax,
+                Current = config.GetBindable<bool>(OsuSetting.MenuParallax)
+            };
+
+            FormSliderBar<float> parallaxStrength = new FormSliderBar<float>
+            {
+                Caption = "Parallax strength",
+                Current = config.GetBindable<float>(OsuSetting.ParallaxStrength),
+                KeyboardStep = 0.01f,
+                LabelFormat = v => $"{v:0.##}x"
+            };
+
             Children = new Drawable[]
             {
                 new SettingsItemV2(new FormCheckBox
@@ -35,11 +49,8 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
                     KeyboardStep = 0.01f,
                     LabelFormat = v => $"{v:0.##}x"
                 }),
-                new SettingsItemV2(new FormCheckBox
-                {
-                    Caption = UserInterfaceStrings.Parallax,
-                    Current = config.GetBindable<bool>(OsuSetting.MenuParallax)
-                }),
+                new SettingsItemV2(parallaxEnabled),
+                new SettingsItemV2(parallaxStrength),
                 new SettingsItemV2(new FormSliderBar<double>
                 {
                     Caption = UserInterfaceStrings.HoldToConfirmActivationTime,
