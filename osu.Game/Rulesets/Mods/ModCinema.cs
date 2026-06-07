@@ -47,6 +47,7 @@ namespace osu.Game.Rulesets.Mods
             player.DimmableStoryboard.IgnoreUserSettings.Value = true;
 
             player.BreakOverlay.Hide();
+            (player as ReplayPlayer)?.ReplayOverlay.Hide();
         }
 
         public bool PerformFail() => false;

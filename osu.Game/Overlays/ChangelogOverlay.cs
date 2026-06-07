@@ -82,6 +82,14 @@ namespace osu.Game.Overlays
 
             Show();
 
+            string[] split = version.Split('-');
+
+            if (split.Length < 2)
+                return;
+
+            string versionPart = split[0];
+            string updateStream = split[1];
+
             performAfterFetch(() =>
             {
                 string[] versionIdentifier = version.Split('-');

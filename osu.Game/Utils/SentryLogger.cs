@@ -14,6 +14,7 @@ using osu.Framework;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Configuration;
+using osu.Framework.Development;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Framework.Statistics;
@@ -49,11 +50,14 @@ namespace osu.Game.Utils
             if (Environment.GetEnvironmentVariable("OSU_DISABLE_ERROR_REPORTING") == "1")
                 return;
 
-            if (!game.IsDeployedBuild || !game.CreateEndpoints().WebsiteUrl.EndsWith(@".jvnko.boats", StringComparison.Ordinal))
+            if (!game.IsDeployedBuild ||
+                !game.CreateEndpoints().WebsiteUrl.EndsWith(@".jvnko.boats", StringComparison.Ordinal) ||
+                DebugUtils.IsNUnitRunning)
                 return;
 
             sentrySession = SentrySdk.Init(options =>
             {
+                // NOTE: should probably make DSN private
                 options.Dsn = "https://8b67571746af4a07a09558574c7e2227@satellite.jvnko.boats/1";
                 options.AutoSessionTracking = true;
                 options.IsEnvironmentUser = false;

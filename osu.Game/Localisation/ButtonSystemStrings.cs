@@ -110,6 +110,12 @@ Please check your internet connection"); // TODO: implement l10n in osu-resource
         /// "Successfully refreshed background categories!"
         /// </summary>
         public static LocalisableString SeasonalBackgroundsRefreshed => new TranslatableString(getKey(@"seasonal_backgrounds_refreshed"), @"Successfully refreshed background categories!");
+
+        /// <summary>
+        /// "Understood"
+        /// </summary>
+        public static LocalisableString MobileDisclaimerOkButton => new TranslatableString(getKey(@"mobile_disclaimer_ok_button"), @"Understood");
+
         private static string getKey(string key) => $@"{prefix}:{key}";
     }
 }
