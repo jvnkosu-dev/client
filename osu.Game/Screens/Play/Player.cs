@@ -526,7 +526,7 @@ namespace osu.Game.Screens.Play
                         Retries = RestartCount,
                         OnRetry = () => Restart(),
                         OnQuit = () => PerformExitWithConfirmation(),
-                        OnQuitReplay = (this is SoloPlayer) ? PerformExitReplay : null
+                        CanSaveReplay = (this is SoloPlayer) ? true : false
                     },
                 },
             };
@@ -692,7 +692,11 @@ namespace osu.Game.Screens.Play
             }
 
             // import current score if possible.
-            prepareAndImportScoreAsync();
+            if (!PauseOverlay.ReplayOnQuit)
+                prepareAndImportScoreAsync();
+            else
+                savePendingReplay();
+
 
             if (this.IsCurrentScreen())
             {
@@ -714,9 +718,9 @@ namespace osu.Game.Screens.Play
             return true;
         }
 
-        // XXX: replays saved from pause screen, when played back, will continue playing past the point player quits
+        // XXX: replays saved from the pause screen, when played back, will continue playing past the point player quits
         // unfixable because it's not possible to manually trigger a failure in a way that would be recorded (w/o using a mod)
-        protected void PerformExitReplay()
+        private void savePendingReplay()
         {
             // manually triggering a failure in a messy manner to avoid score submission
             GameplayClockContainer.Stop();
@@ -725,7 +729,6 @@ namespace osu.Game.Screens.Play
             ConcludeFailedScore(Score);
 
             prepareAndImportScoreAsync(true);
-            PerformExit();
         }
 
         protected virtual void RequestIntroSkip()
@@ -1009,6 +1012,13 @@ namespace osu.Game.Screens.Play
                                 && this is SoloPlayer;
             if (exitOnFail)
                 game.Exit(); // we're done here
+
+            if (PauseOverlay.ReplayOnQuit && this is SoloPlayer)
+            {
+                // TODO: synchronize fail overlay button state with actual replay state
+                savePendingReplay();
+            }
+
 
             bool restartOnFail = GameplayState.Mods.OfType<IApplicableFailOverride>().Any(m => m.RestartOnFail);
             if (!restartOnFail)

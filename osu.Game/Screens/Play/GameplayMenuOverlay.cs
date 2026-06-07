@@ -47,7 +47,10 @@ namespace osu.Game.Screens.Play
         public Action? OnResume { get; init; }
         public Action? OnRetry { get; init; }
         public Action? OnQuit { get; init; }
-        public Action? OnQuitReplay { get; init; }
+
+        public bool CanSaveReplay = false;
+        private bool replayOnQuit = false;
+        public bool ReplayOnQuit => replayOnQuit;
 
         /// <summary>
         /// Action that is invoked when <see cref="GlobalAction.Back"/> is triggered.
@@ -132,26 +135,6 @@ namespace osu.Game.Screens.Play
                             },
                         },
 
-                        // XXX: I have mixed feelings about this, but it works at least
-                        (OnQuitReplay != null)
-                            ? new SettingsButtonV2 // probably not a good idea
-                            {
-                                Text = "Quit and save replay",
-                                Origin = Anchor.TopCentre,
-                                Anchor = Anchor.TopCentre,
-                                Height = 32,
-                                Colour = colours.PurpleLight,
-                                Action = () => OnQuitReplay.Invoke(),
-                                RelativeSizeAxes = Axes.X
-                            }
-                            : new OsuSpriteText
-                            {
-                                Text = "",
-                                Origin = Anchor.TopCentre,
-                                Anchor = Anchor.TopCentre,
-                                Font = OsuFont.GetFont(size: 18),
-                            },
-
                         playInfoText = new OsuTextFlowContainer(cp => cp.Font = OsuFont.GetFont(size: 18))
                         {
                             Origin = Anchor.TopCentre,
@@ -175,6 +158,7 @@ namespace osu.Game.Screens.Play
             State.ValueChanged += _ => InternalButtons.Deselect();
 
             updateInfoText();
+            addReplaySaveButton(CanSaveReplay);
 
             if (host != null)
                 windowActive.BindTo(host.IsActive);
@@ -364,5 +348,46 @@ namespace osu.Game.Screens.Play
         }
 
         #endregion
+
+        private void addReplaySaveButton(bool canImport = false)
+        {
+            // from #10339 maybe this is a better visual effect
+            Add(new Container
+            {
+                Anchor = Anchor.BottomLeft,
+                Origin = Anchor.BottomLeft,
+                RelativeSizeAxes = Axes.X,
+                Height = TwoLayerButton.SIZE_EXTENDED.Y,
+                Children = new Drawable[]
+                {
+                    new Box
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Colour = Color4Extensions.FromHex("#333")
+                    },
+                    new FillFlowContainer
+                    {
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        AutoSizeAxes = Axes.X,
+                        RelativeSizeAxes = Axes.Y,
+                        Spacing = new Vector2(5),
+                        Padding = new MarginPadding(10),
+                        Direction = FillDirection.Horizontal,
+                        Children = new Drawable[]
+                        {
+                            new SaveScoreOnQuitButton(canImport)
+                            {
+                                Width = 300,
+                                OnAct = (bool a) =>
+                                {
+                                    replayOnQuit = a;
+                                }
+                            },
+                        }
+                    }
+                }
+            });
+        }
     }
 }
