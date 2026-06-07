@@ -794,6 +794,9 @@ namespace osu.Game.Screens.Play
 
             isRestarting = true;
 
+            if (PauseOverlay.ReplayOnQuit)
+                savePendingReplay();
+
             // at the point of restarting the track should either already be paused or the volume should be zero.
             // stopping here is to ensure music doesn't become audible after exiting back to PlayerLoader.
             musicController.Stop();
@@ -1007,17 +1010,19 @@ namespace osu.Game.Screens.Play
             if (PauseOverlay.State.Value == Visibility.Visible)
                 PauseOverlay.Hide();
 
-            bool exitOnFail = GameplayState.Mods.OfType<IApplicableFailExit>().Any(m => m.ExitOnFail)
-                                && Score.ScoreInfo.User.Username == config.Get<string>(OsuSetting.Username)
-                                && this is SoloPlayer;
-            if (exitOnFail)
-                game.Exit(); // we're done here
 
             if (PauseOverlay.ReplayOnQuit && this is SoloPlayer)
             {
                 // TODO: synchronize fail overlay button state with actual replay state
                 savePendingReplay();
             }
+
+            bool exitOnFail = GameplayState.Mods.OfType<IApplicableFailExit>().Any(m => m.ExitOnFail)
+                                && Score.ScoreInfo.User.Username == config.Get<string>(OsuSetting.Username)
+                                && this is SoloPlayer;
+
+            if (exitOnFail)
+                game.Exit(); // we're done here
 
 
             bool restartOnFail = GameplayState.Mods.OfType<IApplicableFailOverride>().Any(m => m.RestartOnFail);
