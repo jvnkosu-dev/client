@@ -38,12 +38,12 @@ namespace osu.Game.Screens.Menu
         /// <summary>
         /// The number of bars in one rotation of the visualiser.
         /// </summary>
-        private const int bars_per_visualiser = 200;
+        private const int bars_per_visualiser = 100;
 
         /// <summary>
         /// How many times we should stretch around the circumference (overlapping overselves).
         /// </summary>
-        private const float visualiser_rounds = 5;
+        private const float visualiser_rounds = 3;
 
         /// <summary>
         /// How much should each bar go down each millisecond (based on a full bar).
