@@ -60,6 +60,7 @@ using osu.Game.Overlays.Notifications;
 using osu.Game.Overlays.OSD;
 using osu.Game.Overlays.SkinEditor;
 using osu.Game.Overlays.Toolbar;
+using osu.Game.Overlays.SkinListing;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Scoring;
 using osu.Game.Scoring.Legacy;
@@ -122,6 +123,8 @@ namespace osu.Game
 
         public Toolbar Toolbar { get; private set; }
 
+        public void ToggleSkinListing() => skinListing?.ToggleVisibility();
+
         private ChatOverlay chatOverlay;
 
         private ChannelManager channelManager;
@@ -179,6 +182,9 @@ namespace osu.Game
         [Cached]
         private SeasonalBackgroundLoader seasonalBackgroundLoader;
 
+        [Cached]
+        private SkinUploader skinUploader = new SkinUploader();
+
         protected SentryLogger SentryLogger;
         private SentryLogger sentryLogger;
 
@@ -208,6 +214,8 @@ namespace osu.Game
         protected ScreenFooter ScreenFooter => screenStackFooter.Footer;
 
         protected SettingsOverlay Settings;
+
+        private SkinListingOverlay skinListing;
 
         protected FirstRunSetupOverlay FirstRunOverlay { get; private set; }
 
@@ -421,7 +429,6 @@ namespace osu.Game
                 dependencies.CacheAs(osuLogo = new OsuLogoChristmas { Alpha = 0 });
             else
                 dependencies.CacheAs(osuLogo = new OsuLogo { Alpha = 0 });
-
             // bind config int to database RulesetInfo
             configRuleset = LocalConfig.GetBindable<string>(OsuSetting.Ruleset);
             uiScale = LocalConfig.GetBindable<float>(OsuSetting.UIScale);
@@ -755,7 +762,7 @@ namespace osu.Game
                     // Don't change the local ruleset if the user is on another ruleset and is showing converted beatmaps at song select.
                     // Eventually we probably want to check whether conversion is actually possible for the current ruleset.
                     bool requiresRulesetSwitch = !selection.Ruleset.Equals(Ruleset.Value)
-                                                 && (selection.Ruleset.OnlineID > 0 || !LocalConfig.Get<bool>(OsuSetting.ShowConvertedBeatmaps));
+                                                    && (selection.Ruleset.OnlineID > 0 || !LocalConfig.Get<bool>(OsuSetting.ShowConvertedBeatmaps));
 
                     if (requiresRulesetSwitch)
                     {
@@ -1234,6 +1241,8 @@ namespace osu.Game
             loadComponentSingleFile(userProfile = new UserProfileOverlay(), overlayContent.Add, true);
             loadComponentSingleFile(beatmapSetOverlay = new BeatmapSetOverlay(), overlayContent.Add, true);
             loadComponentSingleFile(wikiOverlay = new WikiOverlay(), overlayContent.Add, true);
+            loadComponentSingleFile(new SkinDownloader(), Add, true);
+            loadComponentSingleFile(skinListing = new SkinListingOverlay(), overlayContent.Add, true);
             loadComponentSingleFile(skinEditor = new SkinEditorOverlay(ScreenContainer), overlayContent.Add, true);
 
             loadComponentSingleFile(new LoginOverlay
@@ -1287,7 +1296,7 @@ namespace osu.Game
             }
 
             // ensure only one of these overlays are open at once.
-            var singleDisplayOverlays = new OverlayContainer[] { chatOverlay, news, dashboard, beatmapListing, changelogOverlay, rankingsOverlay, wikiOverlay };
+            var singleDisplayOverlays = new OverlayContainer[] { chatOverlay, news, dashboard, beatmapListing, skinListing, changelogOverlay, rankingsOverlay, wikiOverlay };
 
             foreach (var overlay in singleDisplayOverlays)
             {
