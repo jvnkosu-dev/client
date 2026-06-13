@@ -1,3 +1,6 @@
+// Copyright (c) jvnkosu! team, MIT license
+// See the LICENCE file in the repository root for full license text.
+
 using Newtonsoft.Json;
 
 using System;
@@ -24,7 +27,7 @@ namespace osu.Game.Online.API.Requests
         [JsonProperty("description")]
         public string Description { get; set; } = string.Empty;
 
-        // Поле для будущей системы обновлений (на сервере пока нет, но в клиенте подготовим)
+        // to be used later
         [JsonProperty("last_updated")]
         public DateTimeOffset? LastUpdated { get; set; }
     }

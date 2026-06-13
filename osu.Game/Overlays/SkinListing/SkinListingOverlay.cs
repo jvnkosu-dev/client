@@ -1,3 +1,6 @@
+// Copyright (c) jvnkosu! team, MIT license
+// See the LICENCE file in the repository root for full license text.
+
 using System.Collections.Generic;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
@@ -103,14 +106,14 @@ namespace osu.Game.Overlays.SkinListing
             activeRequest?.Cancel();
             cardsContainer.Clear();
 
-            statusText.Text = "Ищем скины...";
+            statusText.Text = "Fetching skins...";
             statusText.FadeIn(200);
 
             activeRequest = new GetSkinsRequest(query);
             activeRequest.Success += skins => Schedule(() => displaySkins(skins));
             activeRequest.Failure += ex => Schedule(() =>
             {
-                statusText.Text = $"Ошибка: {ex.Message}";
+                statusText.Text = $"An exception has occurred during fetching: {ex.Message}";
                 statusText.FadeIn(200);
             });
 
@@ -124,7 +127,7 @@ namespace osu.Game.Overlays.SkinListing
 
             if (skins.Count == 0)
             {
-                statusText.Text = "Ничего не найдено :(";
+                statusText.Text = "...nope, nothing found.";
                 statusText.FadeIn(200);
                 return;
             }
@@ -163,7 +166,7 @@ namespace osu.Game.Overlays.SkinListing
             {
                 Title = "skins";
                 Description = "browse for new skins";
-                Icon = FontAwesome.Solid.Palette;
+                Icon = OsuIcon.SkinB;
             }
         }
     }

@@ -1,4 +1,6 @@
-// SkinUploadDialog.cs
+// Copyright (c) jvnkosu! team, MIT license
+// See the LICENCE file in the repository root for full license text
+
 using System.IO;
 using System.Threading.Tasks;
 using osu.Framework.Allocation;
@@ -16,6 +18,7 @@ using osu.Game.Skinning;
 using osuTK;
 using osuTK.Graphics;
 
+// to be revamped and used later
 namespace osu.Game.Overlays.SkinListing
 {
     public partial class SkinUploadDialog : FocusedOverlayContainer
@@ -58,7 +61,7 @@ namespace osu.Game.Overlays.SkinListing
                     {
                         new OsuSpriteText
                         {
-                            Text = "Загрузка нового скина",
+                            Text = "Uploading skin...",
                             Font = OsuFont.GetFont(size: 24, weight: FontWeight.Bold),
                         },
                         new FillFlowContainer
@@ -71,20 +74,20 @@ namespace osu.Game.Overlays.SkinListing
                             {
                                 new OsuSpriteText
                                 {
-                                    Text = "Описание (необязательно):",
+                                    Text = "Description:",
                                     Font = OsuFont.GetFont(size: 14)
                                 },
                                 descriptionBox = new OsuTextBox
                                 {
                                     RelativeSizeAxes = Axes.X,
                                     Height = 40,
-                                    PlaceholderText = "Введите описание скина..."
+                                    PlaceholderText = "Put your description here! (Optional)"
                                 }
                             }
                         },
                         fileLabel = new OsuSpriteText
                         {
-                            Text = "Файл не выбран",
+                            Text = "no file specified!",
                             Font = OsuFont.GetFont(size: 14),
                             Colour = colours.Red,
                         },
@@ -100,7 +103,7 @@ namespace osu.Game.Overlays.SkinListing
                                 {
                                     Width = 100,
                                     Height = 40,
-                                    Text = "Отмена",
+                                    Text = "Cancel",
                                     Action = Hide,
                                     BackgroundColour = colours.Gray3
                                 },
@@ -109,7 +112,7 @@ namespace osu.Game.Overlays.SkinListing
                                     RelativeSizeAxes = Axes.X,
                                     Width = 0.7f,
                                     Height = 40,
-                                    Text = "Загрузить на сервер",
+                                    Text = "Upload!",
                                     Action = upload,
                                     BackgroundColour = colours.Blue
                                 }

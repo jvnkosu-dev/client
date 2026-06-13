@@ -167,10 +167,15 @@ namespace osu.Game.Overlays.Toolbar
                                             new ToolbarWikiButton(),
                                             new ToolbarRankingsButton(),
                                             new ToolbarBeatmapListingButton(),
+                                            new ToolbarSkinListingButton(),
                                             new ToolbarChatButton(),
                                             new ToolbarSocialButton(),
                                             new ToolbarMusicButton(),
-                                            new ToolbarSkinListingButton(),
+                                            // re-added to avoid future conflicts?
+                                            //new ToolbarButton
+                                            //{
+                                            //    Icon = FontAwesome.Solid.search
+                                            //},
                                             userButton = new ToolbarUserButton(),
                                             new ToolbarClock(),
                                             new ToolbarNotificationButton(),

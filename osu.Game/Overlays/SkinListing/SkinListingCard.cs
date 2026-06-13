@@ -1,3 +1,6 @@
+// Copyright (c) jvnkosu! team, MIT license
+// See the LICENCE file in the repository root for full license text
+
 using System;
 using System.IO;
 using System.Net.Http;
@@ -105,14 +108,14 @@ namespace osu.Game.Overlays.SkinListing
                                         },
                                         new TruncatingSpriteText
                                         {
-                                            Text = $"создал {skin.Creator}",
+                                            Text = $"created by {skin.Creator}",
                                             Font = OsuFont.GetFont(size: 14, weight: FontWeight.SemiBold),
                                             Colour = colours.BlueLight,
                                             RelativeSizeAxes = Axes.X,
                                         },
                                         new TruncatingSpriteText
                                         {
-                                            Text = string.IsNullOrEmpty(skin.Description) ? "Нет описания..." : skin.Description,
+                                            Text = string.IsNullOrEmpty(skin.Description) ? "No description given!" : skin.Description,
                                             Font = OsuFont.GetFont(size: 12),
                                             Colour = colours.Gray8,
                                             RelativeSizeAxes = Axes.X,
@@ -120,7 +123,7 @@ namespace osu.Game.Overlays.SkinListing
                                         },
                                         downloadButton = new RoundedButton
                                         {
-                                            Text = "Скачать",
+                                            Text = "Download",
                                             RelativeSizeAxes = Axes.X,
                                             Height = 35,
                                             Action = () => skinDownloader.DownloadAndImport(skin)
