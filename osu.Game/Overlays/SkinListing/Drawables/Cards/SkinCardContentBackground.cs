@@ -36,7 +36,6 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                 cover = new Container
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Masking = true,
                     Children = new Drawable[]
                     {
                         new Box

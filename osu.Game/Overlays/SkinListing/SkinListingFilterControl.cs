@@ -13,6 +13,7 @@ using osu.Game.Beatmaps.Drawables.Cards;
 using osu.Game.Configuration;
 using osu.Game.Online.API;
 using osu.Game.Online.API.Requests;
+using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Skinning;
 using osuTK;
 using osuTK.Graphics;
@@ -36,6 +37,8 @@ namespace osu.Game.Overlays.SkinListing
         private ScheduledDelegate? queryChangedDebounce;
         private GetSkinsRequest? getSkinsRequest;
         private List<APIOnlineSkin> lastResults = new List<APIOnlineSkin>();
+
+        private IBindable<APIUser> apiUser = null!;
 
         [Resolved]
         private IAPIProvider api { get; set; } = null!;
@@ -113,6 +116,11 @@ namespace osu.Game.Overlays.SkinListing
 
         public void TakeFocus() => searchControl.TakeFocus();
 
+        /// <summary>
+        /// Re-fetch skins from the server using the current search criteria.
+        /// </summary>
+        public void Refresh() => Schedule(() => queueUpdateSearch());
+
         protected override void LoadComplete()
         {
             base.LoadComplete();
@@ -134,6 +142,19 @@ namespace osu.Game.Overlays.SkinListing
             sortControl.Current.BindValueChanged(_ => resortAndPublish());
             sortControl.SortDirection.BindValueChanged(_ => resortAndPublish());
 
+            apiUser = api.LocalUser.GetBoundCopy();
+            apiUser.BindValueChanged(_ =>
+            {
+                if (!api.IsLoggedIn)
+                {
+                    resetSearch();
+                    lastResults.Clear();
+                    return;
+                }
+
+                queueUpdateSearch();
+            });
+
             queueUpdateSearch();
         }
 
@@ -141,8 +162,12 @@ namespace osu.Game.Overlays.SkinListing
 
         private void queueUpdateSearch(bool queryTextChanged = false)
         {
-            SearchStarted?.Invoke();
             resetSearch();
+
+            if (!api.IsLoggedIn)
+                return;
+
+            SearchStarted?.Invoke();
 
             queryChangedDebounce = Scheduler.AddDelayed(performRequest, queryTextChanged ? 500 : 100);
         }

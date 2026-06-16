@@ -7,6 +7,7 @@ using osu.Framework.Platform;
 using osu.Game.Database;
 using osu.Game.Overlays;
 using osu.Game.Overlays.Notifications;
+using osu.Game.Overlays.SkinListing;
 using osu.Game.Skinning;
 
 namespace osu.Game.Overlays.SkinListing.Submission
@@ -26,6 +27,9 @@ namespace osu.Game.Overlays.SkinListing.Submission
 
         [Resolved]
         private INotificationOverlay notifications { get; set; } = null!;
+
+        [Resolved]
+        private SkinListingOverlay skinListing { get; set; } = null!;
 
         private bool uploadInProgress;
 
@@ -112,16 +116,6 @@ namespace osu.Game.Overlays.SkinListing.Submission
 
             string skinFilePath = settings.SkinFilePath;
 
-            try
-            {
-                SkinIniVersionHelper.EnsureSkinMetadataInOsk(skinFilePath, uploadName, author, version);
-            }
-            catch (Exception ex)
-            {
-                notifications.Post(new SimpleNotification { Text = $"Не удалось обновить skin.ini: {ex.Message}" });
-                return;
-            }
-
             var payload = new SkinUploadPayload
             {
                 FilePath = skinFilePath,
@@ -135,31 +129,75 @@ namespace osu.Game.Overlays.SkinListing.Submission
             uploadInProgress = true;
             NextButton!.Enabled.Value = false;
 
-            var notification = new ProgressNotification { Text = "Загрузка скина на сервер..." };
+            var notification = new ProgressNotification
+            {
+                Text = "Подготовка скина к выгрузке...",
+                State = ProgressNotificationState.Active,
+                IsImportant = true,
+            };
             notifications.Post(notification);
 
             Task.Run(async () =>
             {
-                bool success = await uploader.UploadSkinAsync(payload).ConfigureAwait(false);
-
-                Schedule(() =>
+                try
                 {
-                    uploadInProgress = false;
-                    NextButton!.Enabled.Value = true;
+                    await Task.Run(() => SkinIniVersionHelper.EnsureSkinMetadataInOsk(skinFilePath, uploadName, author, version), notification.CancellationToken)
+                        .ConfigureAwait(false);
 
-                    if (success)
+                    Schedule(() => notification.Text = "Загрузка скина на сервер...");
+
+                    bool success = await uploader.UploadSkinAsync(payload, (current, total) =>
                     {
-                        notification.State = ProgressNotificationState.Completed;
-                        notification.Text = "Скин успешно загружен!";
-                        base.ShowNextStep();
-                    }
-                    else
+                        if (total > 0)
+                            notification.Progress = (float)current / total;
+                    }, notification.CancellationToken).ConfigureAwait(false);
+
+                    Schedule(() => finishUpload(notification, success));
+                }
+                catch (OperationCanceledException)
+                {
+                    Schedule(() =>
                     {
-                        notification.State = ProgressNotificationState.Cancelled;
-                        notification.Text = "Ошибка при загрузке скина.";
-                    }
-                });
+                        if (notification.State == ProgressNotificationState.Active)
+                        {
+                            notification.State = ProgressNotificationState.Cancelled;
+                            notification.Text = "Выгрузка скина отменена.";
+                        }
+
+                        resetUploadState();
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Schedule(() => finishUpload(notification, false, ex.Message));
+                }
             });
+        }
+
+        private void finishUpload(ProgressNotification notification, bool success, string? errorMessage = null)
+        {
+            resetUploadState();
+
+            if (success)
+            {
+                notification.Progress = 1;
+                notification.CompletionText = "Skin uploaded successfully!";
+                notification.State = ProgressNotificationState.Completed;
+                skinListing.RefreshListing();
+                base.ShowNextStep();
+                return;
+            }
+
+            notification.State = ProgressNotificationState.Cancelled;
+            notification.Text = string.IsNullOrWhiteSpace(errorMessage)
+                ? "Ошибка при загрузке скина."
+                : $"Ошибка при загрузке скина: {errorMessage}";
+        }
+
+        private void resetUploadState()
+        {
+            uploadInProgress = false;
+            NextButton!.Enabled.Value = true;
         }
     }
 }

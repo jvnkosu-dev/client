@@ -18,8 +18,6 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
         public Bindable<bool> ShowDetails = new Bindable<bool>();
 
         private readonly IBindable<DownloadState> downloadState;
-        private readonly SkinDownloadButton downloadButton;
-        private readonly GoToSkinButton goToSkinButton;
 
         public float ButtonsExpandedWidth
         {
@@ -97,17 +95,20 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                         RelativeSizeAxes = Axes.Both,
                         Children = new BeatmapCardIconButton[]
                         {
-                            downloadButton = new SkinDownloadButton(skin)
+                            new SkinFavouriteButton
                             {
-                                Anchor = Anchor.Centre,
-                                Origin = Anchor.Centre,
+                                Anchor = Anchor.TopCentre,
+                                Origin = Anchor.TopCentre,
                                 RelativeSizeAxes = Axes.Both,
+                                Height = 0.5f,
                             },
-                            goToSkinButton = new GoToSkinButton(skin)
+                            new SkinDownloadButton(skin)
                             {
-                                Anchor = Anchor.Centre,
-                                Origin = Anchor.Centre,
+                                Anchor = Anchor.BottomCentre,
+                                Origin = Anchor.BottomCentre,
                                 RelativeSizeAxes = Axes.Both,
+                                Height = 0.5f,
+                                State = { BindTarget = downloadState },
                             },
                         }
                     }
@@ -135,21 +136,24 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                             },
                         },
                     }
-                }
+                },
             };
+
+            buttons.Add(new GoToSkinButton(skin)
+            {
+                Anchor = Anchor.BottomCentre,
+                Origin = Anchor.BottomCentre,
+                RelativeSizeAxes = Axes.Both,
+                Height = 0.5f,
+                State = { BindTarget = downloadState },
+            });
         }
 
         protected override void LoadComplete()
         {
             base.LoadComplete();
 
-            downloadState.BindValueChanged(e =>
-            {
-                downloadButton.State.Value = e.NewValue;
-                goToSkinButton.State.Value = e.NewValue;
-                updateState();
-            }, true);
-
+            downloadState.BindValueChanged(_ => updateState(), true);
             ShowDetails.BindValueChanged(_ => updateState(), true);
             FinishTransforms(true);
         }
@@ -163,6 +167,7 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
 
             mainArea.ResizeWidthTo(mainAreaWidth, BeatmapCard.TRANSITION_DURATION, Easing.OutQuint);
 
+            // By limiting the width we avoid this box showing up as an outline around the drawables that are on top of it.
             background.ResizeWidthTo(buttonAreaWidth + BeatmapCard.CORNER_RADIUS, BeatmapCard.TRANSITION_DURATION, Easing.OutQuint);
             if (ButtonsCollapsedWidth == 0)
                 background.FadeTo(ShowDetails.Value ? 1 : 0, BeatmapCard.TRANSITION_DURATION, Easing.OutQuint);

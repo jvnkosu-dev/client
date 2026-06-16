@@ -160,14 +160,12 @@ namespace osu.Game.Skinning
 
             try
             {
-                byte[] inputBytes = File.ReadAllBytes(oskPath);
-
                 using (var output = File.Create(tempPath))
                 using (var writer = new ZipWriter(output, new ZipWriterOptions(CompressionType.Deflate) { ArchiveEncoding = skin_archive_encoding }))
                 {
                     bool skinIniUpdated = false;
 
-                    using (var input = new MemoryStream(inputBytes))
+                    using (var input = File.OpenRead(oskPath))
                     using (var archive = ZipArchive.OpenArchive(input, new ReaderOptions { ArchiveEncoding = skin_archive_encoding }))
                     {
                         foreach (var entry in archive.Entries)

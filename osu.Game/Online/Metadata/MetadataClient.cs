@@ -35,7 +35,13 @@ namespace osu.Game.Online.Metadata
             base.LoadComplete();
 
             localFriends.BindTo(api.LocalUserState.Friends);
-            localFriends.BindCollectionChanged((_, _) => RefreshFriends().FireAndForget());
+            localFriends.BindCollectionChanged((_, _) =>
+            {
+                if (!api.IsLoggedIn)
+                    return;
+
+                RefreshFriends().FireAndForget();
+            });
         }
 
         #region Beatmap metadata updates
