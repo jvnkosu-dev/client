@@ -294,13 +294,12 @@ namespace osu.Game.Online.Metadata
             Logger.Log($@"{nameof(OnlineMetadataClient)} stopped watching multiplayer room with ID {id}", LoggingTarget.Network);
         }
 
-        public override async Task RefreshFriends()
+        public override Task RefreshFriends()
         {
-            if (connector?.IsConnected.Value != true)
-                throw new OperationCanceledException();
+            if (connector?.IsConnected.Value != true || connection?.State != HubConnectionState.Connected)
+                return Task.CompletedTask;
 
-            Debug.Assert(connection != null);
-            await connection.InvokeAsync(nameof(IMetadataServer.RefreshFriends)).ConfigureAwait(false);
+            return connection.InvokeAsync(nameof(IMetadataServer.RefreshFriends));
         }
 
         protected override void Dispose(bool isDisposing)

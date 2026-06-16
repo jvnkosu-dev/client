@@ -27,6 +27,8 @@ using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Cursor;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Localisation;
+using osu.Game.Online.API;
+using osu.Game.Overlays;
 using osu.Game.Overlays.Dialog;
 using osu.Game.Overlays.OSD;
 using osu.Game.Overlays.Settings;
@@ -67,6 +69,12 @@ namespace osu.Game.Overlays.SkinEditor
 
         [Resolved]
         private IPerformFromScreenRunner? performer { get; set; }
+
+        [Resolved]
+        private IAPIProvider api { get; set; } = null!;
+
+        [Resolved(canBeNull: true)]
+        private LoginOverlay? loginOverlay { get; set; }
 
         [Resolved]
         private SkinManager skins { get; set; } = null!;
@@ -302,6 +310,12 @@ namespace osu.Game.Overlays.SkinEditor
 
         private void submitSkin()
         {
+            if (api.State.Value != APIState.Online)
+            {
+                loginOverlay?.Show();
+                return;
+            }
+
             Save();
 
             var skin = currentSkin.Value;

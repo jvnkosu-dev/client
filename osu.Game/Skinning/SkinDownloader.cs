@@ -89,9 +89,10 @@ namespace osu.Game.Skinning
                 {
                     try
                     {
-                        await skinManager.Import(tempPath).ConfigureAwait(false);
+                        await skinManager.Import(new ImportTask(tempPath)).ConfigureAwait(false);
+
+                        notification.CompletionText = $"Скин {onlineSkin.Name} успешно установлен!";
                         notification.State = ProgressNotificationState.Completed;
-                        notification.Text = $"Скин {onlineSkin.Name} успешно установлен!";
                         Schedule(() =>
                         {
                             activeRequests.Remove(onlineSkin.OnlineID);

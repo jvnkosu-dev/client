@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Extensions.IEnumerableExtensions;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
@@ -14,7 +15,9 @@ using osu.Game.Beatmaps.Drawables.Cards;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
+using osu.Game.Online.API;
 using osu.Game.Online.API.Requests;
+using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Overlays.SkinListing.Drawables.Cards;
 using osuTK;
 using osuTK.Graphics;
@@ -23,13 +26,18 @@ namespace osu.Game.Overlays.SkinListing
 {
     public partial class SkinListingOverlay : OnlineOverlay<SkinListingHeader>
     {
+        [Resolved]
+        private IAPIProvider api { get; set; } = null!;
+
+        private IBindable<APIUser> apiUser = null!;
+
         private Container panelTarget = null!;
         private ReverseChildIDFillFlowContainer<SkinCard> foundContent = null!;
 
         private SkinListingFilterControl filterControl => Header.FilterControl;
 
         public SkinListingOverlay()
-            : base(OverlayColourScheme.Blue, requiresSignIn: false)
+            : base(OverlayColourScheme.Blue)
         {
         }
 
@@ -75,12 +83,35 @@ namespace osu.Game.Overlays.SkinListing
         {
             base.LoadComplete();
             filterControl.CardSize.BindValueChanged(_ => onCardSizeChanged());
+
+            apiUser = api.LocalUser.GetBoundCopy();
+            apiUser.BindValueChanged(_ => Schedule(onUserChanged));
+        }
+
+        private void onUserChanged()
+        {
+            cancellationToken?.Cancel();
+            Loading.Hide();
+
+            if (api.IsLoggedIn)
+                replaceResultsAreaContent(Empty());
+            else
+                panelTarget.Clear();
         }
 
         public void ShowWithSearch(string query)
         {
             filterControl.Search(query);
             Show();
+            ScrollFlow.ScrollToStart();
+        }
+
+        /// <summary>
+        /// Re-fetch skins from the server and update the displayed results.
+        /// </summary>
+        public void RefreshListing()
+        {
+            filterControl.Refresh();
             ScrollFlow.ScrollToStart();
         }
 
