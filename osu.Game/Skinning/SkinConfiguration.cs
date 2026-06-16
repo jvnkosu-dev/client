@@ -26,6 +26,11 @@ namespace osu.Game.Skinning
         /// </summary>
         public decimal? LegacyVersion { get; internal set; }
 
+        /// <summary>
+        /// User-facing skin release version (jvnko extension), stored as <c>SkinVersion</c> in skin.ini.
+        /// </summary>
+        public string SkinVersion { get; internal set; } = string.Empty;
+
         public enum LegacySetting
         {
             Version,

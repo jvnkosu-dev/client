@@ -27,6 +27,7 @@ using osu.Game.Localisation;
 using osu.Game.Online.API;
 using osu.Game.Online.Rooms;
 using osu.Game.Overlays;
+using osu.Game.Resources.Localisation.Web;
 using osuTK;
 using osuTK.Graphics;
 using osuTK.Input;
@@ -44,6 +45,7 @@ namespace osu.Game.Screens.Menu
         public Action? OnEditSkin;
         public Action<UIEvent>? OnExit;
         public Action? OnBeatmapListing;
+        public Action? OnSkinListing;
         public Action? OnSolo;
         public Action? OnSettings;
         public Action? OnMultiplayer;
@@ -89,6 +91,7 @@ namespace osu.Game.Screens.Menu
         private readonly List<MainMenuButton> buttonsPlay = new List<MainMenuButton>();
         private readonly List<MainMenuButton> buttonsMulti = new List<MainMenuButton>();
         private readonly List<MainMenuButton> buttonsEdit = new List<MainMenuButton>();
+        private readonly List<MainMenuButton> buttonsBrowse = new List<MainMenuButton>();
 
         private Sample? sampleBackToLogo;
         private Sample? sampleLogoSwoosh;
@@ -129,7 +132,7 @@ namespace osu.Game.Screens.Menu
                 {
                     Padding = new MarginPadding { Right = WEDGE_WIDTH },
                     VisibleStateMin = ButtonSystemState.Play,
-                    VisibleStateMax = ButtonSystemState.Edit,
+                    VisibleStateMax = ButtonSystemState.Browse,
                 },
                 logoTrackingContainer.LogoFacade.With(d => d.Scale = new Vector2(0.74f))
             });
@@ -175,12 +178,20 @@ namespace osu.Game.Screens.Menu
             buttonsEdit.Add(new MainMenuButton(SkinEditorStrings.SkinEditor.ToLower(), @"button-default-select", OsuIcon.SkinB, new Color4(220, 160, 0, 255), (_, _) => OnEditSkin?.Invoke(), Key.S));
             buttonsEdit.ForEach(b => b.VisibleState = ButtonSystemState.Edit);
 
+            buttonsBrowse.Add(new MainMenuButton(PageTitleStrings.MainBeatmapsetsControllerIndex.ToLower(), @"button-default-select", OsuIcon.Beatmap, new Color4(165, 204, 0, 255), (_, _) => OnBeatmapListing?.Invoke(), Key.B,
+                Key.D)
+            {
+                Padding = new MarginPadding { Left = WEDGE_WIDTH },
+            });
+            buttonsBrowse.Add(new MainMenuButton(@"skin listing", @"button-default-select", OsuIcon.SkinB, new Color4(140, 180, 0, 255), (_, _) => OnSkinListing?.Invoke(), Key.S));
+            buttonsBrowse.ForEach(b => b.VisibleState = ButtonSystemState.Browse);
+
             buttonsTopLevel.Add(new MainMenuButton(ButtonSystemStrings.Play, @"button-play-select", OsuIcon.Play, new Color4(102, 68, 204, 255), (_, _) => State = ButtonSystemState.Play, Key.P, Key.M, Key.L)
             {
                 Padding = new MarginPadding { Left = WEDGE_WIDTH },
             });
             buttonsTopLevel.Add(new MainMenuButton(ButtonSystemStrings.Edit, @"button-play-select", OsuIcon.EditCircle, new Color4(238, 170, 0, 255), (_, _) => State = ButtonSystemState.Edit, Key.E));
-            buttonsTopLevel.Add(new MainMenuButton(ButtonSystemStrings.Browse, @"button-default-select", OsuIcon.Beatmap, new Color4(165, 204, 0, 255), (_, _) => OnBeatmapListing?.Invoke(), Key.B,
+            buttonsTopLevel.Add(new MainMenuButton(ButtonSystemStrings.Browse, @"button-play-select", OsuIcon.Beatmap, new Color4(165, 204, 0, 255), (_, _) => State = ButtonSystemState.Browse, Key.B,
                 Key.D));
 
             if (host.CanExit)
@@ -189,6 +200,7 @@ namespace osu.Game.Screens.Menu
             buttonArea.AddRange(buttonsMulti);
             buttonArea.AddRange(buttonsPlay);
             buttonArea.AddRange(buttonsEdit);
+            buttonArea.AddRange(buttonsBrowse);
             buttonArea.AddRange(buttonsTopLevel);
 
             buttonArea.ForEach(b =>
@@ -367,6 +379,7 @@ namespace osu.Game.Screens.Menu
                     return true;
 
                 case ButtonSystemState.Edit:
+                case ButtonSystemState.Browse:
                 case ButtonSystemState.Play:
                 case ButtonSystemState.Multi:
                     StopSamplePlayback();
@@ -411,6 +424,10 @@ namespace osu.Game.Screens.Menu
 
                 case ButtonSystemState.Edit:
                     buttonsEdit.First().TriggerClick();
+                    return false;
+
+                case ButtonSystemState.Browse:
+                    buttonsBrowse.First().TriggerClick();
                     return false;
             }
         }
@@ -532,6 +549,7 @@ namespace osu.Game.Screens.Menu
         Play,
         Multi,
         Edit,
+        Browse,
         EnteringMode,
     }
 }

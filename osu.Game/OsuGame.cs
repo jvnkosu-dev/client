@@ -701,6 +701,24 @@
             }
 
             /// <summary>
+            /// Opens skin settings and selects the locally installed skin matching the given online entry.
+            /// </summary>
+            /// <param name="onlineSkin">The online skin entry to present.</param>
+            public void PresentSkinFromListing(APIOnlineSkin onlineSkin)
+            {
+                var installedSkin = dependencies.Get<SkinDownloader>().GetInstalledSkin(onlineSkin);
+
+                if (installedSkin == null)
+                {
+                    Logger.Log("The requested skin is not installed.", LoggingTarget.Information);
+                    return;
+                }
+
+                PresentSkin(installedSkin.Value);
+                dependencies.Get<SettingsOverlay>().ShowSkinSection();
+            }
+
+            /// <summary>
             /// Present a beatmap at song select immediately.
             /// The user should have already requested this interactively.
             /// </summary>

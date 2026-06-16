@@ -165,6 +165,7 @@ namespace osu.Game.Skinning
         {
             string nameLine = @$"Name: {item.Name}";
             string authorLine = @$"Author: {item.Creator}";
+            string skinVersion = createInstance(item).Configuration.SkinVersion?.Trim() ?? string.Empty;
 
             List<string> newLines = new List<string>
             {
@@ -173,6 +174,9 @@ namespace osu.Game.Skinning
                 nameLine,
                 authorLine,
             };
+
+            if (!string.IsNullOrWhiteSpace(skinVersion))
+                newLines.Add(@$"SkinVersion: {skinVersion}");
 
             var existingFile = item.GetFile(@"skin.ini");
 

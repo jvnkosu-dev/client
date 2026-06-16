@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -6,6 +7,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.IO.Network;
 using osu.Framework.Platform;
+using osu.Game.Database;
 using osu.Game.Online.API.Requests;
 using osu.Game.Overlays;
 using osu.Game.Overlays.Notifications;
@@ -14,6 +16,13 @@ namespace osu.Game.Skinning
 {
     public partial class SkinDownloader : Component
     {
+        public event Action<APIOnlineSkin, FileWebRequest>? DownloadBegan;
+        public event Action<APIOnlineSkin>? DownloadCompleted;
+        public event Action<APIOnlineSkin>? DownloadFailed;
+
+        private readonly Dictionary<int, FileWebRequest> activeRequests = new Dictionary<int, FileWebRequest>();
+        private readonly Dictionary<int, Live<SkinInfo>> installedOnlineSkins = new Dictionary<int, Live<SkinInfo>>();
+
         [Resolved]
         private SkinManager skinManager { get; set; } = null!;
 
@@ -23,13 +32,23 @@ namespace osu.Game.Skinning
         [Resolved]
         private INotificationOverlay notifications { get; set; } = null!;
 
-        public bool IsInstalled(APIOnlineSkin onlineSkin)
+        public bool IsInstalled(APIOnlineSkin onlineSkin) => GetInstalledSkin(onlineSkin) != null;
+
+        public Live<SkinInfo>? GetInstalledSkin(APIOnlineSkin onlineSkin)
         {
-            var installedSkins = skinManager.GetAllUsableSkins();
-            return installedSkins.Any(s =>
-                string.Equals(s.Value.Name, onlineSkin.Name, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(s.Value.Creator, onlineSkin.Creator, StringComparison.OrdinalIgnoreCase));
+            if (onlineSkin.OnlineID > 0 && installedOnlineSkins.TryGetValue(onlineSkin.OnlineID, out var cached))
+            {
+                if (skinManager.GetAllUsableSkins().Any(s => s.ID == cached.ID))
+                    return cached;
+
+                installedOnlineSkins.Remove(onlineSkin.OnlineID);
+            }
+
+            return skinManager.GetAllUsableSkins().FirstOrDefault(s => s.PerformRead(info => matchesOnlineSkin(info, onlineSkin)));
         }
+
+        public FileWebRequest? GetActiveRequest(APIOnlineSkin onlineSkin) =>
+            activeRequests.TryGetValue(onlineSkin.OnlineID, out var request) ? request : null;
 
         public void DownloadAndImport(APIOnlineSkin onlineSkin)
         {
@@ -42,6 +61,9 @@ namespace osu.Game.Skinning
                 return;
             }
 
+            if (activeRequests.ContainsKey(onlineSkin.OnlineID))
+                return;
+
             string tempFileName = $"{onlineSkin.OnlineID}_{Guid.NewGuid()}.osk";
             string tempPath = Path.Combine(storage.GetFullPath("temp"), tempFileName);
 
@@ -51,6 +73,7 @@ namespace osu.Game.Skinning
             };
 
             var request = new FileWebRequest(tempPath, onlineSkin.DownloadUrl);
+            activeRequests[onlineSkin.OnlineID] = request;
 
             request.DownloadProgress += (current, total) =>
             {
@@ -69,12 +92,27 @@ namespace osu.Game.Skinning
                         await skinManager.Import(tempPath).ConfigureAwait(false);
                         notification.State = ProgressNotificationState.Completed;
                         notification.Text = $"Скин {onlineSkin.Name} успешно установлен!";
-                        // В идеале тут нужно вызвать событие, чтобы карточки обновили свой статус "Установлено"
+                        Schedule(() =>
+                        {
+                            activeRequests.Remove(onlineSkin.OnlineID);
+
+                            var imported = GetInstalledSkin(onlineSkin);
+
+                            if (imported != null && onlineSkin.OnlineID > 0)
+                                installedOnlineSkins[onlineSkin.OnlineID] = imported;
+
+                            DownloadCompleted?.Invoke(onlineSkin);
+                        });
                     }
                     catch (Exception ex)
                     {
                         notification.State = ProgressNotificationState.Cancelled;
                         notification.Text = $"Ошибка импорта {onlineSkin.Name}: {ex.Message}";
+                        Schedule(() =>
+                        {
+                            activeRequests.Remove(onlineSkin.OnlineID);
+                            DownloadFailed?.Invoke(onlineSkin);
+                        });
                     }
                     finally
                     {
@@ -84,14 +122,37 @@ namespace osu.Game.Skinning
                 });
             };
 
-            request.Failed += (exception) =>
+            request.Failed += _ =>
             {
                 notification.State = ProgressNotificationState.Cancelled;
-                notification.Text = $"Ошибка скачивания {onlineSkin.Name}: {exception.Message}";
+                notification.Text = $"Ошибка скачивания {onlineSkin.Name}";
+                activeRequests.Remove(onlineSkin.OnlineID);
+                DownloadFailed?.Invoke(onlineSkin);
             };
 
             notifications.Post(notification);
+            DownloadBegan?.Invoke(onlineSkin, request);
             request.PerformAsync();
+        }
+
+        internal static bool matchesOnlineSkin(SkinInfo skinInfo, APIOnlineSkin onlineSkin)
+        {
+            if (!namesMatch(skinInfo.Name, onlineSkin.Name))
+                return false;
+
+            if (string.IsNullOrEmpty(onlineSkin.Creator))
+                return true;
+
+            return string.Equals(skinInfo.Creator, onlineSkin.Creator, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool namesMatch(string installedName, string onlineName)
+        {
+            if (string.Equals(installedName, onlineName, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // SkinImporter appends " [archiveName]" when the archive filename differs from the skin name.
+            return installedName.StartsWith(onlineName + " [", StringComparison.OrdinalIgnoreCase);
         }
     }
 }
