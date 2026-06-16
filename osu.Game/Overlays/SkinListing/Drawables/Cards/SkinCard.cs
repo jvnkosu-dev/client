@@ -18,11 +18,18 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
         public const float CORNER_RADIUS = BeatmapCard.CORNER_RADIUS;
         public const float WIDTH = BeatmapCard.WIDTH;
 
+        /// <summary>
+        /// Reserved height for the version line so metrics align across cards with and without a version.
+        /// </summary>
+        internal const float VERSION_LINE_HEIGHT = 14f;
+
         protected readonly BindableBool ExpandedBindable = new BindableBool();
 
         public IBindable<bool> Expanded => ExpandedBindable;
 
         public readonly APIOnlineSkin Skin;
+
+        protected readonly Bindable<SkinFavouriteState> FavouriteState;
 
         protected abstract Drawable IdleContent { get; }
         protected abstract Drawable DownloadInProgressContent { get; }
@@ -34,6 +41,7 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
         {
             ExpandedBindable.Disabled = !allowExpansion;
             Skin = skin;
+            FavouriteState = new Bindable<SkinFavouriteState>(new SkinFavouriteState(skin.HasFavourited, skin.FavouriteCount));
             DownloadTracker = new SkinDownloadTracker(skin);
         }
 

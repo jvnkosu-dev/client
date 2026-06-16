@@ -31,7 +31,18 @@ namespace osu.Game.Online.API.Requests
         [JsonProperty("version")]
         public string? Version { get; set; }
 
-        // Поле для будущей системы обновлений (на сервере пока нет, но в клиенте подготовим)
+        [JsonProperty("download_count")]
+        public int DownloadCount { get; set; }
+
+        [JsonProperty("favourite_count")]
+        public int FavouriteCount { get; set; }
+
+        [JsonProperty("has_favourited")]
+        public bool HasFavourited { get; set; }
+
+        [JsonProperty("created_at")]
+        public DateTimeOffset? CreatedAt { get; set; }
+
         [JsonProperty("last_updated")]
         public DateTimeOffset? LastUpdated { get; set; }
 

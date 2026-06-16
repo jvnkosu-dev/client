@@ -17,6 +17,8 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
     {
         public Bindable<bool> ShowDetails = new Bindable<bool>();
 
+        public Bindable<SkinFavouriteState> FavouriteState { get; } = new Bindable<SkinFavouriteState>();
+
         private readonly IBindable<DownloadState> downloadState;
 
         public float ButtonsExpandedWidth
@@ -95,8 +97,9 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                         RelativeSizeAxes = Axes.Both,
                         Children = new BeatmapCardIconButton[]
                         {
-                            new SkinFavouriteButton
+                            new SkinFavouriteButton(skin)
                             {
+                                Current = { BindTarget = FavouriteState },
                                 Anchor = Anchor.TopCentre,
                                 Origin = Anchor.TopCentre,
                                 RelativeSizeAxes = Axes.Both,

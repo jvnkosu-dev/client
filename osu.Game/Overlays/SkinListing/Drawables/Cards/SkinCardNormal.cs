@@ -2,12 +2,15 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Beatmaps.Drawables.Cards;
+using osu.Game.Beatmaps.Drawables.Cards.Statistics;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.API.Requests;
 using osu.Game.Overlays;
+using osu.Game.Overlays.SkinListing.Drawables.Cards.Statistics;
+using osu.Game.Skinning;
 using osuTK;
 
 namespace osu.Game.Overlays.SkinListing.Drawables.Cards
@@ -26,7 +29,11 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
         private SkinCollapsibleButtonContainer buttonContainer = null!;
 
         private FillFlowContainer idleBottomContent = null!;
+        private FillFlowContainer<BeatmapCardStatistic> statisticsContainer = null!;
         private BeatmapCardDownloadProgressBar downloadProgressBar = null!;
+        private TruncatingSpriteText versionText = null!;
+
+        private string displayVersion = string.Empty;
 
         [Resolved]
         private OverlayColourProvider colourProvider { get; set; } = null!;
@@ -43,6 +50,8 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
             Width = WIDTH;
             Height = HEIGHT;
 
+            displayVersion = SkinIniVersionHelper.GetDisplayVersion(Skin.Version, Skin.Name);
+
             Child = content.With(c =>
             {
                 c.MainContent = new Container
@@ -58,6 +67,7 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                         },
                         buttonContainer = new SkinCollapsibleButtonContainer(Skin, DownloadTracker.State)
                         {
+                            FavouriteState = { BindTarget = FavouriteState },
                             X = HEIGHT - CORNER_RADIUS,
                             Width = WIDTH - HEIGHT + CORNER_RADIUS,
                             ButtonsCollapsedWidth = CORNER_RADIUS,
@@ -83,6 +93,21 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                                             Colour = colourProvider.Light1,
                                             RelativeSizeAxes = Axes.X,
                                         },
+                                        new Container
+                                        {
+                                            RelativeSizeAxes = Axes.X,
+                                            Height = VERSION_LINE_HEIGHT,
+                                            Child = versionText = new TruncatingSpriteText
+                                            {
+                                                Anchor = Anchor.CentreLeft,
+                                                Origin = Anchor.CentreLeft,
+                                                RelativeSizeAxes = Axes.X,
+                                                Text = displayVersion,
+                                                Shadow = false,
+                                                Font = OsuFont.GetFont(size: 11f, weight: FontWeight.SemiBold),
+                                                Colour = colourProvider.Content2,
+                                            },
+                                        },
                                     }
                                 },
                                 new Container
@@ -99,7 +124,21 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                                             RelativeSizeAxes = Axes.X,
                                             AutoSizeAxes = Axes.Y,
                                             Direction = FillDirection.Vertical,
+                                            Spacing = new Vector2(0, 2),
                                             AlwaysPresent = true,
+                                            Children = new Drawable[]
+                                            {
+                                                statisticsContainer = new FillFlowContainer<BeatmapCardStatistic>
+                                                {
+                                                    RelativeSizeAxes = Axes.X,
+                                                    AutoSizeAxes = Axes.Y,
+                                                    Direction = FillDirection.Horizontal,
+                                                    Spacing = new Vector2(8, 0),
+                                                    Alpha = 0,
+                                                    AlwaysPresent = true,
+                                                    ChildrenEnumerable = SkinCardStatistics.CreateFor(Skin, FavouriteState),
+                                                },
+                                            }
                                         },
                                         downloadProgressBar = new BeatmapCardDownloadProgressBar
                                         {
@@ -121,6 +160,12 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
             });
         }
 
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+            versionText.Alpha = string.IsNullOrEmpty(displayVersion) ? 0 : 1;
+        }
+
         protected override void UpdateState()
         {
             base.UpdateState();
@@ -129,6 +174,7 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
 
             buttonContainer.ShowDetails.Value = showDetails;
             thumbnail.Dimmed.Value = showDetails;
+            statisticsContainer.FadeTo(showDetails ? 1 : 0, TRANSITION_DURATION, Easing.OutQuint);
         }
     }
 }
