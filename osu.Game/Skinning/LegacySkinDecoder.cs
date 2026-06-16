@@ -32,6 +32,10 @@ namespace osu.Game.Skinning
                                 skin.SkinInfo.Creator = pair.Value;
                                 return;
 
+                            case @"SkinVersion":
+                                skin.SkinVersion = pair.Value;
+                                return;
+
                             case @"Version":
                                 if (pair.Value == "latest")
                                     skin.LegacyVersion = SkinConfiguration.LATEST_VERSION;

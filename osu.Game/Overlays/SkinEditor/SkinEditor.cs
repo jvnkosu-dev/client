@@ -18,6 +18,7 @@ using osu.Framework.Input;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
 using osu.Framework.Localisation;
+using osu.Framework.Screens;
 using Web = osu.Game.Resources.Localisation.Web;
 using osu.Framework.Testing;
 using osu.Game.Database;
@@ -29,6 +30,8 @@ using osu.Game.Localisation;
 using osu.Game.Overlays.Dialog;
 using osu.Game.Overlays.OSD;
 using osu.Game.Overlays.Settings;
+using osu.Game.Overlays.SkinListing.Submission;
+using osu.Game.Screens;
 using osu.Game.Screens.Edit;
 using osu.Game.Screens.Edit.Components;
 using osu.Game.Screens.Edit.Components.Menus;
@@ -61,6 +64,9 @@ namespace osu.Game.Overlays.SkinEditor
 
         [Resolved]
         private OsuGame? game { get; set; }
+
+        [Resolved]
+        private IPerformFromScreenRunner? performer { get; set; }
 
         [Resolved]
         private SkinManager skins { get; set; } = null!;
@@ -166,6 +172,7 @@ namespace osu.Game.Overlays.SkinEditor
                                                     {
                                                         new EditorMenuItem(Web.CommonStrings.ButtonsSave, MenuItemType.Standard, () => Save()) { Hotkey = new Hotkey(PlatformAction.Save) },
                                                         new EditorMenuItem(CommonStrings.Export, MenuItemType.Standard, () => skins.ExportCurrentSkin()) { Action = { Disabled = !RuntimeInfo.IsDesktop } },
+                                                        new EditorMenuItem("Загрузить на сервер", MenuItemType.Standard, submitSkin) { Action = { Disabled = !RuntimeInfo.IsDesktop } },
                                                         new EditorMenuItem(EditorStrings.EditExternally, MenuItemType.Standard, () => _ = editExternally()) { Action = { Disabled = !RuntimeInfo.IsDesktop } },
                                                         new OsuMenuItemSpacer(),
                                                         new EditorMenuItem(CommonStrings.RevertToDefault, MenuItemType.Destructive, () => dialogOverlay?.Push(new RevertConfirmDialog(revert))),
@@ -291,6 +298,19 @@ namespace osu.Game.Overlays.SkinEditor
             var skin = currentSkin.Value.SkinInfo.PerformRead(s => s.Detach());
 
             externalEditOperation = await externalEditOverlay!.Begin(skin).ConfigureAwait(false);
+        }
+
+        private void submitSkin()
+        {
+            Save();
+
+            var skin = currentSkin.Value;
+
+            performer?.PerformFromScreen(screen =>
+            {
+                screen.Push(new SkinSubmissionScreen(skin));
+                skinEditorOverlay?.Hide();
+            });
         }
 
         public bool OnPressed(KeyBindingPressEvent<PlatformAction> e)

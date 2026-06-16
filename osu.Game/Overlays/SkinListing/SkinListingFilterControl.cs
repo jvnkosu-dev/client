@@ -1,32 +1,54 @@
-// SkinListingFilterControl.cs
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
+using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Game.Graphics.UserInterface;
-using osu.Game.Graphics.UserInterfaceV2;
+using osu.Framework.Graphics.Effects;
+using osu.Framework.Graphics.Shapes;
+using osu.Framework.Threading;
+using osu.Game.Beatmaps.Drawables.Cards;
+using osu.Game.Configuration;
+using osu.Game.Online.API;
+using osu.Game.Online.API.Requests;
+using osu.Game.Skinning;
 using osuTK;
+using osuTK.Graphics;
 
 namespace osu.Game.Overlays.SkinListing
 {
-    public partial class SkinListingFilterControl : Container
+    public partial class SkinListingFilterControl : CompositeDrawable
     {
-        public Action<string>? SearchStarted;
+        public Action<SearchResult>? SearchFinished;
+        public Action? SearchStarted;
         public Action? TypingStarted;
-        public Action? UploadRequested;
 
-        private OsuTextBox searchTextBox = null!;
+        public IBindable<BeatmapCardSize> CardSize => cardSize;
+
+        private readonly Bindable<BeatmapCardSize> cardSize = new Bindable<BeatmapCardSize>();
+
+        private readonly SkinListingSearchControl searchControl;
+        private readonly SkinListingSortTabControl sortControl;
+        private readonly Box sortControlBackground;
+
+        private ScheduledDelegate? queryChangedDebounce;
+        private GetSkinsRequest? getSkinsRequest;
+        private List<APIOnlineSkin> lastResults = new List<APIOnlineSkin>();
+
+        [Resolved]
+        private IAPIProvider api { get; set; } = null!;
+
+        [Resolved]
+        private OsuConfigManager config { get; set; } = null!;
 
         public SkinListingFilterControl()
         {
             RelativeSizeAxes = Axes.X;
             AutoSizeAxes = Axes.Y;
-        }
 
-        [BackgroundDependencyLoader]
-        private void load()
-        {
-            Child = new FillFlowContainer
+            InternalChild = new FillFlowContainer
             {
                 RelativeSizeAxes = Axes.X,
                 AutoSizeAxes = Axes.Y,
@@ -34,47 +56,180 @@ namespace osu.Game.Overlays.SkinListing
                 Spacing = new Vector2(0, 10),
                 Children = new Drawable[]
                 {
-                    new FillFlowContainer
+                    new Container
                     {
                         RelativeSizeAxes = Axes.X,
                         AutoSizeAxes = Axes.Y,
-                        Direction = FillDirection.Horizontal,
-                        Spacing = new Vector2(10, 0),
+                        Masking = true,
+                        EdgeEffect = new EdgeEffectParameters
+                        {
+                            Colour = Color4.Black.Opacity(0.25f),
+                            Type = EdgeEffectType.Shadow,
+                            Radius = 3,
+                            Offset = new Vector2(0f, 1f),
+                        },
+                        Child = searchControl = new SkinListingSearchControl
+                        {
+                            TypingStarted = () => TypingStarted?.Invoke()
+                        }
+                    },
+                    new Container
+                    {
+                        RelativeSizeAxes = Axes.X,
+                        Height = 40,
                         Children = new Drawable[]
                         {
-                            searchTextBox = new OsuTextBox
+                            sortControlBackground = new Box
                             {
-                                RelativeSizeAxes = Axes.X,
-                                Width = 0.8f,
-                                Height = 40,
-                                PlaceholderText = "Введите название скина или автора...",
-                                SelectAllOnFocus = true,
+                                RelativeSizeAxes = Axes.Both
                             },
-                            new RoundedButton
+                            sortControl = new SkinListingSortTabControl
                             {
-                                RelativeSizeAxes = Axes.X,
-                                Width = 0.2f,
-                                Height = 40,
-                                Text = "Загрузить скин",
-                                Action = () => UploadRequested?.Invoke()
+                                Anchor = Anchor.CentreLeft,
+                                Origin = Anchor.CentreLeft,
+                                Margin = new MarginPadding { Left = 20 }
+                            },
+                            new SkinListingCardSizeTabControl
+                            {
+                                Anchor = Anchor.CentreRight,
+                                Origin = Anchor.CentreRight,
+                                Margin = new MarginPadding { Right = 20 },
+                                Current = { BindTarget = cardSize }
                             }
                         }
                     }
                 }
             };
+        }
 
-            searchTextBox.Current.ValueChanged += _ => TypingStarted?.Invoke();
-
-            searchTextBox.OnCommit += (_, _) =>
-            {
-                SearchStarted?.Invoke(searchTextBox.Text);
-            };
+        [BackgroundDependencyLoader]
+        private void load(OverlayColourProvider colourProvider)
+        {
+            sortControlBackground.Colour = colourProvider.Background4;
         }
 
         public void Search(string query)
+            => Schedule(() => searchControl.Query.Value = query);
+
+        public void TakeFocus() => searchControl.TakeFocus();
+
+        protected override void LoadComplete()
         {
-            searchTextBox.Text = query;
-            SearchStarted?.Invoke(query);
+            base.LoadComplete();
+
+            config.BindWith(OsuSetting.SkinListingCardSize, cardSize);
+
+            cardSize.BindValueChanged(v =>
+            {
+                if (v.NewValue != BeatmapCardSize.Normal && v.NewValue != BeatmapCardSize.Extra)
+                    cardSize.Value = BeatmapCardSize.Normal;
+            }, true);
+
+            searchControl.Query.BindValueChanged(_ =>
+            {
+                resetSortControl();
+                queueUpdateSearch(true);
+            });
+
+            sortControl.Current.BindValueChanged(_ => resortAndPublish());
+            sortControl.SortDirection.BindValueChanged(_ => resortAndPublish());
+
+            queueUpdateSearch();
+        }
+
+        private void resetSortControl() => sortControl.Reset(!string.IsNullOrEmpty(searchControl.Query.Value));
+
+        private void queueUpdateSearch(bool queryTextChanged = false)
+        {
+            SearchStarted?.Invoke();
+            resetSearch();
+
+            queryChangedDebounce = Scheduler.AddDelayed(performRequest, queryTextChanged ? 500 : 100);
+        }
+
+        private void performRequest()
+        {
+            getSkinsRequest?.Cancel();
+            getSkinsRequest = new GetSkinsRequest(searchControl.Query.Value);
+
+            getSkinsRequest.Success += skins =>
+            {
+                lastResults = sortSkins(skins);
+                getSkinsRequest = null;
+                SearchFinished?.Invoke(SearchResult.ResultsReturned(lastResults));
+            };
+
+            getSkinsRequest.Failure += _ =>
+            {
+                getSkinsRequest = null;
+                SearchFinished?.Invoke(SearchResult.Failed());
+            };
+
+            api.PerformAsync(getSkinsRequest);
+        }
+
+        private void resortAndPublish()
+        {
+            if (!lastResults.Any())
+                return;
+
+            SearchStarted?.Invoke();
+            lastResults = sortSkins(lastResults);
+            SearchFinished?.Invoke(SearchResult.ResultsReturned(lastResults));
+        }
+
+        private List<APIOnlineSkin> sortSkins(List<APIOnlineSkin> skins)
+        {
+            IEnumerable<APIOnlineSkin> ordered = sortControl.Current.Value switch
+            {
+                SortCriteria.Name => skins.OrderBy(s => s.Name, StringComparer.OrdinalIgnoreCase),
+                SortCriteria.Creator => skins.OrderBy(s => s.Creator, StringComparer.OrdinalIgnoreCase),
+                SortCriteria.Updated => skins.OrderBy(s => s.LastUpdated ?? DateTimeOffset.MinValue),
+                SortCriteria.Relevance => skins,
+                _ => skins
+            };
+
+            if (sortControl.SortDirection.Value == SortDirection.Ascending)
+                ordered = ordered.Reverse();
+
+            return ordered.ToList();
+        }
+
+        private void resetSearch()
+        {
+            getSkinsRequest?.Cancel();
+            getSkinsRequest = null;
+            queryChangedDebounce?.Cancel();
+        }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            resetSearch();
+            base.Dispose(isDisposing);
+        }
+
+        public enum SearchResultType
+        {
+            ResultsReturned,
+            Failed,
+        }
+
+        public struct SearchResult
+        {
+            public SearchResultType Type { get; private set; }
+            public List<APIOnlineSkin> Results { get; private set; }
+
+            public static SearchResult ResultsReturned(List<APIOnlineSkin> results) => new SearchResult
+            {
+                Type = SearchResultType.ResultsReturned,
+                Results = results,
+            };
+
+            public static SearchResult Failed() => new SearchResult
+            {
+                Type = SearchResultType.Failed,
+                Results = new List<APIOnlineSkin>(),
+            };
         }
     }
 }

@@ -13,6 +13,7 @@ using osu.Framework.Audio.Sample;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
+using osu.Framework.Logging;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.IO.Stores;
 using osu.Game.Audio;
@@ -67,12 +68,19 @@ namespace osu.Game.Skinning
 
             stream.Seek(0, SeekOrigin.Begin);
 
-            using (LineBufferedReader reader = new LineBufferedReader(stream))
+            try
             {
-                var maniaList = new LegacyManiaSkinDecoder().Decode(reader);
+                using (LineBufferedReader reader = new LineBufferedReader(stream))
+                {
+                    var maniaList = new LegacyManiaSkinDecoder().Decode(reader);
 
-                foreach (var config in maniaList)
-                    maniaConfigurations[config.Keys] = config;
+                    foreach (var config in maniaList)
+                        maniaConfigurations[config.Keys] = config;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Failed to load mania skin configuration.");
             }
         }
 

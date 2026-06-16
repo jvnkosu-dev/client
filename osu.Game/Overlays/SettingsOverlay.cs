@@ -92,6 +92,20 @@ namespace osu.Game.Overlays
             SectionsContainer.ScrollTo(SectionsContainer.ChildrenOfType<T>().Single());
         }
 
+        public void ShowSkinSection()
+        {
+            SearchTextBox.Current.SetDefault();
+            Show();
+
+            if (!SectionsContainer.Any())
+            {
+                Scheduler.Add(ShowSkinSection);
+                return;
+            }
+
+            SectionsContainer.ScrollTo(SectionsContainer.ChildrenOfType<SkinSection>().Single());
+        }
+
         private T createSubPanel<T>(T subPanel)
             where T : SettingsSubPanel
         {
