@@ -4,9 +4,10 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using osu.Framework.Allocation;
+using Newtonsoft.Json.Linq;
 using osu.Framework.Graphics;
 using osu.Framework.IO.Network;
+using osu.Framework.Logging;
 using osu.Game.Online.API;
 using osu.Game.Overlays.SkinListing.Submission;
 
@@ -14,15 +15,48 @@ namespace osu.Game.Skinning
 {
     public partial class SkinUploader : Component
     {
-        private readonly string uploadUrl = "https://osu.jvnko.boats/api/skins/upload";
+        private const string skins_api_base = "https://osu.jvnko.boats/api/skins";
+        private const string upload_url = skins_api_base + "/upload";
 
-        public async Task<bool> UploadSkinAsync(SkinUploadPayload payload, Action<long, long>? onProgress = null, CancellationToken cancellationToken = default)
+        public Task<SkinUploadResult> UploadSkinAsync(
+            SkinUploadPayload payload,
+            string? accessToken,
+            Action<long, long>? onProgress = null,
+            CancellationToken cancellationToken = default)
+            => submitSkinAsync(payload, accessToken, HttpMethod.Post, upload_url, onProgress, cancellationToken);
+
+        public Task<SkinUploadResult> UpdateSkinAsync(
+            SkinUploadPayload payload,
+            int skinId,
+            string? accessToken,
+            Action<long, long>? onProgress = null,
+            CancellationToken cancellationToken = default)
+            => submitSkinAsync(payload, accessToken, HttpMethod.Put, $"{skins_api_base}/{skinId}", onProgress, cancellationToken);
+
+        public Task<SkinUploadResult> SubmitSkinAsync(
+            SkinUploadPayload payload,
+            string? accessToken,
+            Action<long, long>? onProgress = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (payload.OnlineSkinId is int skinId && skinId > 0)
+                return UpdateSkinAsync(payload, skinId, accessToken, onProgress, cancellationToken);
+
+            return UploadSkinAsync(payload, accessToken, onProgress, cancellationToken);
+        }
+
+        private async Task<SkinUploadResult> submitSkinAsync(
+            SkinUploadPayload payload,
+            string? accessToken,
+            HttpMethod method,
+            string url,
+            Action<long, long>? onProgress,
+            CancellationToken cancellationToken)
         {
             if (!File.Exists(payload.FilePath))
-            {
-                System.Diagnostics.Debug.WriteLine("[SkinUploader] Файл скина не найден!");
-                return false;
-            }
+                return SkinUploadResult.Failed("Skin file not found.");
+
+            OsuWebRequest? request = null;
 
             try
             {
@@ -42,11 +76,14 @@ namespace osu.Game.Skinning
                     previewExtension = Path.GetExtension(payload.PreviewFilePath);
                 }
 
-                var request = new OsuWebRequest(uploadUrl)
+                request = new OsuWebRequest(url)
                 {
-                    Method = HttpMethod.Post,
+                    Method = method,
                     Timeout = 600_000,
                 };
+
+                if (!string.IsNullOrEmpty(accessToken))
+                    request.AddHeader(@"Authorization", $@"Bearer {accessToken}");
 
                 if (previewBytes != null)
                     request.AddFile("thumbnail", previewBytes, $"thumbnail{previewExtension ?? ".jpg"}");
@@ -56,11 +93,22 @@ namespace osu.Game.Skinning
                 request.AddParameter("creator", payload.Author, RequestParameterType.Form);
                 request.AddParameter("description", payload.Description, RequestParameterType.Form);
 
+                if (!string.IsNullOrWhiteSpace(payload.Tags))
+                    request.AddParameter("tags", payload.Tags, RequestParameterType.Form);
+
+                if (!string.IsNullOrWhiteSpace(payload.Version))
+                    request.AddParameter("version", payload.Version, RequestParameterType.Form);
+
+                if (payload.ModifiedModes.Count > 0)
+                    request.AddParameter("modified_modes", SkinModifiedModesHelper.FormatForUpload(payload.ModifiedModes), RequestParameterType.Form);
+
+                if (!string.IsNullOrWhiteSpace(payload.EngineType))
+                    request.AddParameter("engine_type", payload.EngineType, RequestParameterType.Form);
+
                 if (onProgress != null)
                 {
                     request.UploadProgress += (current, total) =>
                     {
-                        // Reserve the first 15% of the bar for reading files from disk.
                         const float upload_portion = 0.85f;
                         const float upload_offset = 0.15f;
 
@@ -69,23 +117,77 @@ namespace osu.Game.Skinning
                     };
                 }
 
-                await request.PerformAsync().ConfigureAwait(false);
+                await request.PerformAsync(cancellationToken).ConfigureAwait(false);
 
-                var status = request.ResponseStatusCode;
+                var status = request.ResponseStatusCode ?? HttpStatusCode.InternalServerError;
                 bool success = status >= HttpStatusCode.OK && status < HttpStatusCode.MultipleChoices;
 
                 if (success)
-                    System.Diagnostics.Debug.WriteLine("[SkinUploader] Скин успешно загружен!");
-                else
-                    System.Diagnostics.Debug.WriteLine($"[SkinUploader] Ошибка сервера: {status}");
+                {
+                    int? assignedId = method == HttpMethod.Put
+                        ? payload.OnlineSkinId
+                        : tryParseUploadedSkinId(request);
 
-                return success;
+                    Logger.Log($"Skin {(method == HttpMethod.Put ? "update" : "upload")} completed successfully.", LoggingTarget.Network);
+                    return SkinUploadResult.Completed(assignedId);
+                }
+
+                string error = formatServerError(request, status);
+                Logger.Log($"Skin {(method == HttpMethod.Put ? "update" : "upload")} failed: {error}", LoggingTarget.Network, LogLevel.Important);
+                return SkinUploadResult.Failed(error);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[SkinUploader] Критическая ошибка: {ex.Message}");
-                return false;
+                Logger.Error(ex, $"Skin {(method == HttpMethod.Put ? "update" : "upload")} failed with an exception.");
+
+                if (request?.ResponseStatusCode is HttpStatusCode status)
+                    return SkinUploadResult.Failed(formatServerError(request, status));
+
+                string message = string.IsNullOrWhiteSpace(ex.Message) ? ex.GetType().Name : ex.Message;
+                return SkinUploadResult.Failed(message);
             }
+        }
+
+        private static int? tryParseUploadedSkinId(OsuWebRequest request)
+        {
+            string? body = request.GetResponseString()?.Trim();
+
+            if (string.IsNullOrWhiteSpace(body))
+                return null;
+
+            try
+            {
+                var token = JObject.Parse(body)["id"];
+
+                if (token != null && int.TryParse(token.ToString(), out int id) && id > 0)
+                    return id;
+            }
+            catch
+            {
+                // Response may be a legacy plain-text success message.
+            }
+
+            return null;
+        }
+
+        private static string formatServerError(OsuWebRequest request, HttpStatusCode status)
+        {
+            string body = request.GetResponseString()?.Trim() ?? string.Empty;
+
+            if (!string.IsNullOrWhiteSpace(body))
+            {
+                const int max_length = 300;
+                if (body.Length > max_length)
+                    body = body[..max_length] + "...";
+
+                return $"HTTP {(int)status}: {body}";
+            }
+
+            return $"HTTP {(int)status} {status}";
         }
 
         private static async Task<byte[]> readFileWithProgressAsync(string path, long totalBytes, Action<long, long>? onProgress, CancellationToken cancellationToken)
@@ -151,7 +253,6 @@ namespace osu.Game.Skinning
             if (onProgress == null || totalBytes <= 0)
                 return;
 
-            // Reading from disk fills up to 15% of the progress bar.
             onProgress((long)(bytesRead / (float)totalBytes * 150), 1000);
         }
     }

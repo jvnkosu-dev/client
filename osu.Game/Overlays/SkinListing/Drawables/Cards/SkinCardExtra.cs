@@ -1,4 +1,3 @@
-using System;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -22,35 +21,29 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
         protected override Drawable DownloadInProgressContent => downloadProgressBar;
 
         private const float height = 112;
+        private const float bottom_content_spacing = 2f;
 
         [Cached]
         private readonly BeatmapCardContent content;
 
-        protected override BeatmapCardContent? ExpansionContent => content;
-
         private SkinCardThumbnail thumbnail = null!;
         private SkinCollapsibleButtonContainer buttonContainer = null!;
-        private FillFlowContainer contentFlow = null!;
-        private FillFlowContainer headerFlow = null!;
-        private FillFlowContainer<BeatmapCardStatistic> statisticsContainer = null!;
-        private SkinCardDescription description = null!;
 
+        private GridContainer statisticsContainer = null!;
         private FillFlowContainer idleBottomContent = null!;
         private BeatmapCardDownloadProgressBar downloadProgressBar = null!;
         private TruncatingSpriteText versionText = null!;
 
         private string displayVersion = string.Empty;
-        private bool descriptionOverflows;
 
         [Resolved]
         private OverlayColourProvider colourProvider { get; set; } = null!;
-
-        private float lastAvailableHeight = -1;
 
         public SkinCardExtra(APIOnlineSkin skin, bool allowExpansion = true)
             : base(skin, false)
         {
             content = new BeatmapCardContent(height);
+            Action = DefaultAction;
         }
 
         [BackgroundDependencyLoader]
@@ -83,61 +76,39 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                             ButtonsExpandedWidth = 24,
                             Children = new Drawable[]
                             {
-                                contentFlow = new FillFlowContainer
+                                new FillFlowContainer
                                 {
                                     RelativeSizeAxes = Axes.Both,
                                     Direction = FillDirection.Vertical,
-                                    Spacing = new Vector2(0, 2),
                                     Children = new Drawable[]
                                     {
-                                        headerFlow = new FillFlowContainer
+                                        new TruncatingSpriteText
+                                        {
+                                            Text = SkinIniVersionHelper.GetDisplayName(Skin.Name),
+                                            Font = OsuFont.Default.With(size: 18f, weight: FontWeight.SemiBold),
+                                            RelativeSizeAxes = Axes.X,
+                                        },
+                                        new TruncatingSpriteText
+                                        {
+                                            Text = $"by {Skin.Creator}",
+                                            Font = OsuFont.Default.With(size: 14f, weight: FontWeight.SemiBold),
+                                            Colour = colourProvider.Light1,
+                                            RelativeSizeAxes = Axes.X,
+                                        },
+                                        new Container
                                         {
                                             RelativeSizeAxes = Axes.X,
-                                            AutoSizeAxes = Axes.Y,
-                                            Direction = FillDirection.Vertical,
-                                            Children = new Drawable[]
+                                            Height = VERSION_LINE_HEIGHT,
+                                            Child = versionText = new TruncatingSpriteText
                                             {
-                                                new TruncatingSpriteText
-                                                {
-                                                    Text = Skin.Name,
-                                                    Font = OsuFont.Default.With(size: 18f, weight: FontWeight.SemiBold),
-                                                    RelativeSizeAxes = Axes.X,
-                                                },
-                                                new TruncatingSpriteText
-                                                {
-                                                    Text = $"создал {Skin.Creator}",
-                                                    Font = OsuFont.Default.With(size: 14f, weight: FontWeight.SemiBold),
-                                                    Colour = colourProvider.Light1,
-                                                    RelativeSizeAxes = Axes.X,
-                                                },
-                                                new Container
-                                                {
-                                                    RelativeSizeAxes = Axes.X,
-                                                    Height = VERSION_LINE_HEIGHT,
-                                                    Child = versionText = new TruncatingSpriteText
-                                                    {
-                                                        Anchor = Anchor.CentreLeft,
-                                                        Origin = Anchor.CentreLeft,
-                                                        RelativeSizeAxes = Axes.X,
-                                                        Text = displayVersion,
-                                                        Shadow = false,
-                                                        Font = OsuFont.GetFont(size: 11f, weight: FontWeight.SemiBold),
-                                                        Colour = colourProvider.Content2,
-                                                    },
-                                                },
-                                            }
-                                        },
-                                        statisticsContainer = new FillFlowContainer<BeatmapCardStatistic>
-                                        {
-                                            RelativeSizeAxes = Axes.X,
-                                            AutoSizeAxes = Axes.Y,
-                                            Direction = FillDirection.Horizontal,
-                                            Spacing = new Vector2(8, 0),
-                                            ChildrenEnumerable = SkinCardStatistics.CreateFor(Skin, FavouriteState),
-                                        },
-                                        description = new SkinCardDescription(Skin.Description)
-                                        {
-                                            RelativeSizeAxes = Axes.X,
+                                                Anchor = Anchor.CentreLeft,
+                                                Origin = Anchor.CentreLeft,
+                                                RelativeSizeAxes = Axes.X,
+                                                Text = displayVersion,
+                                                Shadow = false,
+                                                Font = OsuFont.GetFont(size: 11f, weight: FontWeight.SemiBold),
+                                                Colour = colourProvider.Content2,
+                                            },
                                         },
                                     }
                                 },
@@ -154,7 +125,33 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                                         {
                                             RelativeSizeAxes = Axes.X,
                                             AutoSizeAxes = Axes.Y,
+                                            Direction = FillDirection.Vertical,
+                                            Spacing = new Vector2(0, bottom_content_spacing),
                                             AlwaysPresent = true,
+                                            Children = new Drawable[]
+                                            {
+                                                new SkinCardUploaderLine(Skin),
+                                                statisticsContainer = new GridContainer
+                                                {
+                                                    RelativeSizeAxes = Axes.X,
+                                                    AutoSizeAxes = Axes.Y,
+                                                    RowDimensions = new[]
+                                                    {
+                                                        new Dimension(GridSizeMode.AutoSize),
+                                                    },
+                                                    ColumnDimensions = new[]
+                                                    {
+                                                        new Dimension(GridSizeMode.AutoSize),
+                                                        new Dimension(GridSizeMode.AutoSize),
+                                                        new Dimension()
+                                                    },
+                                                    Content = new[]
+                                                    {
+                                                        new Drawable[3],
+                                                    }
+                                                },
+                                                new SkinCardModifiedModesDisplay(Skin),
+                                            }
                                         },
                                         downloadProgressBar = new BeatmapCardDownloadProgressBar
                                         {
@@ -171,52 +168,33 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                         }
                     }
                 };
-                c.ExpandedContent = new Container
-                {
-                    RelativeSizeAxes = Axes.X,
-                    AutoSizeAxes = Axes.Y,
-                    Padding = new MarginPadding { Horizontal = 8, Vertical = 10 },
-                    Child = SkinCardDescription.CreateExpandedLabel(Skin.Description, colourProvider),
-                };
+                c.ExpandedContent = new Container();
                 c.Expanded.BindTarget = Expanded;
             });
+
+            createStatistics();
         }
 
         protected override void LoadComplete()
         {
             base.LoadComplete();
-
             versionText.Alpha = string.IsNullOrEmpty(displayVersion) ? 0 : 1;
-
-            description.OverflowChanged += onDescriptionOverflowChanged;
-            Schedule(updateDescriptionBounds);
         }
 
-        protected override void Update()
+        private void createStatistics()
         {
-            base.Update();
-            updateDescriptionBounds();
-        }
+            BeatmapCardStatistic withMargin(BeatmapCardStatistic original)
+            {
+                original.Margin = new MarginPadding { Right = 8 };
+                return original;
+            }
 
-        private void updateDescriptionBounds()
-        {
-            if (!IsLoaded)
-                return;
+            statisticsContainer.Content[0][0] = withMargin(new SkinDownloadCountStatistic(Skin));
+            statisticsContainer.Content[0][1] = withMargin(new SkinFavouritesStatistic(Skin) { Current = { BindTarget = FavouriteState } });
 
-            float availableHeight = contentFlow.DrawHeight - headerFlow.DrawHeight - statisticsContainer.DrawHeight - contentFlow.Spacing.Y * 2;
-            availableHeight = Math.Max(0, availableHeight);
-
-            if (Math.Abs(lastAvailableHeight - availableHeight) < 0.5f)
-                return;
-
-            lastAvailableHeight = availableHeight;
-            description.MaxHeight = availableHeight;
-        }
-
-        private void onDescriptionOverflowChanged(bool overflows)
-        {
-            descriptionOverflows = overflows;
-            SetExpansionEnabled(descriptionOverflows, content);
+            var dateStatistic = SkinCardDateStatistic.CreateFor(Skin);
+            if (dateStatistic != null)
+                statisticsContainer.Content[0][2] = withMargin(dateStatistic);
         }
 
         protected override void UpdateState()
@@ -227,7 +205,6 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
 
             buttonContainer.ShowDetails.Value = showDetails;
             thumbnail.Dimmed.Value = showDetails;
-            description.Alpha = Expanded.Value && descriptionOverflows ? 0 : 1;
         }
     }
 }

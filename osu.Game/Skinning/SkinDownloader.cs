@@ -56,7 +56,7 @@ namespace osu.Game.Skinning
             {
                 notifications.Post(new SimpleNotification
                 {
-                    Text = $"Скин '{onlineSkin.Name}' уже установлен!"
+                    Text = $"Skin '{onlineSkin.Name}' is already installed!"
                 });
                 return;
             }
@@ -69,7 +69,7 @@ namespace osu.Game.Skinning
 
             var notification = new ProgressNotification
             {
-                Text = $"Скачивание скина {onlineSkin.Name}...",
+                Text = $"Downloading skin {onlineSkin.Name}...",
             };
 
             var request = new FileWebRequest(tempPath, onlineSkin.DownloadUrl);
@@ -83,7 +83,7 @@ namespace osu.Game.Skinning
             request.Finished += () =>
             {
                 notification.Progress = 1;
-                notification.Text = $"Импорт скина {onlineSkin.Name}...";
+                notification.Text = $"Importing skin {onlineSkin.Name}...";
 
                 Task.Run(async () =>
                 {
@@ -91,7 +91,7 @@ namespace osu.Game.Skinning
                     {
                         await skinManager.Import(new ImportTask(tempPath)).ConfigureAwait(false);
 
-                        notification.CompletionText = $"Скин {onlineSkin.Name} успешно установлен!";
+                        notification.CompletionText = $"Skin {onlineSkin.Name} installed successfully!";
                         notification.State = ProgressNotificationState.Completed;
                         Schedule(() =>
                         {
@@ -100,7 +100,10 @@ namespace osu.Game.Skinning
                             var imported = GetInstalledSkin(onlineSkin);
 
                             if (imported != null && onlineSkin.OnlineID > 0)
+                            {
                                 installedOnlineSkins[onlineSkin.OnlineID] = imported;
+                                skinManager.PersistOnlineSkinId(imported, onlineSkin.OnlineID);
+                            }
 
                             DownloadCompleted?.Invoke(onlineSkin);
                         });
@@ -108,7 +111,7 @@ namespace osu.Game.Skinning
                     catch (Exception ex)
                     {
                         notification.State = ProgressNotificationState.Cancelled;
-                        notification.Text = $"Ошибка импорта {onlineSkin.Name}: {ex.Message}";
+                        notification.Text = $"Failed to import {onlineSkin.Name}: {ex.Message}";
                         Schedule(() =>
                         {
                             activeRequests.Remove(onlineSkin.OnlineID);
@@ -126,7 +129,7 @@ namespace osu.Game.Skinning
             request.Failed += _ =>
             {
                 notification.State = ProgressNotificationState.Cancelled;
-                notification.Text = $"Ошибка скачивания {onlineSkin.Name}";
+                notification.Text = $"Failed to download {onlineSkin.Name}";
                 activeRequests.Remove(onlineSkin.OnlineID);
                 DownloadFailed?.Invoke(onlineSkin);
             };

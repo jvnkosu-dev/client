@@ -53,9 +53,11 @@ namespace osu.Game.Overlays.SkinListing.Submission
         {
             base.OnEntering(e);
 
-            overlay.PopulateMetadataFromSkin(skin);
-            overlay.Show();
+            SkinMetadataHelper.ConfigureFromSkin(settings, skin);
+            overlay.SetSubmissionSkin(skin);
+            overlay.RefreshHeaderCopy();
 
+            overlay.Show();
             Task.Run(async () =>
             {
                 try
@@ -68,7 +70,7 @@ namespace osu.Game.Overlays.SkinListing.Submission
                     {
                         notifications.Post(new SimpleNotification
                         {
-                            Text = $"Не удалось подготовить скин: {ex.Message}",
+                            Text = $"Failed to prepare skin: {ex.Message}",
                         });
                         overlay.Hide();
                     });

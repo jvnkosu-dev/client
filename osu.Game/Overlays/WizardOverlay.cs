@@ -216,6 +216,7 @@ namespace osu.Game.Overlays
                 {
                     loadingShowDelegate?.Cancel();
                     loading.Hide();
+                    updateButtons();
                 };
 
                 stack.Push(nextScreen);

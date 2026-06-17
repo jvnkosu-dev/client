@@ -36,6 +36,20 @@ namespace osu.Game.Skinning
                                 skin.SkinVersion = pair.Value;
                                 return;
 
+                            case @"SkinType":
+                                skin.SkinType = pair.Value;
+                                return;
+
+                            case @"ModifiedModes":
+                                skin.ModifiedModes = pair.Value;
+                                return;
+
+                            case @"OnlineSkinID":
+                                if (int.TryParse(pair.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int onlineSkinId) && onlineSkinId > 0)
+                                    skin.OnlineSkinId = onlineSkinId;
+
+                                return;
+
                             case @"Version":
                                 if (pair.Value == "latest")
                                     skin.LegacyVersion = SkinConfiguration.LATEST_VERSION;

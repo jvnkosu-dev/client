@@ -69,7 +69,7 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
 
             if (available)
             {
-                TooltipText = "Перейти к скину";
+                TooltipText = "Go to skin";
                 this.FadeTo(1f, BeatmapCard.TRANSITION_DURATION, Easing.OutQuint);
             }
             else

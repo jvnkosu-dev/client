@@ -38,7 +38,7 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
         }
 
         public static string Format(string? description) =>
-            string.IsNullOrWhiteSpace(description) ? "Нет описания..." : description.Trim();
+            string.IsNullOrWhiteSpace(description) ? "No description..." : description.Trim();
 
         public SkinCardDescription(string? description)
         {

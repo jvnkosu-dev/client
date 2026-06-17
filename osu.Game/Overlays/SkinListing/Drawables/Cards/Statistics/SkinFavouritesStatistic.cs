@@ -34,7 +34,7 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards.Statistics
         {
             Icon = current.Value.Favourited ? FontAwesome.Solid.Heart : FontAwesome.Regular.Heart;
             Text = current.Value.FavouriteCount.ToMetric(decimals: 1);
-            TooltipText = LocalisableString.Interpolate($"В избранном: {current.Value.FavouriteCount.ToLocalisableString(@"N0")}");
+            TooltipText = LocalisableString.Interpolate($"Favourited: {current.Value.FavouriteCount.ToLocalisableString(@"N0")}");
         }
     }
 }

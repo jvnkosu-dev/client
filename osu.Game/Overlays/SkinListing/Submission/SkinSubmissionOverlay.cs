@@ -1,10 +1,12 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Platform;
 using osu.Game.Database;
+using osu.Game.Online.API;
 using osu.Game.Overlays;
 using osu.Game.Overlays.Notifications;
 using osu.Game.Overlays.SkinListing;
@@ -29,8 +31,17 @@ namespace osu.Game.Overlays.SkinListing.Submission
         private INotificationOverlay notifications { get; set; } = null!;
 
         [Resolved]
+        private IAPIProvider api { get; set; } = null!;
+
+        [Resolved]
         private SkinListingOverlay skinListing { get; set; } = null!;
 
+        [Resolved]
+        private SkinManager skins { get; set; } = null!;
+
+        public bool IsUpdate => settings.IsUpdate.Value;
+
+        private Skin? submissionSkin;
         private bool uploadInProgress;
 
         public SkinSubmissionOverlay()
@@ -42,12 +53,24 @@ namespace osu.Game.Overlays.SkinListing.Submission
         private void load()
         {
             AddStep<ScreenSkinMetadata>();
-
-            Header.Title = "Выгрузка скина";
-            Header.Description = "Заполните метаданные перед отправкой на сервер";
+            RefreshHeaderCopy();
         }
 
-        public void PopulateMetadataFromSkin(Skin skin) => SkinMetadataHelper.PopulateSettingsFromSkin(settings, skin);
+        public void SetSubmissionSkin(Skin skin) => submissionSkin = skin;
+
+        public void RefreshHeaderCopy()
+        {
+            if (IsUpdate)
+            {
+                Header.Title = SkinMetadataHelper.UpdateUploadActionText;
+                Header.Description = "Update metadata and files for your existing skin on the server";
+            }
+            else
+            {
+                Header.Title = "Skin upload";
+                Header.Description = "Fill in metadata before submitting to the server";
+            }
+        }
 
         public async Task ExportSkinToTempAsync(Skin skin)
         {
@@ -80,19 +103,37 @@ namespace osu.Game.Overlays.SkinListing.Submission
         {
             if (string.IsNullOrWhiteSpace(settings.Name.Value))
             {
-                notifications.Post(new SimpleNotification { Text = "Укажите название скина." });
+                notifications.Post(new SimpleNotification { Text = "Please enter a skin name." });
                 return false;
             }
 
             if (string.IsNullOrWhiteSpace(settings.Author.Value))
             {
-                notifications.Post(new SimpleNotification { Text = "Укажите автора скина." });
+                notifications.Post(new SimpleNotification { Text = "Please enter the skin author." });
                 return false;
             }
 
             if (string.IsNullOrEmpty(settings.SkinFilePath) || !File.Exists(settings.SkinFilePath))
             {
-                notifications.Post(new SimpleNotification { Text = "Не удалось подготовить файл скина для выгрузки." });
+                notifications.Post(new SimpleNotification { Text = "Failed to prepare the skin file for upload." });
+                return false;
+            }
+
+            if (!settings.ModifiedModes.Any())
+            {
+                notifications.Post(new SimpleNotification { Text = "Please select at least one modified ruleset." });
+                return false;
+            }
+
+            if (api.LocalUser.Value is GuestUser)
+            {
+                notifications.Post(new SimpleNotification { Text = "Please log in to upload a skin." });
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(api.AccessToken))
+            {
+                notifications.Post(new SimpleNotification { Text = "Failed to obtain an auth token. Please log in again." });
                 return false;
             }
 
@@ -109,12 +150,15 @@ namespace osu.Game.Overlays.SkinListing.Submission
 
             string name = settings.Name.Value.Trim();
             string author = settings.Author.Value.Trim();
-            string uploadName = SkinIniVersionHelper.FormatUploadName(name, version);
+            string uploadName = SkinIniVersionHelper.SanitizeUploadName(name);
+            string engineType = settings.EngineType.Value.Trim();
+            string modifiedModes = SkinModifiedModesHelper.FormatForUpload(settings.ModifiedModes);
 
             if (string.IsNullOrEmpty(settings.SkinFilePath))
                 return;
 
             string skinFilePath = settings.SkinFilePath;
+            int? onlineSkinId = settings.OnlineSkinId.Value > 0 ? settings.OnlineSkinId.Value : null;
 
             var payload = new SkinUploadPayload
             {
@@ -124,6 +168,10 @@ namespace osu.Game.Overlays.SkinListing.Submission
                 Version = version,
                 Description = settings.Description.Value.Trim(),
                 Author = author,
+                Tags = settings.Tags.Value.Trim(),
+                ModifiedModes = settings.ModifiedModes.ToList(),
+                EngineType = settings.EngineType.Value.Trim(),
+                OnlineSkinId = onlineSkinId,
             };
 
             uploadInProgress = true;
@@ -131,7 +179,7 @@ namespace osu.Game.Overlays.SkinListing.Submission
 
             var notification = new ProgressNotification
             {
-                Text = "Подготовка скина к выгрузке...",
+                Text = IsUpdate ? "Preparing skin for update..." : "Preparing skin for upload...",
                 State = ProgressNotificationState.Active,
                 IsImportant = true,
             };
@@ -141,18 +189,30 @@ namespace osu.Game.Overlays.SkinListing.Submission
             {
                 try
                 {
-                    await Task.Run(() => SkinIniVersionHelper.EnsureSkinMetadataInOsk(skinFilePath, uploadName, author, version), notification.CancellationToken)
-                        .ConfigureAwait(false);
-
-                    Schedule(() => notification.Text = "Загрузка скина на сервер...");
-
-                    bool success = await uploader.UploadSkinAsync(payload, (current, total) =>
+                    try
                     {
-                        if (total > 0)
-                            notification.Progress = (float)current / total;
-                    }, notification.CancellationToken).ConfigureAwait(false);
+                        await Task.Run(() => SkinIniVersionHelper.EnsureSkinMetadataInOsk(skinFilePath, uploadName, author, version, engineType, modifiedModes, onlineSkinId), notification.CancellationToken)
+                            .ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        Schedule(() => finishUpload(notification, SkinUploadResult.Failed($"Failed to update skin.ini: {ex.Message}")));
+                        return;
+                    }
 
-                    Schedule(() => finishUpload(notification, success));
+                    Schedule(() => notification.Text = IsUpdate ? "Updating skin on server..." : "Uploading skin to server...");
+
+                    var result = await uploader.SubmitSkinAsync(
+                        payload,
+                        api.AccessToken,
+                        (current, total) =>
+                        {
+                            if (total > 0)
+                                notification.Progress = (float)current / total;
+                        },
+                        notification.CancellationToken).ConfigureAwait(false);
+
+                    Schedule(() => finishUpload(notification, result));
                 }
                 catch (OperationCanceledException)
                 {
@@ -161,7 +221,7 @@ namespace osu.Game.Overlays.SkinListing.Submission
                         if (notification.State == ProgressNotificationState.Active)
                         {
                             notification.State = ProgressNotificationState.Cancelled;
-                            notification.Text = "Выгрузка скина отменена.";
+                            notification.Text = "Skin upload cancelled.";
                         }
 
                         resetUploadState();
@@ -169,29 +229,51 @@ namespace osu.Game.Overlays.SkinListing.Submission
                 }
                 catch (Exception ex)
                 {
-                    Schedule(() => finishUpload(notification, false, ex.Message));
+                    string message = string.IsNullOrWhiteSpace(ex.Message)
+                        ? ex.GetType().Name
+                        : ex.Message;
+
+                    Schedule(() => finishUpload(notification, SkinUploadResult.Failed(message)));
                 }
             });
         }
 
-        private void finishUpload(ProgressNotification notification, bool success, string? errorMessage = null)
+        private void finishUpload(ProgressNotification notification, SkinUploadResult result)
         {
             resetUploadState();
 
-            if (success)
+            if (result.Success)
             {
+                int? resolvedOnlineSkinId = result.AssignedOnlineSkinId ?? (settings.OnlineSkinId.Value > 0 ? settings.OnlineSkinId.Value : null);
+
+                if (resolvedOnlineSkinId is > 0)
+                    persistOnlineSkinId(resolvedOnlineSkinId.Value);
+
                 notification.Progress = 1;
-                notification.CompletionText = "Skin uploaded successfully!";
+                notification.CompletionText = IsUpdate ? "Skin updated successfully!" : "Skin uploaded successfully!";
                 notification.State = ProgressNotificationState.Completed;
                 skinListing.RefreshListing();
+
                 base.ShowNextStep();
                 return;
             }
 
+            notification.Text = string.IsNullOrWhiteSpace(result.ErrorMessage)
+                ? IsUpdate ? "Skin update failed." : "Skin upload failed."
+                : IsUpdate ? $"Skin update failed: {result.ErrorMessage}" : $"Skin upload failed: {result.ErrorMessage}";
             notification.State = ProgressNotificationState.Cancelled;
-            notification.Text = string.IsNullOrWhiteSpace(errorMessage)
-                ? "Ошибка при загрузке скина."
-                : $"Ошибка при загрузке скина: {errorMessage}";
+        }
+
+        private void persistOnlineSkinId(int onlineSkinId)
+        {
+            settings.OnlineSkinId.Value = onlineSkinId;
+            settings.IsUpdate.Value = true;
+
+            if (submissionSkin == null)
+                return;
+
+            submissionSkin.Configuration.OnlineSkinId = onlineSkinId;
+            skins.PersistOnlineSkinId(submissionSkin.SkinInfo, onlineSkinId);
         }
 
         private void resetUploadState()

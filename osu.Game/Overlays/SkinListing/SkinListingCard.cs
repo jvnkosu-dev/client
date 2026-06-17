@@ -144,9 +144,9 @@ namespace osu.Game.Overlays.SkinListing
             var installedSkins = skinDownloader.IsInstalled(skin);
             if (installedSkins)
             {
-                // Для упрощения сейчас просто блокируем, но в будущем тут можно добавить проверку хэша для кнопки "Обновить"
+                // For now just disable the button; a hash check could enable an "Update" action later.
                 downloadButton.Enabled.Value = false;
-                downloadButton.Text = "Установлено";
+                downloadButton.Text = "Installed";
                 downloadButton.BackgroundColour = colours.Gray4;
             }
         }
@@ -210,7 +210,7 @@ namespace osu.Game.Overlays.SkinListing
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Ошибка загрузки обложки скина: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Failed to load skin cover: {ex.Message}");
                 }
             });
         }

@@ -31,6 +31,21 @@ namespace osu.Game.Skinning
         /// </summary>
         public string SkinVersion { get; internal set; } = string.Empty;
 
+        /// <summary>
+        /// Skin engine type (jvnko extension), stored as <c>SkinType</c> in skin.ini.
+        /// </summary>
+        public string SkinType { get; internal set; } = string.Empty;
+
+        /// <summary>
+        /// Comma-separated modified mode short names (jvnko extension), stored as <c>ModifiedModes</c> in skin.ini.
+        /// </summary>
+        public string ModifiedModes { get; internal set; } = string.Empty;
+
+        /// <summary>
+        /// Online listing ID (jvnko extension), stored as <c>OnlineSkinID</c> in skin.ini.
+        /// </summary>
+        public int OnlineSkinId { get; internal set; }
+
         public enum LegacySetting
         {
             Version,

@@ -435,6 +435,11 @@ namespace osu.Game.Skinning
             });
         }
 
+        public void PersistOnlineSkinId(Live<SkinInfo> skinInfo, int onlineSkinId)
+        {
+            skinInfo.PerformWrite(s => skinImporter.PersistOnlineSkinId(s, onlineSkinId, s.Realm!));
+        }
+
         public void SetSkinFromConfiguration(string guidString)
         {
             Live<SkinInfo> skinInfo = null;

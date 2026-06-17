@@ -9,6 +9,7 @@ using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.API.Requests;
 using osu.Game.Overlays;
+using osu.Game.Skinning;
 using osuTK;
 
 namespace osu.Game.Overlays.SkinListing.Drawables.Cards
@@ -36,6 +37,7 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
             : base(skin, false)
         {
             content = new BeatmapCardContent(height);
+            Action = DefaultAction;
         }
 
         [BackgroundDependencyLoader]
@@ -67,13 +69,13 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                                     {
                                         new TruncatingSpriteText
                                         {
-                                            Text = Skin.Name,
+                                            Text = SkinIniVersionHelper.GetDisplayName(Skin.Name),
                                             Font = OsuFont.Default.With(size: 19, weight: FontWeight.SemiBold),
                                             RelativeSizeAxes = Axes.X,
                                         },
                                         new TruncatingSpriteText
                                         {
-                                            Text = $"создал {Skin.Creator}",
+                                            Text = $"by {Skin.Creator}",
                                             Font = OsuFont.Default.With(size: 16, weight: FontWeight.SemiBold),
                                             Colour = colourProvider.Light1,
                                             RelativeSizeAxes = Axes.X,

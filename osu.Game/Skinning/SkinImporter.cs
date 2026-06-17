@@ -178,6 +178,11 @@ namespace osu.Game.Skinning
             if (!string.IsNullOrWhiteSpace(skinVersion))
                 newLines.Add(@$"SkinVersion: {skinVersion}");
 
+            int onlineSkinId = createInstance(item).Configuration.OnlineSkinId;
+
+            if (onlineSkinId > 0)
+                newLines.Add(FormattableString.Invariant($"{@"OnlineSkinID"}: {onlineSkinId}"));
+
             var existingFile = item.GetFile(@"skin.ini");
 
             if (existingFile == null)
@@ -233,6 +238,42 @@ namespace osu.Game.Skinning
 
                 item.Hash = ComputeHash(item);
             }
+        }
+
+        public void PersistOnlineSkinId(SkinInfo item, int onlineSkinId, Realm realm)
+        {
+            if (onlineSkinId <= 0)
+                return;
+
+            var existingFile = item.GetFile(@"skin.ini");
+
+            if (existingFile == null)
+            {
+                using (Stream stream = new MemoryStream())
+                {
+                    using (var sw = new StreamWriter(stream, Encoding.UTF8, 1024, true))
+                    {
+                        sw.WriteLine(@"// The following content was automatically added by osu! in order to use metadata that more closely matches user expectations.");
+                        sw.WriteLine(@"[General]");
+                        sw.WriteLine(FormattableString.Invariant($"{@"OnlineSkinID"}: {onlineSkinId}"));
+                    }
+
+                    modelManager.AddFile(item, stream, @"skin.ini", realm);
+                }
+            }
+            else
+            {
+                using (var existingStream = Files.Storage.GetStream(existingFile.File.GetStoragePath()))
+                using (var reader = new StreamReader(existingStream))
+                {
+                    string updated = SkinIniVersionHelper.UpdateSkinIniMetadata(reader.ReadToEnd(), name: null, author: null, version: null, onlineSkinId: onlineSkinId);
+
+                    using (Stream stream = new MemoryStream(Encoding.UTF8.GetBytes(updated)))
+                        modelManager.ReplaceFile(existingFile, stream, realm);
+                }
+            }
+
+            item.Hash = ComputeHash(item);
         }
 
         private Skin createInstance(SkinInfo item) => item.CreateInstance(skinResources);

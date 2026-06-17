@@ -28,6 +28,8 @@ using osu.Game.Graphics.Cursor;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Localisation;
 using osu.Game.Online.API;
+using osu.Game.Online.API.Requests;
+using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Overlays;
 using osu.Game.Overlays.Dialog;
 using osu.Game.Overlays.OSD;
@@ -109,6 +111,7 @@ namespace osu.Game.Overlays.SkinEditor
         private EditorMenuItem copyMenuItem = null!;
         private EditorMenuItem cloneMenuItem = null!;
         private EditorMenuItem pasteMenuItem = null!;
+        private SkinEditorUploadMenuItem uploadMenuItem = null!;
 
         private readonly BindableWithCurrent<bool> canCut = new BindableWithCurrent<bool>();
         private readonly BindableWithCurrent<bool> canCopy = new BindableWithCurrent<bool>();
@@ -180,7 +183,7 @@ namespace osu.Game.Overlays.SkinEditor
                                                     {
                                                         new EditorMenuItem(Web.CommonStrings.ButtonsSave, MenuItemType.Standard, () => Save()) { Hotkey = new Hotkey(PlatformAction.Save) },
                                                         new EditorMenuItem(CommonStrings.Export, MenuItemType.Standard, () => skins.ExportCurrentSkin()) { Action = { Disabled = !RuntimeInfo.IsDesktop } },
-                                                        new EditorMenuItem("Загрузить на сервер", MenuItemType.Standard, submitSkin) { Action = { Disabled = !RuntimeInfo.IsDesktop } },
+                                                        uploadMenuItem = new SkinEditorUploadMenuItem(submitSkin) { Action = { Disabled = !RuntimeInfo.IsDesktop } },
                                                         new EditorMenuItem(EditorStrings.EditExternally, MenuItemType.Standard, () => _ = editExternally()) { Action = { Disabled = !RuntimeInfo.IsDesktop } },
                                                         new OsuMenuItemSpacer(),
                                                         new EditorMenuItem(CommonStrings.RevertToDefault, MenuItemType.Destructive, () => dialogOverlay?.Push(new RevertConfirmDialog(revert))),
@@ -325,6 +328,15 @@ namespace osu.Game.Overlays.SkinEditor
                 screen.Push(new SkinSubmissionScreen(skin));
                 skinEditorOverlay?.Hide();
             });
+        }
+
+        private void updateUploadMenuItemText()
+        {
+            bool isUpdate = SkinIniVersionHelper.TryGetOnlineSkinId(currentSkin.Value, out _);
+
+            uploadMenuItem.Label.Value = isUpdate
+                ? SkinMetadataHelper.UpdateUploadActionText
+                : SkinMetadataHelper.UploadActionText;
         }
 
         public bool OnPressed(KeyBindingPressEvent<PlatformAction> e)
@@ -527,6 +539,8 @@ namespace osu.Game.Overlays.SkinEditor
                 // Reload sidebar components.
                 selectedTarget.TriggerChange();
             });
+
+            updateUploadMenuItemText();
         }
 
         /// <summary>

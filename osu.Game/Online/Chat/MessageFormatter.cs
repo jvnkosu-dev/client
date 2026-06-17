@@ -355,6 +355,7 @@ namespace osu.Game.Online.Chat
         Spectate,
         OpenUserProfile,
         SearchBeatmapSet,
+        SearchSkin,
         OpenWiki,
         Custom,
         OpenChangelog,

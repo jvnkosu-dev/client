@@ -79,12 +79,37 @@ namespace osu.Game.Screens.Edit.Components.Menus
             MaxHeight = MaxHeight,
         };
 
-        protected override DrawableMenuItem CreateDrawableMenuItem(MenuItem item) => new DrawableEditorBarMenuItem(item);
+        protected override DrawableMenuItem CreateDrawableMenuItem(MenuItem item)
+        {
+            if (item is IDynamicMenuItem dynamic)
+                return new DrawableDynamicEditorBarMenuItem(item, dynamic);
+
+            return new DrawableEditorBarMenuItem(item);
+        }
+
+        internal partial class DrawableDynamicEditorBarMenuItem : DrawableEditorBarMenuItem
+        {
+            private readonly IDynamicMenuItem dynamic;
+
+            public DrawableDynamicEditorBarMenuItem(MenuItem item, IDynamicMenuItem dynamic)
+                : base(item)
+            {
+                this.dynamic = dynamic;
+            }
+
+            protected override void LoadComplete()
+            {
+                base.LoadComplete();
+                dynamic.Label.BindValueChanged(v => SetLabel(v.NewValue), true);
+            }
+        }
 
         internal partial class DrawableEditorBarMenuItem : DrawableMenuItem
         {
             private HoverClickSounds hoverClickSounds = null!;
             private TextContainer text = null!;
+
+            protected void SetLabel(LocalisableString value) => text.Text = value;
 
             public DrawableEditorBarMenuItem(MenuItem item)
                 : base(item)

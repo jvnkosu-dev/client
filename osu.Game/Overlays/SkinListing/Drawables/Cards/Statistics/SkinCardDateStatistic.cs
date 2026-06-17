@@ -19,7 +19,7 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards.Statistics
 
             Icon = FontAwesome.Solid.Upload;
             Text = dateTime.ToLocalisedMediumDate();
-            TooltipText = LocalisableString.Interpolate($"Выгружен: {dateTime.ToLocalisedMediumDate()}");
+            TooltipText = LocalisableString.Interpolate($"Submitted: {dateTime.ToLocalisedMediumDate()}");
         }
 
         public override object TooltipContent => dateTime;

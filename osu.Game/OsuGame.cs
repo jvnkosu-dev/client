@@ -48,6 +48,7 @@ using osu.Game.Input.Bindings;
 using osu.Game.IO;
 using osu.Game.Localisation;
 using osu.Game.Online;
+using osu.Game.Online.API;
 using osu.Game.Online.API.Requests;
 using osu.Game.Online.Chat;
 using osu.Game.Online.Leaderboards;
@@ -61,6 +62,8 @@ using osu.Game.Overlays.OSD;
 using osu.Game.Overlays.SkinEditor;
 using osu.Game.Overlays.Toolbar;
 using osu.Game.Overlays.SkinListing;
+using osu.Game.Overlays.SkinListing.Submission;
+using osu.Game.Overlays.SkinSet;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Scoring;
 using osu.Game.Scoring.Legacy;
@@ -142,6 +145,8 @@ namespace osu.Game
 
         private BeatmapSetOverlay beatmapSetOverlay;
 
+        private SkinSetOverlay skinSetOverlay;
+
         private WikiOverlay wikiOverlay;
 
         private ChangelogOverlay changelogOverlay;
@@ -181,9 +186,6 @@ namespace osu.Game
 
         [Cached]
         private SeasonalBackgroundLoader seasonalBackgroundLoader;
-
-        [Cached]
-        private SkinUploader skinUploader = new SkinUploader();
 
         protected SentryLogger SentryLogger;
         private SentryLogger sentryLogger;
@@ -520,6 +522,10 @@ namespace osu.Game
 
                     break;
 
+                case LinkAction.SearchSkin:
+                    SearchSkin(argString);
+                    break;
+
                 case LinkAction.FilterBeatmapSetGenre:
                     FilterBeatmapSetGenre((SearchGenre)link.Argument);
                     break;
@@ -620,6 +626,12 @@ namespace osu.Game
         /// </summary>
         /// <param name="query">The query to search for.</param>
         public void SearchBeatmapSet(string query) => waitForReady(() => beatmapListing, _ => beatmapListing.ShowWithSearch(query));
+
+        /// <summary>
+        /// Shows the skin listing overlay, with the given <paramref name="query"/> in the search box.
+        /// </summary>
+        /// <param name="query">The query to search for.</param>
+        public void SearchSkin(string query) => waitForReady(() => skinListing, _ => skinListing.ShowWithSearch(query));
 
         public void FilterBeatmapSetGenre(SearchGenre genre) => waitForReady(() => beatmapListing, _ => beatmapListing.ShowWithGenreFilter(genre));
 
@@ -1258,8 +1270,10 @@ namespace osu.Game
             loadComponentSingleFile(changelogOverlay = new ChangelogOverlay(), overlayContent.Add, true);
             loadComponentSingleFile(userProfile = new UserProfileOverlay(), overlayContent.Add, true);
             loadComponentSingleFile(beatmapSetOverlay = new BeatmapSetOverlay(), overlayContent.Add, true);
+            loadComponentSingleFile(skinSetOverlay = new SkinSetOverlay(), overlayContent.Add, true);
             loadComponentSingleFile(wikiOverlay = new WikiOverlay(), overlayContent.Add, true);
             loadComponentSingleFile(new SkinDownloader(), Add, true);
+            loadComponentSingleFile(new SkinUploader(), Add, true);
             loadComponentSingleFile(skinListing = new SkinListingOverlay(), overlayContent.Add, true);
             loadComponentSingleFile(skinEditor = new SkinEditorOverlay(ScreenContainer), overlayContent.Add, true);
 
@@ -1302,7 +1316,7 @@ namespace osu.Game
             }
 
             // eventually informational overlays should be displayed in a stack, but for now let's only allow one to stay open at a time.
-            var informationalOverlays = new OverlayContainer[] { beatmapSetOverlay, userProfile };
+            var informationalOverlays = new OverlayContainer[] { beatmapSetOverlay, skinSetOverlay, userProfile };
 
             foreach (var overlay in informationalOverlays)
             {

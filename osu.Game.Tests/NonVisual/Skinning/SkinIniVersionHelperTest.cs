@@ -21,10 +21,17 @@ namespace osu.Game.Tests.NonVisual.Skinning
         }
 
         [Test]
-        public void TestFormatUploadNameAppendsVersionSuffix()
+        public void TestSanitizeUploadNameRemovesBracketedSegments()
         {
-            Assert.That(SkinIniVersionHelper.FormatUploadName("sas", "6.7"), Is.EqualTo("sas [6.7]"));
-            Assert.That(SkinIniVersionHelper.FormatUploadName("sas [6.7]", "6.7"), Is.EqualTo("sas [6.7]"));
+            Assert.That(SkinIniVersionHelper.SanitizeUploadName("sas [6.7]"), Is.EqualTo("sas"));
+            Assert.That(SkinIniVersionHelper.SanitizeUploadName("Cool [remix] Skin [1.0]"), Is.EqualTo("Cool Skin"));
+            Assert.That(SkinIniVersionHelper.SanitizeUploadName("Plain Name"), Is.EqualTo("Plain Name"));
+        }
+
+        [Test]
+        public void TestGetDisplayNameMatchesSanitizedUploadName()
+        {
+            Assert.That(SkinIniVersionHelper.GetDisplayName("My Skin [2.0]"), Is.EqualTo("My Skin"));
         }
 
         [Test]
@@ -36,10 +43,12 @@ namespace osu.Game.Tests.NonVisual.Skinning
                 Version: 2.7
                 """;
 
-            string updated = SkinIniVersionHelper.UpdateSkinIniMetadata(original, "My Skin", "Test Author", "2.0-beta");
+            string updated = SkinIniVersionHelper.UpdateSkinIniMetadata(original, "My Skin", "Test Author", "2.0-beta", "Argon", "osu,taiko");
 
             Assert.That(updated, Does.Contain("Author: Test Author"));
             Assert.That(updated, Does.Contain("SkinVersion: 2.0-beta"));
+            Assert.That(updated, Does.Contain("SkinType: Argon"));
+            Assert.That(updated, Does.Contain("ModifiedModes: osu,taiko"));
             Assert.That(updated, Does.Contain("Name: My Skin"));
             Assert.That(updated, Does.Contain("automatically added during skin upload"));
         }
@@ -47,7 +56,7 @@ namespace osu.Game.Tests.NonVisual.Skinning
         [Test]
         public void TestEnsureSkinMetadataInOskUpdatesSharpCompressArchive()
         {
-            string path = Path.Combine(Path.GetTempPath(), $"skin-patch-test-{System.Guid.NewGuid()}.osk");
+            string path = Path.Combine(Path.GetTempPath(), $"skin-patch-test-{Guid.NewGuid()}.osk");
 
             try
             {
@@ -59,12 +68,14 @@ namespace osu.Game.Tests.NonVisual.Skinning
                     Version: latest
                     """);
 
-                SkinIniVersionHelper.EnsureSkinMetadataInOsk(path, "Uploaded Name", "Uploaded Author", "1.5-rc");
+                SkinIniVersionHelper.EnsureSkinMetadataInOsk(path, "Uploaded Name", "Uploaded Author", "1.5-rc", "Legacy", "mania");
 
                 string iniContent = readSkinIniFromOsk(path);
 
                 Assert.That(iniContent, Does.Contain("Author: Uploaded Author"));
                 Assert.That(iniContent, Does.Contain("SkinVersion: 1.5-rc"));
+                Assert.That(iniContent, Does.Contain("SkinType: Legacy"));
+                Assert.That(iniContent, Does.Contain("ModifiedModes: mania"));
                 Assert.That(iniContent, Does.Contain("Name: Uploaded Name"));
             }
             finally
@@ -72,6 +83,55 @@ namespace osu.Game.Tests.NonVisual.Skinning
                 if (File.Exists(path))
                     File.Delete(path);
             }
+        }
+
+        [Test]
+        public void TestTryGetOnlineSkinIdReturnsFalseWhenMissing()
+        {
+            Assert.That(SkinIniVersionHelper.TryGetOnlineSkinId(new SkinConfiguration(), out _), Is.False);
+        }
+
+        [Test]
+        public void TestUpdateSkinIniMetadataWritesOnlineSkinId()
+        {
+            const string original = """
+                [General]
+                Name: Test Skin
+                """;
+
+            string updated = SkinIniVersionHelper.UpdateSkinIniMetadata(original, name: null, author: null, version: null, onlineSkinId: 18);
+
+            Assert.That(updated, Does.Contain("OnlineSkinID: 18"));
+        }
+
+        [Test]
+        public void TestEnsureOnlineSkinIdInOskUpdatesSharpCompressArchive()
+        {
+            string path = Path.Combine(Path.GetTempPath(), $"skin-online-id-test-{Guid.NewGuid()}.osk");
+
+            try
+            {
+                createSharpCompressOsk(path, """
+                    [General]
+                    Name: Test Skin
+                    """);
+
+                SkinIniVersionHelper.EnsureOnlineSkinIdInOsk(path, 42);
+
+                string iniContent = readSkinIniFromOsk(path);
+                Assert.That(iniContent, Does.Contain("OnlineSkinID: 42"));
+            }
+            finally
+            {
+                if (File.Exists(path))
+                    File.Delete(path);
+            }
+        }
+
+        [Test]
+        public void TestParseModifiedModesSplitsCommaSeparatedValues()
+        {
+            Assert.That(SkinIniVersionHelper.ParseModifiedModes("osu, taiko,mania"), Is.EqualTo(new[] { "osu", "taiko", "mania" }));
         }
 
         private static void createSharpCompressOsk(string path, string iniContent)

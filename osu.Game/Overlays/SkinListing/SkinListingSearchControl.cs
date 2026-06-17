@@ -8,6 +8,9 @@ using osu.Framework.Input.Events;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Input.Bindings;
+using osu.Game.Online.API.Requests;
+using osu.Game.Overlays.SkinListing.Drawables.Cards;
+using osu.Game.Skinning;
 using osuTK;
 using osuTK.Graphics;
 
@@ -19,9 +22,21 @@ namespace osu.Game.Overlays.SkinListing
 
         public Bindable<string> Query => textBox.Current;
 
+        public BindableList<SkinListingModifiedMode> ModifiedModes => modifiedModesFilter.Current;
+
+        public Bindable<SkinEngineType?> EngineType => engineTypeFilter.Current;
+
+        public APIOnlineSkin? Skin
+        {
+            set => setSkinCover(value);
+        }
+
         private readonly SkinSearchTextBox textBox;
+        private readonly SkinSearchModifiedModesFilterRow modifiedModesFilter;
+        private readonly SkinSearchEngineTypeFilterRow engineTypeFilter;
 
         private readonly Box background;
+        private readonly Container skinCoverContainer;
 
         public SkinListingSearchControl()
         {
@@ -33,6 +48,16 @@ namespace osu.Game.Overlays.SkinListing
                 background = new Box
                 {
                     RelativeSizeAxes = Axes.Both
+                },
+                new Container
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Masking = true,
+                    Child = skinCoverContainer = new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Alpha = 0,
+                    },
                 },
                 new Container
                 {
@@ -56,6 +81,19 @@ namespace osu.Game.Overlays.SkinListing
                                 RelativeSizeAxes = Axes.X,
                                 TextChanged = () => TypingStarted?.Invoke(),
                             },
+                            new ReverseChildIDFillFlowContainer<Drawable>
+                            {
+                                AutoSizeAxes = Axes.Y,
+                                RelativeSizeAxes = Axes.X,
+                                Direction = FillDirection.Vertical,
+                                Padding = new MarginPadding { Horizontal = 10 },
+                                Spacing = new Vector2(5),
+                                Children = new Drawable[]
+                                {
+                                    modifiedModesFilter = new SkinSearchModifiedModesFilterRow(),
+                                    engineTypeFilter = new SkinSearchEngineTypeFilterRow(),
+                                }
+                            },
                         }
                     }
                 }
@@ -70,6 +108,25 @@ namespace osu.Game.Overlays.SkinListing
 
         public void TakeFocus() => textBox.TakeFocus();
 
+        private void setSkinCover(APIOnlineSkin? skin)
+        {
+            string? url = skin?.GetThumbnailRequestUrl();
+
+            if (string.IsNullOrEmpty(url))
+            {
+                skinCoverContainer.FadeOut(600, Easing.OutQuint);
+                return;
+            }
+
+            skinCoverContainer.Clear();
+            skinCoverContainer.Add(new OnlineSkinSprite(url)
+            {
+                RelativeSizeAxes = Axes.Both,
+                FillMode = FillMode.Fill,
+            });
+            skinCoverContainer.FadeTo(0.1f, 200, Easing.OutQuint);
+        }
+
         private partial class SkinSearchTextBox : BasicSearchTextBox
         {
             public Action? TextChanged;
@@ -78,7 +135,7 @@ namespace osu.Game.Overlays.SkinListing
 
             public SkinSearchTextBox()
             {
-                PlaceholderText = "Введите название скина или автора...";
+                PlaceholderText = "Search for a skin or author...";
             }
 
             protected override bool OnKeyDown(KeyDownEvent e)

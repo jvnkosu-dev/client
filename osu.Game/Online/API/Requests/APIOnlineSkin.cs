@@ -1,6 +1,7 @@
 // Copyright (c) jvnkosu! team, MIT license
 // See the LICENCE file in the repository root for full license text.
 
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using osu.Game.Skinning;
 
@@ -46,25 +47,42 @@ namespace osu.Game.Online.API.Requests
         [JsonProperty("last_updated")]
         public DateTimeOffset? LastUpdated { get; set; }
 
+        [JsonProperty("tags")]
+        public string Tags { get; set; } = string.Empty;
+
+        [JsonProperty("uploaded_by")]
+        public string UploadedBy { get; set; } = string.Empty;
+
+        [JsonProperty("modified_modes")]
+        public List<string> ModifiedModes { get; set; } = new List<string>();
+
+        [JsonProperty("engine_type")]
+        public string EngineType { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Returns the username of the user who uploaded this skin to the server, if available.
+        /// </summary>
+        public string? GetUploaderDisplayName() => string.IsNullOrWhiteSpace(UploadedBy) ? null : UploadedBy.Trim();
+
         /// <summary>
         /// Returns the URL to fetch this skin's thumbnail image.
         /// Uses the API thumbnail route when available to avoid nginx static file permission issues.
         /// </summary>
         public string? GetThumbnailRequestUrl()
         {
-            if (string.IsNullOrEmpty(ThumbnailUrl))
+            if (!string.IsNullOrEmpty(ThumbnailUrl))
+                return ThumbnailUrl;
+
+            if (OnlineID <= 0 || string.IsNullOrEmpty(DownloadUrl))
                 return null;
 
-            if (OnlineID > 0 && !string.IsNullOrEmpty(DownloadUrl))
-            {
-                const string download_segment = "/api/skins/download/";
-                int index = DownloadUrl.IndexOf(download_segment, StringComparison.Ordinal);
+            const string download_segment = "/api/skins/download/";
+            int index = DownloadUrl.IndexOf(download_segment, StringComparison.Ordinal);
 
-                if (index >= 0)
-                    return DownloadUrl[..index] + $"/api/skins/thumbnail/{OnlineID}";
-            }
+            if (index < 0)
+                return null;
 
-            return ThumbnailUrl;
+            return DownloadUrl[..index] + $"/api/skins/thumbnail/{OnlineID}";
         }
     }
 }

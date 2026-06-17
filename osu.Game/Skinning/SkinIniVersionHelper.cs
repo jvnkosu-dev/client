@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -21,6 +22,9 @@ namespace osu.Game.Skinning
         private const string name_key = "Name:";
         private const string author_key = "Author:";
         private const string skin_version_key = "SkinVersion:";
+        private const string skin_type_key = "SkinType:";
+        private const string modified_modes_key = "ModifiedModes:";
+        private const string online_skin_id_key = "OnlineSkinID:";
 
         private static readonly ArchiveEncoding skin_archive_encoding = new ArchiveEncoding
         {
@@ -38,6 +42,14 @@ namespace osu.Game.Skinning
 
         public static string GetSkinVersion(Skin skin, bool useDefaultIfMissing = false) => GetSkinVersion(skin.Configuration, useDefaultIfMissing);
 
+        public static bool TryGetOnlineSkinId(SkinConfiguration configuration, out int onlineSkinId)
+        {
+            onlineSkinId = configuration.OnlineSkinId;
+            return onlineSkinId > 0;
+        }
+
+        public static bool TryGetOnlineSkinId(Skin skin, out int onlineSkinId) => TryGetOnlineSkinId(skin.Configuration, out onlineSkinId);
+
         public static string GetDisplayVersion(string? apiVersion, string skinName)
         {
             if (!string.IsNullOrWhiteSpace(apiVersion))
@@ -45,6 +57,11 @@ namespace osu.Game.Skinning
 
             return ExtractVersionFromName(skinName) ?? string.Empty;
         }
+
+        /// <summary>
+        /// Returns a clean skin name for display in listings, with bracketed suffixes removed.
+        /// </summary>
+        public static string GetDisplayName(string skinName) => SanitizeUploadName(skinName);
 
         public static string? ExtractVersionFromName(string skinName)
         {
@@ -66,25 +83,30 @@ namespace osu.Game.Skinning
         }
 
         /// <summary>
-        /// Formats a skin name for server listing when the API does not expose a separate version field.
+        /// Prepares a skin name for upload by removing version suffixes and any bracketed segments.
         /// </summary>
-        public static string FormatUploadName(string baseName, string version)
+        public static string SanitizeUploadName(string skinName)
         {
-            baseName = ExtractBaseName(baseName);
+            skinName = ExtractBaseName(skinName);
+            return removeAllBracketedSegments(skinName).Trim();
+        }
 
-            if (string.IsNullOrWhiteSpace(version))
-                return baseName;
+        public static IEnumerable<string> ParseModifiedModes(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                yield break;
 
-            if (ExtractVersionFromName(baseName) != null)
-                return baseName;
-
-            return $"{baseName} [{version.Trim()}]";
+            foreach (string part in value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (part.Length > 0)
+                    yield return part;
+            }
         }
 
         public static string UpdateSkinIniContent(string content, string version) =>
             UpdateSkinIniMetadata(content, name: null, author: null, version: version);
 
-        public static string UpdateSkinIniMetadata(string content, string? name, string? author, string? version)
+        public static string UpdateSkinIniMetadata(string content, string? name, string? author, string? version, string? skinType = null, string? modifiedModes = null, int? onlineSkinId = null)
         {
             var lines = content.Replace("\r\n", "\n").Split('\n').ToList();
 
@@ -97,16 +119,44 @@ namespace osu.Game.Skinning
             if (!string.IsNullOrWhiteSpace(version))
                 updateAllMatchingKeys(lines, skin_version_key, version.Trim());
 
-            appendUploadMetadataBlock(lines, name, author, version);
+            if (!string.IsNullOrWhiteSpace(skinType))
+                updateAllMatchingKeys(lines, skin_type_key, skinType.Trim());
+
+            if (!string.IsNullOrWhiteSpace(modifiedModes))
+                updateAllMatchingKeys(lines, modified_modes_key, modifiedModes.Trim());
+
+            if (onlineSkinId is > 0)
+                updateAllMatchingKeys(lines, online_skin_id_key, onlineSkinId.Value.ToString(CultureInfo.InvariantCulture));
+
+            appendUploadMetadataBlock(lines, name, author, version, skinType, modifiedModes, onlineSkinId);
 
             return string.Join('\n', lines);
         }
 
-        public static void EnsureSkinMetadataInOsk(string oskPath, string name, string author, string version) =>
-            patchSkinIniInOsk(oskPath, content => UpdateSkinIniMetadata(content, name, author, version));
+        public static void EnsureSkinMetadataInOsk(string oskPath, string name, string author, string version, string? skinType = null, string? modifiedModes = null, int? onlineSkinId = null) =>
+            patchSkinIniInOsk(oskPath, content => UpdateSkinIniMetadata(content, name, author, version, skinType, modifiedModes, onlineSkinId));
+
+        public static void EnsureOnlineSkinIdInOsk(string oskPath, int onlineSkinId) =>
+            patchSkinIniInOsk(oskPath, content => UpdateSkinIniMetadata(content, name: null, author: null, version: null, onlineSkinId: onlineSkinId));
 
         public static void EnsureSkinVersionInOsk(string oskPath, string version) =>
             patchSkinIniInOsk(oskPath, content => UpdateSkinIniContent(content, version));
+
+        private static string removeAllBracketedSegments(string text)
+        {
+            while (true)
+            {
+                int open = text.IndexOf('[');
+                if (open < 0)
+                    return text;
+
+                int close = text.IndexOf(']', open);
+                if (close < 0)
+                    return text;
+
+                text = (text[..open] + text[(close + 1)..]).Trim();
+            }
+        }
 
         private static void updateAllMatchingKeys(List<string> lines, string key, string value)
         {
@@ -119,9 +169,14 @@ namespace osu.Game.Skinning
             }
         }
 
-        private static void appendUploadMetadataBlock(List<string> lines, string? name, string? author, string? version)
+        private static void appendUploadMetadataBlock(List<string> lines, string? name, string? author, string? version, string? skinType, string? modifiedModes, int? onlineSkinId)
         {
-            if (string.IsNullOrWhiteSpace(name) && string.IsNullOrWhiteSpace(author) && string.IsNullOrWhiteSpace(version))
+            if (string.IsNullOrWhiteSpace(name)
+                && string.IsNullOrWhiteSpace(author)
+                && string.IsNullOrWhiteSpace(version)
+                && string.IsNullOrWhiteSpace(skinType)
+                && string.IsNullOrWhiteSpace(modifiedModes)
+                && onlineSkinId is not > 0)
                 return;
 
             if (lines.Count > 0 && !string.IsNullOrWhiteSpace(lines[^1]))
@@ -138,6 +193,15 @@ namespace osu.Game.Skinning
 
             if (!string.IsNullOrWhiteSpace(version))
                 lines.Add($"{skin_version_key} {version.Trim()}");
+
+            if (!string.IsNullOrWhiteSpace(skinType))
+                lines.Add($"{skin_type_key} {skinType.Trim()}");
+
+            if (!string.IsNullOrWhiteSpace(modifiedModes))
+                lines.Add($"{modified_modes_key} {modifiedModes.Trim()}");
+
+            if (onlineSkinId is > 0)
+                lines.Add($"{online_skin_id_key} {onlineSkinId.Value.ToString(CultureInfo.InvariantCulture)}");
         }
 
         private static bool isSkinIniEntry(string? key)

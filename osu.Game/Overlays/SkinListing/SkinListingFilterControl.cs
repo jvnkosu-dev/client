@@ -142,6 +142,9 @@ namespace osu.Game.Overlays.SkinListing
             sortControl.Current.BindValueChanged(_ => resortAndPublish());
             sortControl.SortDirection.BindValueChanged(_ => resortAndPublish());
 
+            searchControl.ModifiedModes.BindCollectionChanged((_, _) => resortAndPublish());
+            searchControl.EngineType.BindValueChanged(_ => resortAndPublish());
+
             apiUser = api.LocalUser.GetBoundCopy();
             apiUser.BindValueChanged(_ =>
             {
@@ -149,6 +152,7 @@ namespace osu.Game.Overlays.SkinListing
                 {
                     resetSearch();
                     lastResults.Clear();
+                    searchControl.Skin = null;
                     return;
                 }
 
@@ -181,7 +185,8 @@ namespace osu.Game.Overlays.SkinListing
             {
                 lastResults = sortSkins(skins);
                 getSkinsRequest = null;
-                SearchFinished?.Invoke(SearchResult.ResultsReturned(lastResults));
+                searchControl.Skin = getFeaturedSkin(skins);
+                publishResults();
             };
 
             getSkinsRequest.Failure += _ =>
@@ -200,8 +205,18 @@ namespace osu.Game.Overlays.SkinListing
 
             SearchStarted?.Invoke();
             lastResults = sortSkins(lastResults);
-            SearchFinished?.Invoke(SearchResult.ResultsReturned(lastResults));
+            publishResults();
         }
+
+        private void publishResults()
+        {
+            var filtered = SkinModifiedModesHelper.Filter(lastResults, searchControl.ModifiedModes);
+            filtered = SkinEngineTypeHelper.Filter(filtered, searchControl.EngineType.Value);
+            SearchFinished?.Invoke(SearchResult.ResultsReturned(filtered.ToList()));
+        }
+
+        private static APIOnlineSkin? getFeaturedSkin(IEnumerable<APIOnlineSkin> skins) =>
+            skins.OrderByDescending(s => s.LastUpdated ?? s.CreatedAt ?? DateTimeOffset.MinValue).FirstOrDefault();
 
         private List<APIOnlineSkin> sortSkins(List<APIOnlineSkin> skins)
         {
@@ -210,6 +225,7 @@ namespace osu.Game.Overlays.SkinListing
                 SortCriteria.Name => skins.OrderBy(s => s.Name, StringComparer.OrdinalIgnoreCase),
                 SortCriteria.Creator => skins.OrderBy(s => s.Creator, StringComparer.OrdinalIgnoreCase),
                 SortCriteria.Updated => skins.OrderBy(s => s.LastUpdated ?? DateTimeOffset.MinValue),
+                SortCriteria.Favourites => skins.OrderBy(s => s.FavouriteCount),
                 SortCriteria.Relevance => skins,
                 _ => skins
             };

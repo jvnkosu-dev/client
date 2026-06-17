@@ -55,7 +55,7 @@ namespace osu.Game.Overlays.SkinListing.Submission
                 });
                 content.Add(new OsuTextFlowContainer(t => t.Font = OsuFont.Default.With(size: 16))
                 {
-                    Text = "Выберите изображение превью",
+                    Text = "Select a preview image",
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     AutoSizeAxes = Axes.Both,
@@ -87,7 +87,7 @@ namespace osu.Game.Overlays.SkinListing.Submission
                 });
                 content.Add(new OsuTextFlowContainer(t => t.Font = OsuFont.Default.With(size: 16))
                 {
-                    Text = "Не удалось загрузить превью",
+                    Text = "Failed to load preview",
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     AutoSizeAxes = Axes.Both,

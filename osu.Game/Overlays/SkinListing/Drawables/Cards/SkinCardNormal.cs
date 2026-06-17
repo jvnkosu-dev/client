@@ -31,9 +31,6 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
         private FillFlowContainer idleBottomContent = null!;
         private FillFlowContainer<BeatmapCardStatistic> statisticsContainer = null!;
         private BeatmapCardDownloadProgressBar downloadProgressBar = null!;
-        private TruncatingSpriteText versionText = null!;
-
-        private string displayVersion = string.Empty;
 
         [Resolved]
         private OverlayColourProvider colourProvider { get; set; } = null!;
@@ -42,6 +39,7 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
             : base(skin, false)
         {
             content = new BeatmapCardContent(HEIGHT);
+            Action = DefaultAction;
         }
 
         [BackgroundDependencyLoader]
@@ -49,8 +47,6 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
         {
             Width = WIDTH;
             Height = HEIGHT;
-
-            displayVersion = SkinIniVersionHelper.GetDisplayVersion(Skin.Version, Skin.Name);
 
             Child = content.With(c =>
             {
@@ -82,32 +78,18 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                                     {
                                         new TruncatingSpriteText
                                         {
-                                            Text = Skin.Name,
+                                            Text = SkinIniVersionHelper.GetDisplayName(Skin.Name),
                                             Font = OsuFont.Default.With(size: 18f, weight: FontWeight.SemiBold),
                                             RelativeSizeAxes = Axes.X,
                                         },
                                         new TruncatingSpriteText
                                         {
-                                            Text = $"создал {Skin.Creator}",
+                                            Text = $"by {Skin.Creator}",
                                             Font = OsuFont.Default.With(size: 14f, weight: FontWeight.SemiBold),
                                             Colour = colourProvider.Light1,
                                             RelativeSizeAxes = Axes.X,
                                         },
-                                        new Container
-                                        {
-                                            RelativeSizeAxes = Axes.X,
-                                            Height = VERSION_LINE_HEIGHT,
-                                            Child = versionText = new TruncatingSpriteText
-                                            {
-                                                Anchor = Anchor.CentreLeft,
-                                                Origin = Anchor.CentreLeft,
-                                                RelativeSizeAxes = Axes.X,
-                                                Text = displayVersion,
-                                                Shadow = false,
-                                                Font = OsuFont.GetFont(size: 11f, weight: FontWeight.SemiBold),
-                                                Colour = colourProvider.Content2,
-                                            },
-                                        },
+                                        new SkinCardUploaderLine(Skin),
                                     }
                                 },
                                 new Container
@@ -138,6 +120,7 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                                                     AlwaysPresent = true,
                                                     ChildrenEnumerable = SkinCardStatistics.CreateFor(Skin, FavouriteState),
                                                 },
+                                                new SkinCardModifiedModesDisplay(Skin),
                                             }
                                         },
                                         downloadProgressBar = new BeatmapCardDownloadProgressBar
@@ -158,12 +141,6 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                 c.ExpandedContent = new Container();
                 c.Expanded.BindTarget = Expanded;
             });
-        }
-
-        protected override void LoadComplete()
-        {
-            base.LoadComplete();
-            versionText.Alpha = string.IsNullOrEmpty(displayVersion) ? 0 : 1;
         }
 
         protected override void UpdateState()

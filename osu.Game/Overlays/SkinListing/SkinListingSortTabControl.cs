@@ -29,6 +29,7 @@ namespace osu.Game.Overlays.SkinListing
             TabControl.AddItem(SortCriteria.Name);
             TabControl.AddItem(SortCriteria.Creator);
             TabControl.AddItem(SortCriteria.Updated);
+            TabControl.AddItem(SortCriteria.Favourites);
 
             if (hasQuery)
                 TabControl.AddItem(SortCriteria.Relevance);

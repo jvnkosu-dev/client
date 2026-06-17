@@ -253,7 +253,7 @@ namespace osu.Game.Overlays.SkinListing
                         {
                             Anchor = Anchor.Centre,
                             Origin = Anchor.Centre,
-                            Text = "Ничего не найдено :(",
+                            Text = "No results found :(",
                         }
                     }
                 });
@@ -277,7 +277,7 @@ namespace osu.Game.Overlays.SkinListing
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
-                    Text = "Не удалось загрузить список скинов",
+                    Text = "Failed to load skin listing",
                     Font = OsuFont.GetFont(size: 18, weight: FontWeight.SemiBold),
                 });
             }

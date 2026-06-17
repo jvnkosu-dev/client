@@ -34,7 +34,7 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
         [BackgroundDependencyLoader]
         private void load()
         {
-            TooltipText = "Добавить в избранное";
+            TooltipText = "Favourite";
         }
 
         protected override void LoadComplete()
@@ -75,12 +75,12 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
             if (current.Value.Favourited)
             {
                 Icon.Icon = FontAwesome.Solid.Heart;
-                TooltipText = "Убрать из избранного";
+                TooltipText = "Unfavourite";
             }
             else
             {
                 Icon.Icon = FontAwesome.Regular.Heart;
-                TooltipText = "Добавить в избранное";
+                TooltipText = "Favourite";
             }
         }
     }

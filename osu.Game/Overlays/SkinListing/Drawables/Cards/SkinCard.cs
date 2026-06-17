@@ -3,16 +3,22 @@ using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Cursor;
+using osu.Framework.Graphics.UserInterface;
+using osu.Framework.Input;
 using osu.Framework.Input.Events;
 using osu.Game.Beatmaps.Drawables.Cards;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online;
 using osu.Game.Online.API.Requests;
+using osu.Game.Overlays;
+using osu.Game.Overlays.SkinSet;
+using osu.Game.Skinning;
 
 namespace osu.Game.Overlays.SkinListing.Drawables.Cards
 {
-    public abstract partial class SkinCard : OsuClickableContainer
+    public abstract partial class SkinCard : OsuClickableContainer, IHasContextMenu
     {
         public const float TRANSITION_DURATION = BeatmapCard.TRANSITION_DURATION;
         public const float CORNER_RADIUS = BeatmapCard.CORNER_RADIUS;
@@ -36,6 +42,17 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
 
         protected readonly SkinDownloadTracker DownloadTracker;
 
+        private InputManager? containingInputManager;
+
+        [Resolved]
+        private SkinSetOverlay? skinSetOverlay { get; set; }
+
+        [Resolved]
+        private SkinDownloader? skinDownloader { get; set; }
+
+        [Resolved]
+        private OsuGame? game { get; set; }
+
         protected SkinCard(APIOnlineSkin skin, bool allowExpansion = true)
             : base(HoverSampleSet.Button)
         {
@@ -58,6 +75,30 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
             DownloadTracker.State.BindValueChanged(_ => UpdateState());
             Expanded.BindValueChanged(_ => UpdateState(), true);
             FinishTransforms(true);
+
+            containingInputManager = GetContainingInputManager();
+
+            if (Action == null)
+                throw new InvalidOperationException($"An action should be assigned to this {nameof(SkinCard)}. To use the default, assign {nameof(DefaultAction)}.");
+        }
+
+        protected void DefaultAction()
+        {
+            if (containingInputManager?.CurrentState.Keyboard.ShiftPressed == true)
+            {
+                switch (DownloadTracker.State.Value)
+                {
+                    case DownloadState.NotDownloaded:
+                        skinDownloader?.DownloadAndImport(Skin);
+                        break;
+
+                    case DownloadState.LocallyAvailable:
+                        game?.PresentSkinFromListing(Skin);
+                        break;
+                }
+            }
+            else
+                skinSetOverlay?.ShowSkin(Skin);
         }
 
         protected virtual BeatmapCardContent? ExpansionContent => null;
@@ -121,5 +162,10 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                     throw new ArgumentOutOfRangeException(nameof(size), size, @"Unsupported card size");
             }
         }
+
+        public virtual MenuItem[] ContextMenuItems => new MenuItem[]
+        {
+            new OsuMenuItem("View skin", MenuItemType.Highlighted, Action),
+        };
     }
 }

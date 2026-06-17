@@ -64,7 +64,7 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                     Action = () => skinDownloader.DownloadAndImport(skin);
                     this.FadeIn(BeatmapCard.TRANSITION_DURATION, Easing.OutQuint);
                     SetLoading(false);
-                    TooltipText = "Скачать скин";
+                    TooltipText = "Download skin";
                     break;
 
                 default:

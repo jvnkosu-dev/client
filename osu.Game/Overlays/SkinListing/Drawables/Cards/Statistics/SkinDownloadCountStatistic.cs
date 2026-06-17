@@ -13,7 +13,7 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards.Statistics
         {
             Icon = FontAwesome.Solid.Download;
             Text = skin.DownloadCount.ToMetric(decimals: 1);
-            TooltipText = LocalisableString.Interpolate($"Загрузок: {skin.DownloadCount.ToLocalisableString(@"N0")}");
+            TooltipText = LocalisableString.Interpolate($"Downloads: {skin.DownloadCount.ToLocalisableString(@"N0")}");
         }
     }
 }
