@@ -89,7 +89,11 @@ namespace osu.Game.Skinning
                 {
                     try
                     {
-                        await skinManager.Import(new ImportTask(tempPath)).ConfigureAwait(false);
+                        await skinManager.Import(new ImportTask(tempPath), new ImportParameters
+                        {
+                            OnlineSkinListingName = onlineSkin.Name,
+                            OnlineSkinListingCreator = onlineSkin.Creator,
+                        }).ConfigureAwait(false);
 
                         notification.CompletionText = $"Skin {onlineSkin.Name} installed successfully!";
                         notification.State = ProgressNotificationState.Completed;
@@ -152,11 +156,17 @@ namespace osu.Game.Skinning
 
         private static bool namesMatch(string installedName, string onlineName)
         {
+            string sanitizedOnlineName = SkinIniVersionHelper.SanitizeUploadName(onlineName);
+
+            if (string.Equals(installedName, sanitizedOnlineName, StringComparison.OrdinalIgnoreCase))
+                return true;
+
             if (string.Equals(installedName, onlineName, StringComparison.OrdinalIgnoreCase))
                 return true;
 
-            // SkinImporter appends " [archiveName]" when the archive filename differs from the skin name.
-            return installedName.StartsWith(onlineName + " [", StringComparison.OrdinalIgnoreCase);
+            // SkinImporter appends " [archiveName]" when the archive filename differs from the skin name (drag-and-drop imports only).
+            return installedName.StartsWith(sanitizedOnlineName + " [", StringComparison.OrdinalIgnoreCase)
+                   || installedName.StartsWith(onlineName + " [", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

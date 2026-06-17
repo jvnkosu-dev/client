@@ -27,5 +27,15 @@ namespace osu.Game.Database
         /// This is useful for cases where an import <em>must</em> complete even if gameplay is in progress.
         /// </summary>
         public bool ImportImmediately { get; set; }
+
+        /// <summary>
+        /// When importing a skin from the online listing, use this display name (bracket suffixes stripped) instead of archive filename metadata.
+        /// </summary>
+        public string? OnlineSkinListingName { get; set; }
+
+        /// <summary>
+        /// When importing a skin from the online listing, prefer this creator name if provided.
+        /// </summary>
+        public string? OnlineSkinListingCreator { get; set; }
     }
 }

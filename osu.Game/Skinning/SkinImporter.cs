@@ -124,10 +124,27 @@ namespace osu.Game.Skinning
             // Always rewrite instantiation info (even after parsing in from the skin json) for sanity.
             model.InstantiationInfo = createInstance(model).GetType().GetInvariantInstantiationInfo();
 
-            checkSkinIniMetadata(model, realm);
+            checkSkinIniMetadata(model, realm, currentImportParameters);
         }
 
-        private void checkSkinIniMetadata(SkinInfo item, Realm realm)
+        [ThreadStatic]
+        private static ImportParameters currentImportParameters;
+
+        public override Live<SkinInfo>? ImportModel(SkinInfo item, ArchiveReader? archive = null, ImportParameters parameters = default, CancellationToken cancellationToken = default)
+        {
+            currentImportParameters = parameters;
+
+            try
+            {
+                return base.ImportModel(item, archive, parameters, cancellationToken);
+            }
+            finally
+            {
+                currentImportParameters = default;
+            }
+        }
+
+        private void checkSkinIniMetadata(SkinInfo item, Realm realm, ImportParameters parameters = default)
         {
             var instance = createInstance(item);
 
@@ -141,17 +158,31 @@ namespace osu.Game.Skinning
 
             if (isImport)
             {
-                item.Name = !string.IsNullOrEmpty(skinIniSourcedName) ? skinIniSourcedName : archiveName;
-                item.Creator = !string.IsNullOrEmpty(skinIniSourcedCreator) ? skinIniSourcedCreator : unknown_creator_string;
+                bool fromOnlineListing = !string.IsNullOrWhiteSpace(parameters.OnlineSkinListingName);
 
-                // For imports, we want to use the archive or folder name as part of the metadata, in addition to any existing skin.ini metadata.
-                // In an ideal world, skin.ini would be the only source of metadata, but a lot of skin creators and users don't update it when making modifications.
-                // In both of these cases, the expectation from the user is that the filename or folder name is displayed somewhere to identify the skin.
-                if (archiveName != item.Name
-                    // lazer exports use this format
-                    // GetValidFilename accounts for skins with non-ASCII characters in the name that have been exported by lazer.
-                    && archiveName != item.GetDisplayString().GetValidFilename())
-                    item.Name = @$"{item.Name} [{archiveName}]";
+                if (fromOnlineListing)
+                {
+                    item.Name = SkinIniVersionHelper.SanitizeUploadName(parameters.OnlineSkinListingName!);
+
+                    if (!string.IsNullOrWhiteSpace(parameters.OnlineSkinListingCreator))
+                        item.Creator = parameters.OnlineSkinListingCreator.Trim();
+                    else
+                        item.Creator = !string.IsNullOrEmpty(skinIniSourcedCreator) ? skinIniSourcedCreator : unknown_creator_string;
+                }
+                else
+                {
+                    item.Name = !string.IsNullOrEmpty(skinIniSourcedName) ? skinIniSourcedName : archiveName;
+                    item.Creator = !string.IsNullOrEmpty(skinIniSourcedCreator) ? skinIniSourcedCreator : unknown_creator_string;
+
+                    // For imports, we want to use the archive or folder name as part of the metadata, in addition to any existing skin.ini metadata.
+                    // In an ideal world, skin.ini would be the only source of metadata, but a lot of skin creators and users don't update it when making modifications.
+                    // In both of these cases, the expectation from the user is that the filename or folder name is displayed somewhere to identify the skin.
+                    if (archiveName != item.Name
+                        // lazer exports use this format
+                        // GetValidFilename accounts for skins with non-ASCII characters in the name that have been exported by lazer.
+                        && archiveName != item.GetDisplayString().GetValidFilename())
+                        item.Name = @$"{item.Name} [{archiveName}]";
+                }
             }
 
             // By this point, the metadata in SkinInfo will be correct.
