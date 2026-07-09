@@ -1,8 +1,9 @@
-using System.Linq;
+using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Game.Database;
 using osu.Game.Online.API;
 using osu.Game.Online.API.Requests;
 using osu.Game.Online.API.Requests.Responses;
@@ -14,12 +15,16 @@ namespace osu.Game.Overlays.SkinSet
     public partial class SkinSetOverlay : OnlineOverlay<SkinSetHeader>
     {
         public const float Y_PADDING = 25;
-        public const float RIGHT_WIDTH = 275;
+        // Fits two SkinPreviewCard columns (110 + 10 + 110) with equal 15px side padding.
+        public const float RIGHT_WIDTH = 260;
 
         private readonly Bindable<APIOnlineSkin?> skin = new Bindable<APIOnlineSkin?>();
 
         [Resolved]
         private IAPIProvider api { get; set; } = null!;
+
+        [Resolved]
+        private SkinLookupCache skinLookupCache { get; set; } = null!;
 
         private IBindable<APIUser> apiUser = null!;
 
@@ -30,6 +35,7 @@ namespace osu.Game.Overlays.SkinSet
             : base(OverlayColourScheme.Blue)
         {
             SkinSetInfo info;
+            SkinCommentsSection comments;
 
             Child = new FillFlowContainer
             {
@@ -40,12 +46,14 @@ namespace osu.Game.Overlays.SkinSet
                 Children = new Drawable[]
                 {
                     info = new SkinSetInfo(),
+                    comments = new SkinCommentsSection(),
                 }
             };
 
             Header.Skin.BindTo(skin);
             Header.Current.Value = SkinSetTabs.Info;
             info.Skin.BindTo(skin);
+            comments.Skin.BindTo(skin);
         }
 
         [BackgroundDependencyLoader]
@@ -82,11 +90,11 @@ namespace osu.Game.Overlays.SkinSet
         /// </summary>
         public void ShowSkin(APIOnlineSkin skinData)
         {
+            skinLookupCache.StoreSkins(new[] { skinData });
             lastLookupId = skinData.OnlineID;
             fallbackSkin = skinData;
             skin.Value = skinData;
             Show();
-            performFetch();
         }
 
         private void performFetch()
@@ -94,27 +102,26 @@ namespace osu.Game.Overlays.SkinSet
             if (!api.IsLoggedIn || lastLookupId == null)
                 return;
 
-            fetchFromListing(lastLookupId.Value);
-        }
+            int skinId = lastLookupId.Value;
 
-        private void fetchFromListing(int skinId)
-        {
-            var req = new GetSkinsRequest();
-            req.Success += skins =>
+            if (skinLookupCache.TryGetCached(skinId, out var cached))
             {
-                var found = skins.FirstOrDefault(s => s.OnlineID == skinId);
+                skin.Value = cached;
+                return;
+            }
 
-                if (found != null)
-                    skin.Value = found;
-                else if (fallbackSkin != null)
-                    skin.Value = fallbackSkin;
-            };
-            req.Failure += _ =>
+            Task.Run(async () =>
             {
-                if (fallbackSkin != null)
-                    skin.Value = fallbackSkin;
-            };
-            API.Queue(req);
+                var result = await skinLookupCache.GetSkinAsync(skinId).ConfigureAwait(false);
+
+                Schedule(() =>
+                {
+                    if (lastLookupId != skinId)
+                        return;
+
+                    skin.Value = result ?? fallbackSkin;
+                });
+            });
         }
     }
 }

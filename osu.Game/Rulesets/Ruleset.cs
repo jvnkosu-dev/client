@@ -1,4 +1,4 @@
-﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Extensions;
 using osu.Framework.Extensions.EnumExtensions;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
@@ -32,6 +33,7 @@ using osu.Game.Scoring;
 using osu.Game.Screens.Edit.Setup;
 using osu.Game.Screens.Ranking.Statistics;
 using osu.Game.Skinning;
+using osu.Game.Skinning.Preview;
 using osu.Game.Users;
 using osuTK;
 
@@ -222,6 +224,26 @@ namespace osu.Game.Rulesets
         /// <param name="beatmap">The current beatmap.</param>
         /// <returns>A skin with a transformer applied, or null if no transformation is provided by this ruleset.</returns>
         public virtual ISkin? CreateSkinTransformer(ISkin skin, IBeatmap beatmap) => null;
+
+        /// <summary>
+        /// Create a drawable gallery that previews skin elements for this ruleset.
+        /// </summary>
+        /// <param name="skin">The skin to preview.</param>
+        /// <param name="previewRuleset">The ruleset whose skin transformer should be used when rendering preview elements.</param>
+        /// <returns>A gallery drawable, or <c>null</c> if this ruleset does not provide previews.</returns>
+        public virtual Drawable? CreateSkinPreviewGallery(ISkin skin, Ruleset? previewRuleset = null) => null;
+
+        /// <summary>
+        /// Create a compact skin element preview for listing card hover (e.g. hit circle).
+        /// </summary>
+        /// <param name="skin">The skin to preview.</param>
+        /// <returns>A drawable that fills its parent, or <c>null</c> if unsupported.</returns>
+        public virtual Drawable? CreateSkinCardHoverPreview(ISkin skin) => null;
+
+        /// <summary>
+        /// Create a minimal beatmap used when rendering skin element previews for this ruleset.
+        /// </summary>
+        public virtual IBeatmap CreatePreviewBeatmap() => SkinPreviewBeatmap.CreateDefault(this);
 
         protected Ruleset()
         {

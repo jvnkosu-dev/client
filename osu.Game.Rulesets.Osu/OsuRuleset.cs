@@ -1,10 +1,11 @@
-﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Extensions;
+using osu.Framework.Bindables;
 using osu.Framework.Extensions.LocalisationExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -44,6 +45,7 @@ using osu.Game.Scoring;
 using osu.Game.Screens.Edit.Setup;
 using osu.Game.Screens.Ranking.Statistics;
 using osu.Game.Skinning;
+using osu.Game.Skinning.Preview;
 using osu.Game.Utils;
 using osuTK;
 
@@ -284,6 +286,24 @@ namespace osu.Game.Rulesets.Osu
             }
 
             return null;
+        }
+
+        public override Drawable? CreateSkinPreviewGallery(ISkin skin, Ruleset? previewRuleset = null)
+            => new Skinning.Preview.OsuSkinPreviewGallery(skin, this);
+
+        public override Drawable? CreateSkinCardHoverPreview(ISkin skin)
+        {
+            var host = new Skinning.Preview.SkinPreviewDependencyHost(
+                new SkinElementPreviewContainer(skin, this, new Skinning.Preview.SkinPreviewHitCircle())
+                {
+                    RelativeSizeAxes = Axes.Both,
+                });
+
+            // Card thumbnails are a fixed square; fill the parent instead of auto-sizing.
+            // Clear AutoSize before RelativeSizeAxes.Both (framework forbids both on the same axis).
+            host.AutoSizeAxes = Axes.None;
+            host.RelativeSizeAxes = Axes.Both;
+            return host;
         }
 
         public int LegacyID => 0;

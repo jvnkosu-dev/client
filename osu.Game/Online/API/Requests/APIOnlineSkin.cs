@@ -1,15 +1,15 @@
 // Copyright (c) jvnkosu! team, MIT license
 // See the LICENCE file in the repository root for full license text.
 
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using osu.Game.Database;
 using osu.Game.Skinning;
-
-using System;
 
 namespace osu.Game.Online.API.Requests
 {
-    public class APIOnlineSkin
+    public class APIOnlineSkin : IHasOnlineID<int>
     {
         [JsonProperty("id")]
         public int OnlineID { get; set; }
@@ -22,6 +22,9 @@ namespace osu.Game.Online.API.Requests
 
         [JsonProperty("download_url")]
         public string DownloadUrl { get; set; } = string.Empty;
+
+        [JsonProperty("preview_url")]
+        public string PreviewUrl { get; set; } = string.Empty;
 
         [JsonProperty("thumbnail_url")]
         public string ThumbnailUrl { get; set; } = string.Empty;
@@ -63,6 +66,26 @@ namespace osu.Game.Online.API.Requests
         /// Returns the username of the user who uploaded this skin to the server, if available.
         /// </summary>
         public string? GetUploaderDisplayName() => string.IsNullOrWhiteSpace(UploadedBy) ? null : UploadedBy.Trim();
+
+        /// <summary>
+        /// Returns the URL to fetch this skin's file for preview purposes without incrementing download metrics.
+        /// </summary>
+        public string? GetPreviewRequestUrl()
+        {
+            if (!string.IsNullOrWhiteSpace(PreviewUrl))
+                return PreviewUrl;
+
+            if (OnlineID <= 0 || string.IsNullOrEmpty(DownloadUrl))
+                return null;
+
+            const string download_segment = "/api/skins/download/";
+            int index = DownloadUrl.IndexOf(download_segment, StringComparison.Ordinal);
+
+            if (index < 0)
+                return null;
+
+            return DownloadUrl[..index] + $"/api/skins/preview/{OnlineID}";
+        }
 
         /// <summary>
         /// Returns the URL to fetch this skin's thumbnail image.

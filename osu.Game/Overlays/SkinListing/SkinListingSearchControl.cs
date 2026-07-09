@@ -9,7 +9,7 @@ using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Input.Bindings;
 using osu.Game.Online.API.Requests;
-using osu.Game.Overlays.SkinListing.Drawables.Cards;
+using osu.Game.Overlays.SkinListing.Drawables;
 using osu.Game.Skinning;
 using osuTK;
 using osuTK.Graphics;
@@ -36,7 +36,7 @@ namespace osu.Game.Overlays.SkinListing
         private readonly SkinSearchEngineTypeFilterRow engineTypeFilter;
 
         private readonly Box background;
-        private readonly Container skinCoverContainer;
+        private readonly UpdateableOnlineSkinCover skinCover;
 
         public SkinListingSearchControl()
         {
@@ -53,7 +53,7 @@ namespace osu.Game.Overlays.SkinListing
                 {
                     RelativeSizeAxes = Axes.Both,
                     Masking = true,
-                    Child = skinCoverContainer = new Container
+                    Child = skinCover = new TopSearchSkinCover
                     {
                         RelativeSizeAxes = Axes.Both,
                         Alpha = 0,
@@ -110,21 +110,14 @@ namespace osu.Game.Overlays.SkinListing
 
         private void setSkinCover(APIOnlineSkin? skin)
         {
-            string? url = skin?.GetThumbnailRequestUrl();
-
-            if (string.IsNullOrEmpty(url))
+            if (skin == null || string.IsNullOrEmpty(skin.GetThumbnailRequestUrl()))
             {
-                skinCoverContainer.FadeOut(600, Easing.OutQuint);
+                skinCover.FadeOut(600, Easing.OutQuint);
                 return;
             }
 
-            skinCoverContainer.Clear();
-            skinCoverContainer.Add(new OnlineSkinSprite(url)
-            {
-                RelativeSizeAxes = Axes.Both,
-                FillMode = FillMode.Fill,
-            });
-            skinCoverContainer.FadeTo(0.1f, 200, Easing.OutQuint);
+            skinCover.Skin = skin;
+            skinCover.FadeTo(0.1f, 200, Easing.OutQuint);
         }
 
         private partial class SkinSearchTextBox : BasicSearchTextBox
@@ -155,6 +148,11 @@ namespace osu.Game.Overlays.SkinListing
                 TextChanged?.Invoke();
                 return true;
             }
+        }
+
+        private partial class TopSearchSkinCover : UpdateableOnlineSkinCover
+        {
+            protected override bool TransformImmediately => true;
         }
     }
 }

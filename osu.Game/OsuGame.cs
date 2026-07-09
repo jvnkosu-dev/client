@@ -81,6 +81,7 @@ using osu.Game.Screens.Ranking;
 using osu.Game.Screens.Select;
 using osu.Game.Seasonal;
 using osu.Game.Skinning;
+using osu.Game.Skinning.Preview;
 using osu.Game.Updater;
 using osu.Game.Users;
 using osu.Game.Utils;
@@ -1273,6 +1274,7 @@ namespace osu.Game
             loadComponentSingleFile(skinSetOverlay = new SkinSetOverlay(), overlayContent.Add, true);
             loadComponentSingleFile(wikiOverlay = new WikiOverlay(), overlayContent.Add, true);
             loadComponentSingleFile(new SkinDownloader(), Add, true);
+            loadComponentSingleFile(new OnlineSkinPreviewProvider(), Add, true);
             loadComponentSingleFile(new SkinUploader(), Add, true);
             loadComponentSingleFile(skinListing = new SkinListingOverlay(), overlayContent.Add, true);
             loadComponentSingleFile(skinEditor = new SkinEditorOverlay(ScreenContainer), overlayContent.Add, true);

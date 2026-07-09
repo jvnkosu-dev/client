@@ -11,6 +11,7 @@ using osu.Framework.Graphics.Shapes;
 using osu.Framework.Threading;
 using osu.Game.Beatmaps.Drawables.Cards;
 using osu.Game.Configuration;
+using osu.Game.Database;
 using osu.Game.Online.API;
 using osu.Game.Online.API.Requests;
 using osu.Game.Online.API.Requests.Responses;
@@ -45,6 +46,9 @@ namespace osu.Game.Overlays.SkinListing
 
         [Resolved]
         private OsuConfigManager config { get; set; } = null!;
+
+        [Resolved]
+        private SkinLookupCache skinLookupCache { get; set; } = null!;
 
         public SkinListingFilterControl()
         {
@@ -183,9 +187,9 @@ namespace osu.Game.Overlays.SkinListing
 
             getSkinsRequest.Success += skins =>
             {
+                skinLookupCache.StoreSkins(skins);
                 lastResults = sortSkins(skins);
                 getSkinsRequest = null;
-                searchControl.Skin = getFeaturedSkin(skins);
                 publishResults();
             };
 
@@ -212,11 +216,15 @@ namespace osu.Game.Overlays.SkinListing
         {
             var filtered = SkinModifiedModesHelper.Filter(lastResults, searchControl.ModifiedModes);
             filtered = SkinEngineTypeHelper.Filter(filtered, searchControl.EngineType.Value);
-            SearchFinished?.Invoke(SearchResult.ResultsReturned(filtered.ToList()));
-        }
 
-        private static APIOnlineSkin? getFeaturedSkin(IEnumerable<APIOnlineSkin> skins) =>
-            skins.OrderByDescending(s => s.LastUpdated ?? s.CreatedAt ?? DateTimeOffset.MinValue).FirstOrDefault();
+            var results = filtered.ToList();
+
+            // Match beatmap listing: search header cover follows the first visible result
+            // after the current sort and filters.
+            searchControl.Skin = results.FirstOrDefault();
+
+            SearchFinished?.Invoke(SearchResult.ResultsReturned(results));
+        }
 
         private List<APIOnlineSkin> sortSkins(List<APIOnlineSkin> skins)
         {
@@ -230,7 +238,7 @@ namespace osu.Game.Overlays.SkinListing
                 _ => skins
             };
 
-            if (sortControl.SortDirection.Value == SortDirection.Ascending)
+            if (sortControl.SortDirection.Value == SortDirection.Descending)
                 ordered = ordered.Reverse();
 
             return ordered.ToList();

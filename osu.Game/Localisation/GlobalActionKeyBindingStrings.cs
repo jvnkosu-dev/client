@@ -40,6 +40,11 @@ namespace osu.Game.Localisation
         public static LocalisableString ToggleBeatmapListing => new TranslatableString(getKey(@"toggle_beatmap_listing"), @"Toggle beatmap listing");
 
         /// <summary>
+        /// "Toggle skin listing"
+        /// </summary>
+        public static LocalisableString ToggleSkinListing => new TranslatableString(getKey(@"toggle_skin_listing"), @"Toggle skin listing");
+
+        /// <summary>
         /// "Increase volume"
         /// </summary>
         public static LocalisableString IncreaseVolume => new TranslatableString(getKey(@"increase_volume"), @"Increase volume");

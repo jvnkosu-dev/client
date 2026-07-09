@@ -6,7 +6,10 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Game.Beatmaps.Drawables.Cards;
 using osu.Game.Graphics;
+using osu.Game.Online.API.Requests;
 using osu.Game.Overlays;
+using osu.Game.Overlays.SkinListing.Drawables;
+using osu.Game.Skinning.Preview;
 using osuTK;
 
 namespace osu.Game.Overlays.SkinListing.Drawables.Cards
@@ -15,23 +18,38 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
     {
         public BindableBool Dimmed { get; } = new BindableBool();
 
-        private readonly Box background;
-        private readonly Container cover;
-        private readonly Container parallaxWrapper;
-        private readonly OnlineSkinSprite coverSprite;
+        private readonly APIOnlineSkin skin;
+        private readonly bool keepLoaded;
+
+        private Box background = null!;
+        private Container cover = null!;
+        private Container parallaxWrapper = null!;
 
         private float? lockedCoverWidth;
 
         [Resolved]
         private OverlayColourProvider colourProvider { get; set; } = null!;
 
-        public SkinCardContentBackground(string? thumbnailUrl)
+        [Resolved]
+        private OnlineSkinPreviewProvider previewProvider { get; set; } = null!;
+
+        public SkinCardContentBackground(APIOnlineSkin skin, bool keepLoaded = false)
         {
+            this.skin = skin;
+            this.keepLoaded = keepLoaded;
+        }
+
+        [BackgroundDependencyLoader]
+        private void load()
+        {
+            string? thumbnailUrl = skin.GetThumbnailRequestUrl();
+
             InternalChildren = new Drawable[]
             {
                 background = new Box
                 {
                     RelativeSizeAxes = Axes.Both,
+                    Colour = colourProvider.Background2,
                 },
                 cover = new Container
                 {
@@ -47,21 +65,18 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                         {
                             Anchor = Anchor.Centre,
                             Origin = Anchor.Centre,
-                            Child = coverSprite = new OnlineSkinSprite(thumbnailUrl)
+                            Child = new SkinDelayedLoadUnloadWrapper(() => new OnlineSkinSprite(thumbnailUrl)
                             {
                                 RelativeSizeAxes = Axes.Both,
                                 FillMode = FillMode.Fill,
+                            }, previewProvider, skin.OnlineID, keepLoaded ? 0 : 500, keepLoaded ? double.MaxValue : 1000)
+                            {
+                                RelativeSizeAxes = Axes.Both,
                             },
                         },
                     }
                 },
             };
-        }
-
-        [BackgroundDependencyLoader]
-        private void load()
-        {
-            background.Colour = colourProvider.Background2;
         }
 
         protected override void LoadComplete()

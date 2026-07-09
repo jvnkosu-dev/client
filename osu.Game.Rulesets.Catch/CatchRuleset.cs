@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using osu.Framework.Bindables;
 using osu.Framework.Extensions.LocalisationExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -228,6 +229,9 @@ namespace osu.Game.Rulesets.Catch
 
             return null;
         }
+
+        public override Drawable? CreateSkinPreviewGallery(ISkin skin, Ruleset? previewRuleset = null)
+            => new Skinning.Preview.CatchSkinPreviewGallery(skin, this);
 
         public override PerformanceCalculator CreatePerformanceCalculator() => new CatchPerformanceCalculator();
 

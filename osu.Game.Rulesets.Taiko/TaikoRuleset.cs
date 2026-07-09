@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using osu.Framework.Bindables;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Sprites;
@@ -70,6 +71,9 @@ namespace osu.Game.Rulesets.Taiko
 
             return null;
         }
+
+        public override Drawable? CreateSkinPreviewGallery(ISkin skin, Ruleset? previewRuleset = null)
+            => new Skinning.Preview.TaikoSkinPreviewGallery(skin, this);
 
         public const string SHORT_NAME = "taiko";
 

@@ -24,6 +24,8 @@ namespace osu.Game.Rulesets.Osu.Skinning.Argon
 {
     public partial class ArgonMainCirclePiece : CompositeDrawable
     {
+        public override bool RemoveCompletedTransforms => false;
+
         public const float BORDER_THICKNESS = (OsuHitObject.OBJECT_RADIUS * 2) * (2f / 58);
 
         public const float GRADIENT_THICKNESS = BORDER_THICKNESS * 2.5f;

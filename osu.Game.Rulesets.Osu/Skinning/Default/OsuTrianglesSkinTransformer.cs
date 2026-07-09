@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Graphics;
+using osu.Game.Rulesets.Judgements;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Skinning;
 
@@ -27,6 +28,12 @@ namespace osu.Game.Rulesets.Osu.Skinning.Default
                         case HitResult.LargeTickMiss:
                             // use argon judgement piece for new tick misses because i don't want to design another one for triangles.
                             return new DefaultJudgementPieceSliderTickMiss(result);
+
+                        default:
+                            if (result.IsBasic())
+                                return new DefaultJudgementPiece(result);
+
+                            break;
                     }
 
                     break;

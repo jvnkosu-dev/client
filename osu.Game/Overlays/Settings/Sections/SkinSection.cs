@@ -1,4 +1,4 @@
-﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
 #nullable disable
@@ -24,6 +24,7 @@ using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Localisation;
 using osu.Game.Overlays.Dialog;
 using osu.Game.Overlays.SkinEditor;
+using osu.Game.Overlays.SkinSet;
 using osu.Game.Skinning;
 using osuTK;
 using Realms;
@@ -85,6 +86,7 @@ namespace osu.Game.Overlays.Settings.Sections
                     Text = SkinSettingsStrings.SkinLayoutEditor,
                     Action = () => skinEditor?.ToggleVisibility(),
                 },
+                new ViewOnSkinListingButton(),
             };
         }
 
@@ -200,6 +202,47 @@ namespace osu.Game.Overlays.Settings.Sections
                 {
                     Logger.Log($"Could not export current skin: {e.Message}", level: LogLevel.Error);
                 }
+            }
+        }
+
+        public partial class ViewOnSkinListingButton : SettingsButtonV2
+        {
+            [Resolved]
+            private SkinManager skins { get; set; }
+
+            [Resolved(CanBeNull = true)]
+            private SkinSetOverlay skinSetOverlay { get; set; }
+
+            private Bindable<Skin> currentSkin;
+
+            [BackgroundDependencyLoader]
+            private void load()
+            {
+                Text = SkinSettingsStrings.ViewOnSkinListing;
+                Action = viewOnline;
+            }
+
+            protected override void LoadComplete()
+            {
+                base.LoadComplete();
+
+                currentSkin = skins.CurrentSkin.GetBoundCopy();
+                currentSkin.BindValueChanged(_ => updateState());
+                currentSkin.BindDisabledChanged(_ => updateState(), true);
+            }
+
+            private void updateState()
+            {
+                Enabled.Value = !currentSkin.Disabled
+                                && SkinIniVersionHelper.TryGetOnlineSkinId(currentSkin.Value, out _);
+            }
+
+            private void viewOnline()
+            {
+                if (!SkinIniVersionHelper.TryGetOnlineSkinId(currentSkin.Value, out int onlineSkinId))
+                    return;
+
+                skinSetOverlay?.FetchAndShowSkin(onlineSkinId);
             }
         }
 

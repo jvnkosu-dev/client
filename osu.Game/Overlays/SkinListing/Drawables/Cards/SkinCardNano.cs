@@ -1,7 +1,9 @@
 using osu.Framework.Allocation;
+using osu.Framework.Extensions.LocalisationExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Graphics.UserInterface;
 using osu.Game.Beatmaps.Drawables.Cards;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
@@ -11,6 +13,7 @@ using osu.Game.Online.API.Requests;
 using osu.Game.Overlays;
 using osu.Game.Skinning;
 using osuTK;
+using System.Linq;
 
 namespace osu.Game.Overlays.SkinListing.Drawables.Cards
 {
@@ -122,6 +125,22 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
         {
             base.UpdateState();
             buttonContainer.ShowDetails.Value = IsHovered;
+        }
+
+        public override MenuItem[] ContextMenuItems
+        {
+            get
+            {
+                var items = base.ContextMenuItems.ToList();
+
+                foreach (var button in buttonContainer.Buttons)
+                {
+                    if (button.Enabled.Value)
+                        items.Add(new OsuMenuItem(button.TooltipText.ToSentence(), MenuItemType.Standard, () => button.TriggerClick()));
+                }
+
+                return items.ToArray();
+            }
         }
     }
 }

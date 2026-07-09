@@ -70,7 +70,7 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
                 true
             );
 
-            backgroundLoader?.AvailableCategories.BindValueChanged(categories => categoryDropdown.Items = categories.NewValue, true);
+            backgroundLoader?.AvailableCategories.BindValueChanged(categories => Schedule(() => categoryDropdown.Items = categories.NewValue), true);
 
             Children = new Drawable[]
             {

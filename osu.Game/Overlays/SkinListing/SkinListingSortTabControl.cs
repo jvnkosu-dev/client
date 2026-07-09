@@ -34,7 +34,7 @@ namespace osu.Game.Overlays.SkinListing
             if (hasQuery)
                 TabControl.AddItem(SortCriteria.Relevance);
 
-            Current.Value = hasQuery ? SortCriteria.Relevance : SortCriteria.Name;
+            Current.Value = hasQuery ? SortCriteria.Relevance : SortCriteria.Updated;
             SortDirection.Value = Overlays.SortDirection.Descending;
             TabControl.Current.TriggerChange();
         }

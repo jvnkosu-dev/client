@@ -89,6 +89,18 @@ namespace osu.Game.Database
             cache.TryGetValue(lookup, out value);
 
         /// <summary>
+        /// Store a value in the cache without performing a lookup.
+        /// </summary>
+        protected void CacheValue(TLookup lookup, TValue value)
+        {
+            if (value == null)
+                return;
+
+            cache[lookup] = value;
+            statistics.Value.Usage = cache.Count;
+        }
+
+        /// <summary>
         /// Called on cache miss to compute the value for the specified lookup.
         /// </summary>
         /// <param name="lookup">The lookup to retrieve.</param>

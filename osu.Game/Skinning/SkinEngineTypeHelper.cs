@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using osu.Game.Extensions;
 using osu.Game.Online.API.Requests;
 
 namespace osu.Game.Skinning
@@ -16,6 +17,14 @@ namespace osu.Game.Skinning
         };
 
         public static string ToStorageString(SkinEngineType type) => GetDisplayName(type);
+
+        public static string GetInstantiationInfo(SkinEngineType type) => type switch
+        {
+            SkinEngineType.Triangles => typeof(TrianglesSkin).GetInvariantInstantiationInfo(),
+            SkinEngineType.Argon => typeof(ArgonSkin).GetInvariantInstantiationInfo(),
+            SkinEngineType.ArgonPro => typeof(ArgonProSkin).GetInvariantInstantiationInfo(),
+            _ => typeof(LegacySkin).GetInvariantInstantiationInfo(),
+        };
 
         public static SkinEngineType FromInstantiationInfo(string? instantiationInfo)
         {

@@ -3,6 +3,7 @@
 
 using JetBrains.Annotations;
 using osu.Framework.Audio.Sample;
+using osu.Framework.IO.Stores;
 using osu.Game.Audio;
 using osu.Game.Extensions;
 using osu.Game.IO;
@@ -41,9 +42,14 @@ namespace osu.Game.Skinning
         {
         }
 
-        [UsedImplicitly(ImplicitUseKindFlags.InstantiatedWithFixedConstructorSignature)]
         public ArgonProSkin(SkinInfo skin, IStorageResourceProvider resources)
-            : base(skin, resources)
+            : this(skin, resources, null, true)
+        {
+        }
+
+        [UsedImplicitly(ImplicitUseKindFlags.InstantiatedWithFixedConstructorSignature)]
+        public ArgonProSkin(SkinInfo skin, IStorageResourceProvider resources, IResourceStore<byte[]>? fallbackStore = null, bool useRealmStorage = true)
+            : base(skin, resources, fallbackStore, useRealmStorage)
         {
         }
     }

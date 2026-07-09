@@ -124,7 +124,7 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                     Masking = true,
                     Children = new Drawable[]
                     {
-                        new SkinCardContentBackground(skin.GetThumbnailRequestUrl())
+                        new SkinCardContentBackground(skin)
                         {
                             RelativeSizeAxes = Axes.Both,
                             Dimmed = { BindTarget = ShowDetails },

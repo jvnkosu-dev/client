@@ -1,6 +1,8 @@
 using osu.Framework.Allocation;
+using osu.Framework.Extensions.LocalisationExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.UserInterface;
 using osu.Game.Beatmaps.Drawables.Cards;
 using osu.Game.Beatmaps.Drawables.Cards.Statistics;
 using osu.Game.Graphics;
@@ -12,6 +14,7 @@ using osu.Game.Overlays;
 using osu.Game.Overlays.SkinListing.Drawables.Cards.Statistics;
 using osu.Game.Skinning;
 using osuTK;
+using System.Linq;
 
 namespace osu.Game.Overlays.SkinListing.Drawables.Cards
 {
@@ -55,7 +58,7 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                     RelativeSizeAxes = Axes.Both,
                     Children = new Drawable[]
                     {
-                        thumbnail = new SkinCardThumbnail(Skin.GetThumbnailRequestUrl())
+                        thumbnail = new SkinCardThumbnail(Skin)
                         {
                             Name = @"Left (thumbnail) area",
                             Size = new Vector2(HEIGHT),
@@ -152,6 +155,22 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
             buttonContainer.ShowDetails.Value = showDetails;
             thumbnail.Dimmed.Value = showDetails;
             statisticsContainer.FadeTo(showDetails ? 1 : 0, TRANSITION_DURATION, Easing.OutQuint);
+        }
+
+        public override MenuItem[] ContextMenuItems
+        {
+            get
+            {
+                var items = base.ContextMenuItems.ToList();
+
+                foreach (var button in buttonContainer.Buttons)
+                {
+                    if (button.Enabled.Value)
+                        items.Add(new OsuMenuItem(button.TooltipText.ToSentence(), MenuItemType.Standard, () => button.TriggerClick()));
+                }
+
+                return items.ToArray();
+            }
         }
     }
 }

@@ -30,6 +30,11 @@ namespace osu.Game.Localisation
         public static LocalisableString SkinLayoutEditor => new TranslatableString(getKey(@"skin_layout_editor"), @"Skin layout editor");
 
         /// <summary>
+        /// "View on skin listing"
+        /// </summary>
+        public static LocalisableString ViewOnSkinListing => new TranslatableString(getKey(@"view_on_skin_listing"), @"View on skin listing");
+
+        /// <summary>
         /// "Gameplay cursor size"
         /// </summary>
         public static LocalisableString GameplayCursorSize => new TranslatableString(getKey(@"gameplay_cursor_size"), @"Gameplay cursor size");

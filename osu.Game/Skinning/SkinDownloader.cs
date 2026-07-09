@@ -32,6 +32,9 @@ namespace osu.Game.Skinning
         [Resolved]
         private INotificationOverlay notifications { get; set; } = null!;
 
+        [Resolved]
+        private OsuGame game { get; set; } = null!;
+
         public bool IsInstalled(APIOnlineSkin onlineSkin) => GetInstalledSkin(onlineSkin) != null;
 
         public Live<SkinInfo>? GetInstalledSkin(APIOnlineSkin onlineSkin)
@@ -95,6 +98,15 @@ namespace osu.Game.Skinning
                             OnlineSkinListingCreator = onlineSkin.Creator,
                         }).ConfigureAwait(false);
 
+                        notification.CompletionClickAction = () =>
+                        {
+                            var installed = GetInstalledSkin(onlineSkin);
+
+                            if (installed != null)
+                                game.PresentSkin(installed.Value);
+
+                            return true;
+                        };
                         notification.CompletionText = $"Skin {onlineSkin.Name} installed successfully!";
                         notification.State = ProgressNotificationState.Completed;
                         Schedule(() =>

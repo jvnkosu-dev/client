@@ -72,7 +72,9 @@ namespace osu.Game.Skinning
         /// <param name="resources">Access to game-wide resources.</param>
         /// <param name="fallbackStore">An optional fallback store which will be used for file lookups that are not serviced by realm user storage.</param>
         /// <param name="configurationFilename">An optional filename to read the skin configuration from. If not provided, the configuration will be retrieved from the storage using "skin.ini".</param>
-        protected Skin(SkinInfo skin, IStorageResourceProvider? resources, IResourceStore<byte[]>? fallbackStore = null, string configurationFilename = @"skin.ini")
+        /// <param name="useRealmStorage">Whether to attach realm-backed user storage for the provided <paramref name="skin"/>.</param>
+        protected Skin(SkinInfo skin, IStorageResourceProvider? resources, IResourceStore<byte[]>? fallbackStore = null, string configurationFilename = @"skin.ini",
+            bool useRealmStorage = true)
         {
             this.resources = resources;
 
@@ -80,9 +82,10 @@ namespace osu.Game.Skinning
 
             if (resources != null)
             {
-                SkinInfo = skin.ToLive(resources.RealmAccess);
+                SkinInfo = useRealmStorage ? skin.ToLive(resources.RealmAccess) : skin.ToLiveUnmanaged();
 
-                store.AddStore(new RealmBackedResourceStore<SkinInfo>(SkinInfo, resources.Files, resources.RealmAccess));
+                if (useRealmStorage)
+                    store.AddStore(new RealmBackedResourceStore<SkinInfo>(SkinInfo, resources.Files, resources.RealmAccess));
 
                 RecycleSamples();
                 Textures = new TextureStore(resources.Renderer, CreateTextureLoaderStore(resources, store));

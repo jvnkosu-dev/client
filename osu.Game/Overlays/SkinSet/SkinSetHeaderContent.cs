@@ -13,6 +13,7 @@ using osu.Game.Graphics.UserInterface;
 using osu.Game.Online;
 using osu.Game.Online.API.Requests;
 using osu.Game.Online.Chat;
+using osu.Game.Overlays.SkinListing.Drawables;
 using osu.Game.Overlays.SkinListing.Drawables.Cards;
 using osu.Game.Overlays.SkinSet.Buttons;
 using osu.Game.Skinning;
@@ -29,7 +30,7 @@ namespace osu.Game.Overlays.SkinSet
         private const float buttons_height = 45;
         private const float buttons_spacing = 5;
 
-        private readonly Container coverContainer;
+        private readonly UpdateableOnlineSkinCover cover;
         private readonly Box coverGradient;
         private readonly MetadataFlowContainer title;
         private readonly MetadataFlowContainer artist;
@@ -58,7 +59,7 @@ namespace osu.Game.Overlays.SkinSet
                         RelativeSizeAxes = Axes.Both,
                         Children = new Drawable[]
                         {
-                            coverContainer = new Container
+                            cover = new UpdateableOnlineSkinCover
                             {
                                 RelativeSizeAxes = Axes.Both,
                                 Masking = true,
@@ -164,7 +165,7 @@ namespace osu.Game.Overlays.SkinSet
                 fadeContent.Hide();
                 favouriteButton.FadeOut(transition_duration);
                 loading.Show();
-                coverContainer.Clear();
+                cover.Skin = null;
                 author.Skin = null;
                 return;
             }
@@ -182,11 +183,7 @@ namespace osu.Game.Overlays.SkinSet
                 artist.AddText(newSkin.Creator);
 
             author.Skin = newSkin;
-
-            coverContainer.Child = new OnlineSkinSprite(newSkin.GetThumbnailRequestUrl())
-            {
-                RelativeSizeAxes = Axes.Both,
-            };
+            cover.Skin = newSkin;
 
             downloadTracker = new SkinDownloadTracker(newSkin);
             downloadTracker.State.BindValueChanged(_ => updateActionButtons(newSkin));

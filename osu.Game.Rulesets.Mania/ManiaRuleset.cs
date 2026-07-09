@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using osu.Framework.Bindables;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Sprites;
@@ -88,6 +89,24 @@ namespace osu.Game.Rulesets.Mania
 
             return null;
         }
+
+        public override IBeatmap CreatePreviewBeatmap()
+        {
+            var beatmap = new ManiaBeatmap(new StageDefinition(5));
+            beatmap.BeatmapInfo = new BeatmapInfo
+            {
+                Ruleset = RulesetInfo,
+                Difficulty = new BeatmapDifficulty
+                {
+                    CircleSize = 5,
+                    OverallDifficulty = 8,
+                },
+            };
+            return beatmap;
+        }
+
+        public override Drawable? CreateSkinPreviewGallery(ISkin skin, Ruleset? previewRuleset = null)
+            => new Skinning.Preview.ManiaSkinPreviewGallery(skin, this);
 
         public override IEnumerable<Mod> ConvertFromLegacyMods(LegacyMods mods)
         {

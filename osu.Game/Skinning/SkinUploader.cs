@@ -133,7 +133,7 @@ namespace osu.Game.Skinning
                 }
 
                 string error = formatServerError(request, status);
-                Logger.Log($"Skin {(method == HttpMethod.Put ? "update" : "upload")} failed: {error}", LoggingTarget.Network, LogLevel.Important);
+                Logger.Log($"Skin {(method == HttpMethod.Put ? "update" : "upload")} failed: {error}", LoggingTarget.Network);
                 return SkinUploadResult.Failed(error);
             }
             catch (OperationCanceledException)
@@ -142,10 +142,14 @@ namespace osu.Game.Skinning
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Skin {(method == HttpMethod.Put ? "update" : "upload")} failed with an exception.");
-
                 if (request?.ResponseStatusCode is HttpStatusCode status)
-                    return SkinUploadResult.Failed(formatServerError(request, status));
+                {
+                    string error = formatServerError(request, status);
+                    Logger.Log($"Skin {(method == HttpMethod.Put ? "update" : "upload")} failed: {error}", LoggingTarget.Network);
+                    return SkinUploadResult.Failed(error);
+                }
+
+                Logger.Log($"Skin {(method == HttpMethod.Put ? "update" : "upload")} failed: {ex}", LoggingTarget.Network);
 
                 string message = string.IsNullOrWhiteSpace(ex.Message) ? ex.GetType().Name : ex.Message;
                 return SkinUploadResult.Failed(message);
