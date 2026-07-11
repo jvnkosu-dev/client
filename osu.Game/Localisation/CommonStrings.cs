@@ -70,6 +70,11 @@ namespace osu.Game.Localisation
         public static LocalisableString Update => new TranslatableString(getKey(@"update"), @"Update");
 
         /// <summary>
+        /// "Server"
+        /// </summary>
+        public static LocalisableString Server => new TranslatableString(getKey(@"server"), @"Server");
+
+        /// <summary>
         /// "Downloading..."
         /// </summary>
         public static LocalisableString Downloading => new TranslatableString(getKey(@"downloading"), @"Downloading...");

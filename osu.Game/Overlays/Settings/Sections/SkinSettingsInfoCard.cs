@@ -53,6 +53,7 @@ namespace osu.Game.Overlays.Settings.Sections
 
         private TruncatingSpriteText titleText = null!;
         private TruncatingSpriteText creatorText = null!;
+        private SkinOriginStatusPill originPill = null!;
         private StatisticPill downloadsPill = null!;
         private FavouritePill favouritesPill = null!;
         private Sprite titleCover = null!;
@@ -149,13 +150,15 @@ namespace osu.Game.Overlays.Settings.Sections
 
         private void onSkinSourceChanged() => Schedule(() =>
         {
-            if (currentSkin.Value != null)
-            {
-                updateTitleCoverFromLocalSkin(currentSkin.Value);
+            if (currentSkin.Value == null)
+                return;
 
-                if (lastOnlineSkin != null)
-                    updateUpdateButton(lastOnlineSkin);
-            }
+            applyLocalMetadata(currentSkin.Value);
+            updateTitleCoverFromLocalSkin(currentSkin.Value);
+            updateOriginPill(currentSkin.Value, lastOnlineSkin);
+
+            if (lastOnlineSkin != null)
+                updateUpdateButton(lastOnlineSkin);
         });
 
         protected override void Dispose(bool isDisposing)
@@ -215,6 +218,10 @@ namespace osu.Game.Overlays.Settings.Sections
                         Spacing = new Vector2(0, 4),
                         Children = new Drawable[]
                         {
+                            originPill = new SkinOriginStatusPill
+                            {
+                                TextSize = OsuFont.Style.Caption1.Size,
+                            },
                             titleText = new TruncatingSpriteText
                             {
                                 RelativeSizeAxes = Axes.X,
@@ -413,32 +420,27 @@ namespace osu.Game.Overlays.Settings.Sections
             int generation = ++lookupGeneration;
 
             var skin = currentSkin.Value;
-            string displayName = SkinIniVersionHelper.GetDisplayName(skin.Name);
-            string creator = skin.SkinInfo.PerformRead(s => s.Creator) ?? string.Empty;
 
-            titleText.Text = string.IsNullOrWhiteSpace(displayName) ? skin.SkinInfo.ToString() : displayName;
-            creatorText.Text = string.IsNullOrWhiteSpace(creator) ? "-" : creator;
-
-            string localVersion = SkinIniVersionHelper.GetSkinVersion(skin, useDefaultIfMissing: false);
-            version.SetText(string.IsNullOrWhiteSpace(localVersion) ? "-" : localVersion);
-
-            skinType.SetText(skin.SkinInfo.PerformRead(s =>
-                SkinEngineTypeHelper.GetDisplayName(SkinEngineTypeHelper.FromSkinInfo(s))));
-
-            setModes(SkinIniVersionHelper.ParseModifiedModes(skin.Configuration.ModifiedModes).ToArray());
+            applyLocalMetadata(skin);
+            updateTitleCoverFromLocalSkin(skin);
 
             downloadsPill.SetValue(null);
             favouritesPill.SetSkin(null);
             uploadedBy.SetText("-");
             submitted.SetDate(null);
             lastUpdated.SetDate(null);
-            tags.SetTags(Array.Empty<string>());
-            updateTitleCoverFromLocalSkin(skin);
             hideUpdateButton();
             lastOnlineSkin = null;
 
+            // Purely local skin, or listing id missing → Local pill immediately.
             if (!SkinIniVersionHelper.TryGetOnlineSkinId(skin, out int onlineSkinId))
+            {
+                originPill.SetOrigin(SkinOriginStatus.Local);
                 return;
+            }
+
+            // Reflect local file divergence right away; flip further when listing metadata arrives.
+            updateOriginPill(skin, null);
 
             var token = lookupCancellation.Token;
 
@@ -459,8 +461,36 @@ namespace osu.Game.Overlays.Settings.Sections
 
                     if (result != null)
                         applyOnlineSkin(result, generation);
+                    else
+                        originPill.SetOrigin(SkinOriginStatus.Local);
                 });
             }, token);
+        }
+
+        /// <summary>
+        /// Fills title + details wedges from local skin files / skin.ini (never from listing).
+        /// </summary>
+        private void applyLocalMetadata(Skin skin)
+        {
+            string displayName = SkinIniVersionHelper.GetDisplayName(skin.Name);
+            string creator = skin.SkinInfo.PerformRead(s => s.Creator) ?? string.Empty;
+
+            titleText.Text = string.IsNullOrWhiteSpace(displayName) ? skin.SkinInfo.ToString() : displayName;
+            creatorText.Text = string.IsNullOrWhiteSpace(creator) || creator == @"Unknown" ? "-" : creator;
+
+            string localVersion = SkinIniVersionHelper.GetSkinVersion(skin, useDefaultIfMissing: false);
+            version.SetText(string.IsNullOrWhiteSpace(localVersion) ? "-" : localVersion);
+
+            skinType.SetText(skin.SkinInfo.PerformRead(s =>
+                SkinEngineTypeHelper.GetDisplayName(SkinEngineTypeHelper.FromSkinInfo(s))));
+
+            setModes(SkinIniVersionHelper.ParseModifiedModes(skin.Configuration.ModifiedModes).ToArray());
+
+            string[] tagList = string.IsNullOrWhiteSpace(skin.Configuration.Tags)
+                ? Array.Empty<string>()
+                : skin.Configuration.Tags.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            tags.SetTags(tagList, tag => game?.SearchSkin(tag));
         }
 
         private void applyOnlineSkin(APIOnlineSkin online, int generation)
@@ -468,12 +498,7 @@ namespace osu.Game.Overlays.Settings.Sections
             if (generation != lookupGeneration)
                 return;
 
-            if (!string.IsNullOrWhiteSpace(online.Name))
-                titleText.Text = SkinIniVersionHelper.GetDisplayName(online.Name);
-
-            if (!string.IsNullOrWhiteSpace(online.Creator))
-                creatorText.Text = online.Creator;
-
+            // Listing-only fields (not present in skin.ini the same way).
             downloadsPill.SetValue(online.DownloadCount);
             favouritesPill.SetSkin(online);
 
@@ -483,26 +508,34 @@ namespace osu.Game.Overlays.Settings.Sections
             else
                 uploadedBy.SetUploader(uploader);
 
-            string displayVersion = SkinIniVersionHelper.GetDisplayVersion(online.Version, online.Name);
-            if (!string.IsNullOrWhiteSpace(displayVersion))
-                version.SetText(displayVersion);
-
-            skinType.SetText(SkinEngineTypeHelper.GetDisplayName(online));
-
-            setModes(online.ModifiedModes);
-
             submitted.SetDate(online.CreatedAt);
             lastUpdated.SetDate(online.LastUpdated ?? online.CreatedAt);
 
-            string[] tagList = string.IsNullOrWhiteSpace(online.Tags)
-                ? Array.Empty<string>()
-                : online.Tags.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-            tags.SetTags(tagList, tag => game?.SearchSkin(tag));
-
             lastOnlineSkin = online;
             skins.EnsureOnlineHashBaseline(currentSkin.Value.SkinInfo);
+            updateOriginPill(currentSkin.Value, online);
             updateUpdateButton(online);
+        }
+
+        private void updateOriginPill(Skin skin, APIOnlineSkin? online)
+        {
+            // Not linked to listing at all.
+            if (!SkinIniVersionHelper.TryGetOnlineSkinId(skin, out _))
+            {
+                originPill.SetOrigin(SkinOriginStatus.Local);
+                return;
+            }
+
+            // User edited layout/files after last download/update → Local (same signal that offers Update).
+            bool locallyDiverged = skin.SkinInfo.PerformRead(s => !s.MatchesOnlineVersion);
+
+            if (locallyDiverged || (online != null && SkinUpdateHelper.IsUpdateAvailable(skin, online)))
+            {
+                originPill.SetOrigin(SkinOriginStatus.Local);
+                return;
+            }
+
+            originPill.SetOrigin(SkinOriginStatus.Server);
         }
 
         private void updateUpdateButton(APIOnlineSkin online)
@@ -553,6 +586,88 @@ namespace osu.Game.Overlays.Settings.Sections
             titleCover.Texture = null;
             titleCover.FadeOut(200, Easing.OutQuint);
             titleCoverDim.FadeOut(200, Easing.OutQuint);
+        }
+
+        private enum SkinOriginStatus
+        {
+            Local,
+            Server,
+        }
+
+        /// <summary>
+        /// Beatmap-wedge-style status pill: Local (red) vs Server (green).
+        /// </summary>
+        private partial class SkinOriginStatusPill : CircularContainer
+        {
+            private readonly OsuSpriteText statusText;
+            private readonly Box background;
+
+            private SkinOriginStatus origin = SkinOriginStatus.Local;
+
+            private OverlayColourProvider colourProvider = null!;
+
+            public float TextSize
+            {
+                init => statusText.Font = statusText.Font.With(size: value);
+            }
+
+            public SkinOriginStatusPill()
+            {
+                AutoSizeAxes = Axes.Both;
+                Masking = true;
+
+                Children = new Drawable[]
+                {
+                    background = new Box
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                    },
+                    statusText = new OsuSpriteText
+                    {
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        Font = OsuFont.GetFont(weight: FontWeight.Bold),
+                        Padding = new MarginPadding { Horizontal = 6, Vertical = 1 },
+                    },
+                };
+            }
+
+            [BackgroundDependencyLoader]
+            private void load(OverlayColourProvider colourProvider)
+            {
+                this.colourProvider = colourProvider;
+                updateState();
+            }
+
+            public void SetOrigin(SkinOriginStatus value)
+            {
+                if (origin == value && IsLoaded)
+                    return;
+
+                origin = value;
+
+                if (IsLoaded)
+                    updateState();
+            }
+
+            private void updateState()
+            {
+                switch (origin)
+                {
+                    default:
+                    case SkinOriginStatus.Local:
+                        background.Colour = Color4.OrangeRed;
+                        statusText.Text = SongSelectStrings.LocallyModified.ToUpper();
+                        break;
+
+                    case SkinOriginStatus.Server:
+                        background.Colour = Color4Extensions.FromHex(@"b3ff66");
+                        statusText.Text = CommonStrings.Server.ToUpper();
+                        break;
+                }
+
+                statusText.Colour = colourProvider.Background3;
+            }
         }
 
         private partial class CardBackground : Box
