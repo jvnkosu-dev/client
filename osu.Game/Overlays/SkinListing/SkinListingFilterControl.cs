@@ -140,7 +140,16 @@ namespace osu.Game.Overlays.SkinListing
             searchControl.Query.BindValueChanged(_ =>
             {
                 resetSortControl();
-                queueUpdateSearch(true);
+
+                // Text/tag matching is client-side; only hit the API when we have no catalog yet.
+                if (lastResults.Count > 0)
+                {
+                    resetSearch();
+                    SearchStarted?.Invoke();
+                    queryChangedDebounce = Scheduler.AddDelayed(publishResults, 500);
+                }
+                else
+                    queueUpdateSearch(true);
             });
 
             sortControl.Current.BindValueChanged(_ => resortAndPublish());
@@ -183,7 +192,9 @@ namespace osu.Game.Overlays.SkinListing
         private void performRequest()
         {
             getSkinsRequest?.Cancel();
-            getSkinsRequest = new GetSkinsRequest(searchControl.Query.Value);
+            // Fetch the full catalog; text/tag matching is done client-side in publishResults
+            // because the API `q` parameter does not search skin tags.
+            getSkinsRequest = new GetSkinsRequest();
 
             getSkinsRequest.Success += skins =>
             {
@@ -214,7 +225,8 @@ namespace osu.Game.Overlays.SkinListing
 
         private void publishResults()
         {
-            var filtered = SkinModifiedModesHelper.Filter(lastResults, searchControl.ModifiedModes);
+            var filtered = SkinSearchHelper.Filter(lastResults, searchControl.Query.Value);
+            filtered = SkinModifiedModesHelper.Filter(filtered, searchControl.ModifiedModes);
             filtered = SkinEngineTypeHelper.Filter(filtered, searchControl.EngineType.Value);
 
             var results = filtered.ToList();

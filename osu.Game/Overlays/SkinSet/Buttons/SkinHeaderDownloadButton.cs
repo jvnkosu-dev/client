@@ -90,6 +90,11 @@ namespace osu.Game.Overlays.SkinSet.Buttons
                         },
                     }
                 },
+                new SkinDownloadProgressBar(skin)
+                {
+                    Anchor = Anchor.BottomLeft,
+                    Origin = Anchor.BottomLeft,
+                },
             });
 
             button.Action = () =>

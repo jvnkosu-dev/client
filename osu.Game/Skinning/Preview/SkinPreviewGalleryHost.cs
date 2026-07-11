@@ -7,6 +7,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Shapes;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
@@ -22,9 +23,19 @@ namespace osu.Game.Skinning.Preview
     /// </summary>
     public partial class SkinPreviewGalleryHost : Container
     {
+        private const float gallery_spacing = 10;
+        private const int default_gallery_rows = 3;
+
+        /// <summary>
+        /// Height of the default osu! 2×3 preview grid, reserved while loading so the page doesn't jump.
+        /// </summary>
+        private static readonly float default_gallery_height =
+            default_gallery_rows * SkinPreviewCard.CARD_SIZE + (default_gallery_rows - 1) * gallery_spacing;
+
         public Bindable<RulesetInfo> PreviewRuleset { get; } = new Bindable<RulesetInfo>();
 
         private readonly Container galleryHost;
+        private readonly Box galleryHeightSpacer;
         private readonly LoadingSpinner loadingSpinner;
         private readonly OsuSpriteText statusText;
 
@@ -62,6 +73,15 @@ namespace osu.Game.Skinning.Preview
                             AutoSizeAxes = Axes.Y,
                             Children = new Drawable[]
                             {
+                                // Reserve default 2×3 gallery height while the spinner is showing.
+                                // AlwaysPresent is required: Alpha=0 drawables are otherwise skipped by AutoSize.
+                                galleryHeightSpacer = new Box
+                                {
+                                    RelativeSizeAxes = Axes.X,
+                                    Height = default_gallery_height,
+                                    Alpha = 0,
+                                    AlwaysPresent = true,
+                                },
                                 loadingSpinner = new LoadingSpinner
                                 {
                                     Anchor = Anchor.Centre,
@@ -194,7 +214,7 @@ namespace osu.Game.Skinning.Preview
         {
             foreach (var child in galleryHost.ToArray())
             {
-                if (child == loadingSpinner)
+                if (child == loadingSpinner || child == galleryHeightSpacer)
                     continue;
 
                 child.Expire();

@@ -14,7 +14,6 @@ namespace osu.Game.Overlays.SkinSet
     {
         private const float metadata_width = 185;
         private const float spacing = 20;
-        private const float base_height = 420;
         private const float content_top_padding = 15;
         private const float preview_padding = 15;
 
@@ -47,13 +46,6 @@ namespace osu.Game.Overlays.SkinSet
                     Padding = new MarginPadding { Top = content_top_padding, Horizontal = WaveOverlayContainer.HORIZONTAL_PADDING },
                     Children = new Drawable[]
                     {
-                        // Minimum section height when the preview gallery is short.
-                        new Box
-                        {
-                            RelativeSizeAxes = Axes.X,
-                            Height = base_height - content_top_padding,
-                            Alpha = 0,
-                        },
                         new Container
                         {
                             RelativeSizeAxes = Axes.Both,
@@ -90,7 +82,7 @@ namespace osu.Game.Overlays.SkinSet
                                 },
                             },
                         },
-                        // Preview column drives AutoSize height when the gallery grows.
+                        // Preview column drives section height (including reserved gallery height while loading).
                         new Container
                         {
                             Anchor = Anchor.TopRight,

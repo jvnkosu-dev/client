@@ -185,7 +185,7 @@ namespace osu.Game.Overlays.SkinListing
 
 
 
-            protected override LocalisableString LabelFor(SkinEngineType value) => "All";
+            protected override LocalisableString LabelFor(SkinEngineType value) => "Any";
 
         }
 
