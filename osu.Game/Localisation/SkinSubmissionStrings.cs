@@ -30,9 +30,9 @@ namespace osu.Game.Localisation
         public static LocalisableString Done => new TranslatableString(getKey(@"done"), @"Done");
 
         /// <summary>
-        /// "Confirm skin details, then update on the server"
+        /// "Share your updated skin with the world!"
         /// </summary>
-        public static LocalisableString SkinUpdateDescription => new TranslatableString(getKey(@"skin_update_description"), @"Confirm skin details, then update on the server");
+        public static LocalisableString SkinUpdateDescription => new TranslatableString(getKey(@"skin_update_description"), @"Share your updated skin with the world!");
 
         /// <summary>
         /// "What status of your skin?"
@@ -40,9 +40,9 @@ namespace osu.Game.Localisation
         public static LocalisableString SkinSubmissionTargetCaption => new TranslatableString(getKey(@"skin_submission_target_caption"), @"What status of your skin?");
 
         /// <summary>
-        /// "Status selection is currently unavailable."
+        /// "Status selection is currently unavailable. We might decide not to implement this feature in the future."
         /// </summary>
-        public static LocalisableString StatusSelectionUnavailable => new TranslatableString(getKey(@"status_selection_unavailable"), @"Status selection is currently unavailable.");
+        public static LocalisableString StatusSelectionUnavailable => new TranslatableString(getKey(@"status_selection_unavailable"), @"Status selection is currently unavailable. We might decide not to implement this feature in the future.");
 
         /// <summary>
         /// "Open skin page after submission"
@@ -95,19 +95,26 @@ namespace osu.Game.Localisation
         public static LocalisableString FeedbackQueuesForumDescription => new TranslatableString(getKey(@"feedback_queues_forum_description"), @"Having trouble getting feedback on your skin? Why not ask in a feedback queue!");
 
         /// <summary>
-        /// "Note: Because jvnkosu! includes custom elements implemented in code, those elements will not be compatible with osu!(lazer) or osu!(stable). It means if you export a jvnkosu! skin and import it to osu!(lazer) or osu!(stable), the skin will not work as expected or will breaks completely."
+        /// "Note 1: Because jvnkosu! includes custom elements implemented in code, those elements will not be compatible with osu!(lazer) or osu!(stable). It means if you export a jvnkosu! skin and import it to osu!(lazer) or osu!(stable), the skin will not work as expected or will breaks completely."
         /// </summary>
-        public static LocalisableString CustomElementsDisclaimer => new TranslatableString(getKey(@"custom_elements_disclaimer"), @"Note: Because jvnkosu! includes custom elements implemented in code, those elements will not be compatible with osu!(lazer) or osu!(stable). It means if you export a jvnkosu! skin and import it to osu!(lazer) or osu!(stable), the skin will not work as expected or will breaks completely.");
+        public static LocalisableString CustomElementsDisclaimer => new TranslatableString(getKey(@"custom_elements_disclaimer"),
+            @"Note 1: Because jvnkosu! includes custom elements implemented in code, those elements will not be compatible with osu!(lazer) or osu!(stable). It means if you export a jvnkosu! skin and import it to osu!(lazer) or osu!(stable), the skin will not work as expected or will breaks completely.");
 
         /// <summary>
-        /// "Works in Progress / Help (incomplete, not ready for ranking)"
+        /// "Note 2: Starting with osu! 2026.711-lazer, the client regenerates skin.ini and layout JSON files when editing or exporting a skin. Editing a jvnkosu! skin in osu!(lazer) will completely remove almost all jvnkosu!-specific skin metadata."
         /// </summary>
-        public static LocalisableString SkinSubmissionTargetWIP => new TranslatableString(getKey(@"skin_submission_target_wip"), @"Works in Progress / Help (incomplete, not ready for ranking)");
+        public static LocalisableString LazerMetadataRegenDisclaimer => new TranslatableString(getKey(@"lazer_metadata_regen_disclaimer"),
+            @"Note 2: Starting with osu! 2026.711-lazer, the client regenerates skin.ini and layout JSON files when editing or exporting a skin. Editing a jvnkosu! skin in osu!(lazer) will completely remove almost all jvnkosu!-specific skin metadata.");
 
         /// <summary>
-        /// "Pending (complete, ready for ranking)"
+        /// "Works in Progress / Help (incomplete, not ready for approval)"
         /// </summary>
-        public static LocalisableString SkinSubmissionTargetPending => new TranslatableString(getKey(@"skin_submission_target_pending"), @"Pending (complete, ready for ranking)");
+        public static LocalisableString SkinSubmissionTargetWIP => new TranslatableString(getKey(@"skin_submission_target_wip"), @"Works in Progress / Help (incomplete, not ready for approval)");
+
+        /// <summary>
+        /// "Pending (complete, ready for approval)"
+        /// </summary>
+        public static LocalisableString SkinSubmissionTargetPending => new TranslatableString(getKey(@"skin_submission_target_pending"), @"Pending (complete, ready for approval)");
 
         private static string getKey(string key) => $@"{prefix}:{key}";
     }

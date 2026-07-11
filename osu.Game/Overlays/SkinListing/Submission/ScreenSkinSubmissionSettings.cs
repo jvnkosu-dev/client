@@ -52,6 +52,7 @@ namespace osu.Game.Overlays.SkinListing.Submission
             {
                 RelativeSizeAxes = Axes.X,
                 AutoSizeAxes = Axes.Y,
+                Direction = FillDirection.Vertical,
                 Spacing = new Vector2(5),
                 Children = new Drawable[]
                 {
@@ -92,9 +93,18 @@ namespace osu.Game.Overlays.SkinListing.Submission
                     new OsuTextFlowContainer(cp => cp.Font = OsuFont.Default.With(size: CONTENT_FONT_SIZE, weight: FontWeight.Bold))
                     {
                         RelativeSizeAxes = Axes.X,
+                        AutoSizeAxes = Axes.Y,
                         Colour = colours.Orange1,
                         Text = SkinSubmissionStrings.CustomElementsDisclaimer,
                         Padding = new MarginPadding { Top = 20 },
+                    },
+                    new OsuTextFlowContainer(cp => cp.Font = OsuFont.Default.With(size: CONTENT_FONT_SIZE, weight: FontWeight.Bold))
+                    {
+                        RelativeSizeAxes = Axes.X,
+                        AutoSizeAxes = Axes.Y,
+                        Colour = colours.Orange1,
+                        Text = SkinSubmissionStrings.LazerMetadataRegenDisclaimer,
+                        Padding = new MarginPadding { Top = 10 },
                     },
                 }
             });
