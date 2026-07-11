@@ -55,8 +55,8 @@ namespace osu.Game.Overlays.Settings.Sections
 
         private IDisposable realmSubscription;
 
-        [BackgroundDependencyLoader(permitNulls: true)]
-        private void load([CanBeNull] SkinEditorOverlay skinEditor)
+        [BackgroundDependencyLoader]
+        private void load()
         {
             Children = new Drawable[]
             {
@@ -67,26 +67,7 @@ namespace osu.Game.Overlays.Settings.Sections
                     Caption = SkinSettingsStrings.CurrentSkin,
                     Current = skins.CurrentSkinInfo,
                 }),
-                new FillFlowContainer
-                {
-                    RelativeSizeAxes = Axes.X,
-                    AutoSizeAxes = Axes.Y,
-                    Direction = FillDirection.Horizontal,
-                    Padding = SettingsPanel.CONTENT_PADDING,
-                    Children = new Drawable[]
-                    {
-                        // This is all super-temporary until we move skin settings to their own panel / overlay.
-                        new RenameSkinButton { Padding = new MarginPadding { Right = 2.5f }, RelativeSizeAxes = Axes.X, Width = 1 / 3f },
-                        new ExportSkinButton { Padding = new MarginPadding { Horizontal = 2.5f }, RelativeSizeAxes = Axes.X, Width = 1 / 3f },
-                        new DeleteSkinButton { Padding = new MarginPadding { Left = 2.5f }, RelativeSizeAxes = Axes.X, Width = 1 / 3f },
-                    }
-                },
-                new SettingsButtonV2
-                {
-                    Text = SkinSettingsStrings.SkinLayoutEditor,
-                    Action = () => skinEditor?.ToggleVisibility(),
-                },
-                new ViewOnSkinListingButton(),
+                new SkinSettingsInfoCard(),
             };
         }
 
@@ -136,7 +117,18 @@ namespace osu.Game.Overlays.Settings.Sections
             protected override LocalisableString GenerateItemText(Live<SkinInfo> item) => item.ToString();
         }
 
-        public partial class RenameSkinButton : SettingsButtonV2, IHasPopover
+        public partial class EditSkinButton : ShearedButton
+        {
+            [BackgroundDependencyLoader(permitNulls: true)]
+            private void load([CanBeNull] SkinEditorOverlay skinEditor)
+            {
+                Text = CommonStrings.MenuBarEdit;
+                TextSize = 14;
+                Action = () => skinEditor?.ToggleVisibility();
+            }
+        }
+
+        public partial class RenameSkinButton : ShearedButton, IHasPopover
         {
             [Resolved]
             private SkinManager skins { get; set; }
@@ -147,6 +139,7 @@ namespace osu.Game.Overlays.Settings.Sections
             private void load()
             {
                 Text = CommonStrings.Rename;
+                TextSize = 14;
                 Action = this.ShowPopover;
             }
 
@@ -167,7 +160,7 @@ namespace osu.Game.Overlays.Settings.Sections
             }
         }
 
-        public partial class ExportSkinButton : SettingsButtonV2
+        public partial class ExportSkinButton : ShearedButton
         {
             [Resolved]
             private SkinManager skins { get; set; }
@@ -178,6 +171,7 @@ namespace osu.Game.Overlays.Settings.Sections
             private void load()
             {
                 Text = CommonStrings.Export;
+                TextSize = 14;
                 Action = export;
             }
 
@@ -205,7 +199,7 @@ namespace osu.Game.Overlays.Settings.Sections
             }
         }
 
-        public partial class ViewOnSkinListingButton : SettingsButtonV2
+        public partial class ViewOnSkinListingButton : ShearedButton
         {
             [Resolved]
             private SkinManager skins { get; set; }
@@ -219,6 +213,7 @@ namespace osu.Game.Overlays.Settings.Sections
             private void load()
             {
                 Text = SkinSettingsStrings.ViewOnSkinListing;
+                TextSize = 14;
                 Action = viewOnline;
             }
 
@@ -246,7 +241,7 @@ namespace osu.Game.Overlays.Settings.Sections
             }
         }
 
-        public partial class DeleteSkinButton : DangerousSettingsButtonV2
+        public partial class DeleteSkinButton : ShearedButton
         {
             [Resolved]
             private SkinManager skins { get; set; }
@@ -257,9 +252,13 @@ namespace osu.Game.Overlays.Settings.Sections
             private Bindable<Skin> currentSkin;
 
             [BackgroundDependencyLoader]
-            private void load()
+            private void load(OsuColour colours)
             {
                 Text = WebCommonStrings.ButtonsDelete;
+                TextSize = 14;
+                DarkerColour = colours.DangerousButtonColour;
+                LighterColour = colours.Pink1;
+                TextColour = Colour4.White;
                 Action = delete;
             }
 
