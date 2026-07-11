@@ -5,7 +5,6 @@ using osu.Framework.Graphics.Colour;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Game.Beatmaps.Drawables.Cards;
-using osu.Game.Graphics;
 using osu.Game.Online.API.Requests;
 using osu.Game.Overlays;
 using osu.Game.Overlays.SkinListing.Drawables;
@@ -51,30 +50,25 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards
                     RelativeSizeAxes = Axes.Both,
                     Colour = colourProvider.Background2,
                 },
+                // Start transparent like BeatmapCardContentBackground so the cover reveals
+                // via FadeColour only after the LongRunningLoad texture is ready.
                 cover = new Container
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Children = new Drawable[]
+                    Colour = Colour4.Transparent,
+                    Child = parallaxWrapper = new Container
                     {
-                        new Box
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        Child = new SkinDelayedLoadUnloadWrapper(() => new OnlineSkinSprite(thumbnailUrl)
                         {
                             RelativeSizeAxes = Axes.Both,
-                            Colour = OsuColour.Gray(0.2f),
-                        },
-                        parallaxWrapper = new Container
+                            FillMode = FillMode.Fill,
+                        }, previewProvider, skin.OnlineID, keepLoaded ? 0 : 500, keepLoaded ? double.MaxValue : 1000)
                         {
-                            Anchor = Anchor.Centre,
-                            Origin = Anchor.Centre,
-                            Child = new SkinDelayedLoadUnloadWrapper(() => new OnlineSkinSprite(thumbnailUrl)
-                            {
-                                RelativeSizeAxes = Axes.Both,
-                                FillMode = FillMode.Fill,
-                            }, previewProvider, skin.OnlineID, keepLoaded ? 0 : 500, keepLoaded ? double.MaxValue : 1000)
-                            {
-                                RelativeSizeAxes = Axes.Both,
-                            },
+                            RelativeSizeAxes = Axes.Both,
                         },
-                    }
+                    },
                 },
             };
         }
