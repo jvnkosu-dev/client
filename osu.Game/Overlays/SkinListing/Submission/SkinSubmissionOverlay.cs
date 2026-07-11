@@ -6,6 +6,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Platform;
 using osu.Game.Database;
+using osu.Game.IO;
 using osu.Game.Online.API;
 using osu.Game.Overlays;
 using osu.Game.Overlays.Notifications;
@@ -63,12 +64,12 @@ namespace osu.Game.Overlays.SkinListing.Submission
             if (IsUpdate)
             {
                 Header.Title = SkinMetadataHelper.UpdateUploadActionText;
-                Header.Description = "Update metadata and files for your existing skin on the server";
+                Header.Description = "Confirm skin details from the editor Setup tab, then update on the server";
             }
             else
             {
                 Header.Title = "Skin upload";
-                Header.Description = "Fill in metadata before submitting to the server";
+                Header.Description = "Confirm skin details from the editor Setup tab, then upload to the server";
             }
         }
 
@@ -103,13 +104,13 @@ namespace osu.Game.Overlays.SkinListing.Submission
         {
             if (string.IsNullOrWhiteSpace(settings.Name.Value))
             {
-                notifications.Post(new SimpleNotification { Text = "Please enter a skin name." });
+                notifications.Post(new SimpleNotification { Text = "Skin name is empty. Set it in the skin editor Setup tab." });
                 return false;
             }
 
             if (string.IsNullOrWhiteSpace(settings.Author.Value))
             {
-                notifications.Post(new SimpleNotification { Text = "Please enter the skin author." });
+                notifications.Post(new SimpleNotification { Text = "Skin author is empty. Set it in the skin editor Setup tab." });
                 return false;
             }
 
@@ -121,7 +122,7 @@ namespace osu.Game.Overlays.SkinListing.Submission
 
             if (!settings.ModifiedModes.Any())
             {
-                notifications.Post(new SimpleNotification { Text = "Please select at least one modified ruleset." });
+                notifications.Post(new SimpleNotification { Text = "No modified rulesets selected. Set them in the skin editor Setup tab." });
                 return false;
             }
 
@@ -160,10 +161,15 @@ namespace osu.Game.Overlays.SkinListing.Submission
             string skinFilePath = settings.SkinFilePath;
             int? onlineSkinId = settings.OnlineSkinId.Value > 0 ? settings.OnlineSkinId.Value : null;
 
+            string? previewPath = settings.PreviewFile.Value?.FullName;
+
+            if (string.IsNullOrEmpty(previewPath) && settings.SourceSkin != null)
+                previewPath = SkinBackgroundHelper.ExportBackgroundToTempFile(settings.SourceSkin, ((IStorageResourceProvider)skins).Files);
+
             var payload = new SkinUploadPayload
             {
                 FilePath = skinFilePath,
-                PreviewFilePath = settings.PreviewFile.Value?.FullName,
+                PreviewFilePath = previewPath,
                 Name = uploadName,
                 Version = version,
                 Description = settings.Description.Value.Trim(),

@@ -2,6 +2,8 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using osu.Framework.Allocation;
@@ -9,6 +11,7 @@ using osu.Framework.Bindables;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Extensions.LocalisationExtensions;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Colour;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Cursor;
 using osu.Framework.Graphics.Shapes;
@@ -21,10 +24,12 @@ using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
+using osu.Game.IO;
 using osu.Game.Localisation;
 using osu.Game.Online.API;
 using osu.Game.Online.API.Requests;
 using osu.Game.Online.API.Requests.Responses;
+using osu.Game.Rulesets;
 using osu.Game.Skinning;
 using osuTK;
 using osuTK.Graphics;
@@ -50,9 +55,13 @@ namespace osu.Game.Overlays.Settings.Sections
         private TruncatingSpriteText creatorText = null!;
         private StatisticPill downloadsPill = null!;
         private FavouritePill favouritesPill = null!;
+        private Sprite titleCover = null!;
+        private Box titleCoverDim = null!;
 
         private MetadataField uploadedBy = null!;
+        private MetadataField modes = null!;
         private MetadataField version = null!;
+        private MetadataField skinType = null!;
         private MetadataField submitted = null!;
         private MetadataField lastUpdated = null!;
         private MetadataField tags = null!;
@@ -65,6 +74,9 @@ namespace osu.Game.Overlays.Settings.Sections
 
         [Resolved]
         private SkinLookupCache skinLookupCache { get; set; } = null!;
+
+        [Resolved]
+        private RulesetStore rulesets { get; set; } = null!;
 
         [Resolved]
         private OsuGame? game { get; set; }
@@ -107,10 +119,19 @@ namespace osu.Game.Overlays.Settings.Sections
 
             currentSkin.BindTo(skins.CurrentSkin);
             currentSkin.BindValueChanged(_ => updateDisplay(), true);
+
+            skins.SourceChanged += onSkinSourceChanged;
         }
+
+        private void onSkinSourceChanged() => Schedule(() =>
+        {
+            if (currentSkin.Value != null)
+                updateTitleCoverFromLocalSkin(currentSkin.Value);
+        });
 
         protected override void Dispose(bool isDisposing)
         {
+            skins.SourceChanged -= onSkinSourceChanged;
             lookupCancellation?.Cancel();
             lookupCancellation?.Dispose();
             base.Dispose(isDisposing);
@@ -135,6 +156,26 @@ namespace osu.Game.Overlays.Settings.Sections
                 Children = new Drawable[]
                 {
                     new CardBackground(),
+                    titleCover = new Sprite
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Width = 1.25f,
+                        Height = 1.25f,
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        FillMode = FillMode.Fill,
+                        // Parent wedge is sheared; counter so the thumbnail keeps its aspect.
+                        Shear = -OsuGame.SHEAR,
+                        Alpha = 0,
+                    },
+                    titleCoverDim = new Box
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Colour = ColourInfo.GradientVertical(
+                            colourProvider.Background6.Opacity(0.15f),
+                            colourProvider.Background6.Opacity(0.45f)),
+                        Alpha = 0,
+                    },
                     new FillFlowContainer
                     {
                         RelativeSizeAxes = Axes.X,
@@ -149,12 +190,14 @@ namespace osu.Game.Overlays.Settings.Sections
                             {
                                 RelativeSizeAxes = Axes.X,
                                 Font = OsuFont.Style.Title,
+                                Shadow = true,
                             },
                             creatorText = new TruncatingSpriteText
                             {
                                 RelativeSizeAxes = Axes.X,
                                 Font = OsuFont.Style.Heading2,
                                 Colour = colourProvider.Content2,
+                                Shadow = true,
                             },
                             new FillFlowContainer
                             {
@@ -273,7 +316,26 @@ namespace osu.Game.Overlays.Settings.Sections
                                     new Drawable[]
                                     {
                                         uploadedBy = new MetadataField("Uploaded by"),
+                                        modes = new MetadataField("Mode"),
+                                    },
+                                },
+                            },
+                            new GridContainer
+                            {
+                                RelativeSizeAxes = Axes.X,
+                                AutoSizeAxes = Axes.Y,
+                                RowDimensions = new[] { new Dimension(GridSizeMode.AutoSize) },
+                                ColumnDimensions = new[]
+                                {
+                                    new Dimension(),
+                                    new Dimension(),
+                                },
+                                Content = new[]
+                                {
+                                    new Drawable[]
+                                    {
                                         version = new MetadataField("Version"),
+                                        skinType = new MetadataField("Skin Type"),
                                     },
                                 },
                             },
@@ -319,12 +381,18 @@ namespace osu.Game.Overlays.Settings.Sections
             string localVersion = SkinIniVersionHelper.GetSkinVersion(skin, useDefaultIfMissing: false);
             version.SetText(string.IsNullOrWhiteSpace(localVersion) ? "-" : localVersion);
 
+            skinType.SetText(skin.SkinInfo.PerformRead(s =>
+                SkinEngineTypeHelper.GetDisplayName(SkinEngineTypeHelper.FromSkinInfo(s))));
+
+            setModes(SkinIniVersionHelper.ParseModifiedModes(skin.Configuration.ModifiedModes).ToArray());
+
             downloadsPill.SetValue(null);
             favouritesPill.SetSkin(null);
             uploadedBy.SetText("-");
             submitted.SetDate(null);
             lastUpdated.SetDate(null);
             tags.SetTags(Array.Empty<string>());
+            updateTitleCoverFromLocalSkin(skin);
 
             if (!SkinIniVersionHelper.TryGetOnlineSkinId(skin, out int onlineSkinId))
                 return;
@@ -376,6 +444,10 @@ namespace osu.Game.Overlays.Settings.Sections
             if (!string.IsNullOrWhiteSpace(displayVersion))
                 version.SetText(displayVersion);
 
+            skinType.SetText(SkinEngineTypeHelper.GetDisplayName(online));
+
+            setModes(online.ModifiedModes);
+
             submitted.SetDate(online.CreatedAt);
             lastUpdated.SetDate(online.LastUpdated ?? online.CreatedAt);
 
@@ -384,6 +456,36 @@ namespace osu.Game.Overlays.Settings.Sections
                 : online.Tags.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
             tags.SetTags(tagList, tag => game?.SearchSkin(tag));
+        }
+
+        private void setModes(IReadOnlyCollection<string> modeList)
+        {
+            string display = SkinModifiedModesHelper.FormatForDisplay(modeList, rulesets);
+            modes.SetText(string.IsNullOrWhiteSpace(display) ? "-" : display);
+        }
+
+        private void updateTitleCoverFromLocalSkin(Skin skin)
+        {
+            var resources = (IStorageResourceProvider)skins;
+            var texture = SkinBackgroundHelper.GetTexture(skin, resources.Renderer, resources);
+
+            if (texture == null)
+            {
+                clearTitleCover();
+                return;
+            }
+
+            titleCover.Texture = null;
+            titleCover.Texture = texture;
+            titleCover.FadeTo(0.35f, 400, Easing.OutQuint);
+            titleCoverDim.FadeTo(0.6f, 400, Easing.OutQuint);
+        }
+
+        private void clearTitleCover()
+        {
+            titleCover.Texture = null;
+            titleCover.FadeOut(200, Easing.OutQuint);
+            titleCoverDim.FadeOut(200, Easing.OutQuint);
         }
 
         private partial class CardBackground : Box

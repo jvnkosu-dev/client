@@ -307,6 +307,65 @@ namespace osu.Game.Skinning
             item.Hash = ComputeHash(item);
         }
 
+        /// <summary>
+        /// Persists skin editor setup metadata (name, author, version, description, tags, modes) to <see cref="SkinInfo"/> and skin.ini.
+        /// </summary>
+        public void PersistSetupMetadata(Skin skin, string name, string author, string version, string description, string tags, string modifiedModes)
+        {
+            string skinType = !string.IsNullOrWhiteSpace(skin.Configuration.SkinType)
+                ? skin.Configuration.SkinType.Trim()
+                : SkinEngineTypeHelper.ToStorageString(SkinEngineTypeHelper.FromSkinInfo(skin.SkinInfo.Value));
+
+            string normalisedName = name.Trim();
+            string normalisedAuthor = author.Trim();
+            string normalisedVersion = string.IsNullOrWhiteSpace(version) ? SkinIniVersionHelper.DEFAULT_VERSION : version.Trim();
+            string normalisedDescription = description.Trim();
+            string normalisedTags = tags.Trim();
+            string normalisedModes = modifiedModes.Trim();
+
+            skin.Configuration.SkinVersion = normalisedVersion;
+            skin.Configuration.Description = normalisedDescription;
+            skin.Configuration.Tags = normalisedTags;
+            skin.Configuration.ModifiedModes = normalisedModes;
+            skin.Configuration.SkinType = skinType;
+
+            skin.SkinInfo.PerformWrite(s =>
+            {
+                s.Name = normalisedName;
+                s.Creator = string.IsNullOrWhiteSpace(normalisedAuthor) ? @"Unknown" : normalisedAuthor;
+
+                var existingFile = s.GetFile(@"skin.ini");
+                string existingContent = string.Empty;
+
+                if (existingFile != null)
+                {
+                    using (var existingStream = Files.Storage.GetStream(existingFile.File.GetStoragePath()))
+                    using (var reader = new StreamReader(existingStream))
+                        existingContent = reader.ReadToEnd();
+                }
+
+                string updated = SkinIniVersionHelper.ApplyEditorSetupMetadata(
+                    existingContent,
+                    normalisedName,
+                    s.Creator,
+                    normalisedVersion,
+                    normalisedDescription,
+                    normalisedTags,
+                    skinType,
+                    normalisedModes);
+
+                using (Stream stream = new MemoryStream(Encoding.UTF8.GetBytes(updated)))
+                {
+                    if (existingFile != null)
+                        modelManager.ReplaceFile(existingFile, stream, s.Realm!);
+                    else
+                        modelManager.AddFile(s, stream, @"skin.ini", s.Realm!);
+                }
+
+                s.Hash = ComputeHash(s);
+            });
+        }
+
         private Skin createInstance(SkinInfo item) => item.CreateInstance(skinResources);
 
         /// <summary>

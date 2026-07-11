@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -438,6 +439,42 @@ namespace osu.Game.Skinning
         public void PersistOnlineSkinId(Live<SkinInfo> skinInfo, int onlineSkinId)
         {
             skinInfo.PerformWrite(s => skinImporter.PersistOnlineSkinId(s, onlineSkinId, s.Realm!));
+        }
+
+        /// <summary>
+        /// Replaces any existing <c>bg.*</c> image with a new background file, keeping the source extension.
+        /// </summary>
+        public void SetSkinBackground(SkinInfo skinInfo, Stream contents, string extension)
+        {
+            foreach (var existing in SkinIniVersionHelper.FindBackgroundFiles(skinInfo).ToArray())
+                DeleteFile(skinInfo, existing);
+
+            AddFile(skinInfo, contents, SkinIniVersionHelper.GetBackgroundFilename(extension));
+
+            // Defer so realm file mappings and Live<> views see the new bg.* before UI reloads it.
+            scheduler.Add(() => SourceChanged?.Invoke());
+        }
+
+        /// <summary>
+        /// Removes all <c>bg.*</c> background images from the skin.
+        /// </summary>
+        public void ClearSkinBackground(SkinInfo skinInfo)
+        {
+            foreach (var existing in SkinIniVersionHelper.FindBackgroundFiles(skinInfo).ToArray())
+                DeleteFile(skinInfo, existing);
+
+            scheduler.Add(() => SourceChanged?.Invoke());
+        }
+
+        /// <summary>
+        /// Persists skin editor setup metadata to the skin's <see cref="SkinInfo"/> and skin.ini.
+        /// </summary>
+        public void PersistSetupMetadata(Skin skin, string name, string author, string version, string description, string tags, string modifiedModes)
+        {
+            if (!skin.SkinInfo.IsManaged)
+                throw new InvalidOperationException($"Attempting to save a skin which is not yet tracked. Call {nameof(EnsureMutableSkin)} first.");
+
+            skinImporter.PersistSetupMetadata(skin, name, author, version, description, tags, modifiedModes);
         }
 
         public void SetSkinFromConfiguration(string guidString)

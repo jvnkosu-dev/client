@@ -1,5 +1,6 @@
 using System.IO;
 using osu.Framework.Bindables;
+using osu.Game.Skinning;
 
 namespace osu.Game.Overlays.SkinListing.Submission
 {
@@ -26,5 +27,10 @@ namespace osu.Game.Overlays.SkinListing.Submission
         public BindableInt OnlineSkinId { get; } = new BindableInt();
 
         public string? SkinFilePath { get; set; }
+
+        /// <summary>
+        /// The local skin being uploaded; used for review preview and thumbnail extraction.
+        /// </summary>
+        public Skin? SourceSkin { get; set; }
     }
 }

@@ -46,6 +46,16 @@ namespace osu.Game.Skinning
         /// </summary>
         public int OnlineSkinId { get; internal set; }
 
+        /// <summary>
+        /// Skin description (jvnko extension), stored as <c>Description</c> in skin.ini.
+        /// </summary>
+        public string Description { get; internal set; } = string.Empty;
+
+        /// <summary>
+        /// Space-separated listing tags (jvnko extension), stored as <c>Tags</c> in skin.ini.
+        /// </summary>
+        public string Tags { get; internal set; } = string.Empty;
+
         public enum LegacySetting
         {
             Version,

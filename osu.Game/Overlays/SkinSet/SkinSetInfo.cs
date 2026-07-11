@@ -3,10 +3,10 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Input.Events;
 using osu.Game.Graphics.Containers;
 using osu.Game.Online.API.Requests;
 using osu.Game.Skinning;
-using osuTK;
 
 namespace osu.Game.Overlays.SkinSet
 {
@@ -57,24 +57,16 @@ namespace osu.Game.Overlays.SkinSet
                         new Container
                         {
                             RelativeSizeAxes = Axes.Both,
+                            Masking = true,
                             Padding = new MarginPadding { Right = metadata_width + SkinSetOverlay.RIGHT_WIDTH + spacing * 2 },
-                            Child = new FillFlowContainer
+                            Child = new OverflowOnlyScrollContainer
                             {
                                 RelativeSizeAxes = Axes.Both,
-                                Direction = FillDirection.Vertical,
-                                Spacing = new Vector2(0, 15),
-                                Children = new Drawable[]
-                                {
-                                    new Container
-                                    {
-                                        RelativeSizeAxes = Axes.X,
-                                        Height = 120,
-                                        Child = description = new SkinMetadataSectionDescription(),
-                                    },
-                                },
+                                ScrollbarOverlapsContent = false,
+                                Child = description = new SkinMetadataSectionDescription(),
                             },
                         },
-                        new OsuScrollContainer
+                        new OverflowOnlyScrollContainer
                         {
                             Anchor = Anchor.TopRight,
                             Origin = Anchor.TopRight,
@@ -173,6 +165,40 @@ namespace osu.Game.Overlays.SkinSet
             skinType.Metadata = string.IsNullOrWhiteSpace(skin.EngineType)
                 ? string.Empty
                 : SkinEngineTypeHelper.GetDisplayName(skin);
+        }
+
+        /// <summary>
+        /// Scrolls only when content overflows; otherwise lets the parent page scroll handle the input.
+        /// </summary>
+        private partial class OverflowOnlyScrollContainer : OsuScrollContainer
+        {
+            protected override bool OnScroll(ScrollEvent e)
+            {
+                if (ScrollableExtent <= 0)
+                    return false;
+
+                if (e.ScrollDelta.Y > 0 && IsScrolledToStart())
+                    return false;
+
+                if (e.ScrollDelta.Y < 0 && IsScrolledToEnd())
+                    return false;
+
+                return base.OnScroll(e);
+            }
+
+            protected override bool OnDragStart(DragStartEvent e)
+            {
+                if (ScrollableExtent <= 0)
+                    return false;
+
+                if (e.Delta.Y > 0 && IsScrolledToStart())
+                    return false;
+
+                if (e.Delta.Y < 0 && IsScrolledToEnd())
+                    return false;
+
+                return base.OnDragStart(e);
+            }
         }
     }
 }

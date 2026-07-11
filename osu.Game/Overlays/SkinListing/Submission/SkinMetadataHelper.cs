@@ -51,8 +51,8 @@ namespace osu.Game.Overlays.SkinListing.Submission
 
             settings.Name.Value = SkinIniVersionHelper.SanitizeUploadName(skinInfo.Name);
             settings.Version.Value = SkinIniVersionHelper.GetSkinVersion(skin, useDefaultIfMissing: true);
-            settings.Description.Value = string.Empty;
-            settings.Tags.Value = string.Empty;
+            settings.Description.Value = configuration.Description?.Trim() ?? string.Empty;
+            settings.Tags.Value = configuration.Tags?.Trim() ?? string.Empty;
 
             settings.Author.Value = !string.IsNullOrWhiteSpace(skinInfo.Creator) && skinInfo.Creator != @"Unknown"
                 ? skinInfo.Creator

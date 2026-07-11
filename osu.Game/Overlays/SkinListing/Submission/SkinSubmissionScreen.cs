@@ -54,6 +54,7 @@ namespace osu.Game.Overlays.SkinListing.Submission
             base.OnEntering(e);
 
             SkinMetadataHelper.ConfigureFromSkin(settings, skin);
+            settings.SourceSkin = skin;
             overlay.SetSubmissionSkin(skin);
             overlay.RefreshHeaderCopy();
 

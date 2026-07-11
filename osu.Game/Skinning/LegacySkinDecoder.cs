@@ -50,6 +50,14 @@ namespace osu.Game.Skinning
 
                                 return;
 
+                            case @"Description":
+                                skin.Description = pair.Value;
+                                return;
+
+                            case @"Tags":
+                                skin.Tags = pair.Value;
+                                return;
+
                             case @"Version":
                                 if (pair.Value == "latest")
                                     skin.LegacyVersion = SkinConfiguration.LATEST_VERSION;

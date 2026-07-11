@@ -22,8 +22,6 @@ using osu.Framework.Screens;
 using Web = osu.Game.Resources.Localisation.Web;
 using osu.Framework.Testing;
 using osu.Game.Database;
-using osu.Game.Graphics;
-using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Cursor;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Localisation;
@@ -42,6 +40,7 @@ using osu.Game.Screens.Edit.Components.Menus;
 using osu.Game.Skinning;
 using osu.Framework.Graphics.Cursor;
 using osu.Game.Input.Bindings;
+using osu.Game.Overlays.SkinEditor.Setup;
 using osu.Game.Utils;
 
 namespace osu.Game.Overlays.SkinEditor
@@ -61,10 +60,14 @@ namespace osu.Game.Overlays.SkinEditor
 
         private Drawable? targetScreen;
 
-        private OsuTextFlowContainer headerText = null!;
+        private readonly Bindable<SkinEditorScreenMode> mode = new Bindable<SkinEditorScreenMode>(SkinEditorScreenMode.Compose);
 
         private Bindable<Skin> currentSkin = null!;
         private Bindable<string> clipboardContent = null!;
+
+        private Container screenContainer = null!;
+        private SkinEditorScreen? currentEditorScreen;
+        private Container composeContent = null!;
 
         [Resolved]
         private OsuGame? game { get; set; }
@@ -80,9 +83,6 @@ namespace osu.Game.Overlays.SkinEditor
 
         [Resolved]
         private SkinManager skins { get; set; } = null!;
-
-        [Resolved]
-        private OsuColour colours { get; set; } = null!;
 
         [Resolved]
         private RealmAccess realm { get; set; } = null!;
@@ -154,7 +154,6 @@ namespace osu.Game.Overlays.SkinEditor
                         RowDimensions = new[]
                         {
                             new Dimension(GridSizeMode.AutoSize),
-                            new Dimension(GridSizeMode.AutoSize),
                             new Dimension(),
                         },
 
@@ -206,52 +205,74 @@ namespace osu.Game.Overlays.SkinEditor
                                                 },
                                             }
                                         },
-                                        headerText = new OsuTextFlowContainer
+                                        new SkinEditorScreenSwitcherControl
                                         {
-                                            TextAnchor = Anchor.TopRight,
-                                            Padding = new MarginPadding(5),
-                                            Anchor = Anchor.TopRight,
-                                            Origin = Anchor.TopRight,
-                                            AutoSizeAxes = Axes.X,
-                                            RelativeSizeAxes = Axes.Y,
+                                            Anchor = Anchor.BottomRight,
+                                            Origin = Anchor.BottomRight,
+                                            X = -10,
+                                            Current = mode,
                                         },
                                     },
                                 },
                             },
                             new Drawable[]
                             {
-                                new SkinEditorSceneLibrary
-                                {
-                                    RelativeSizeAxes = Axes.X,
-                                },
-                            },
-                            new Drawable[]
-                            {
-                                new GridContainer
+                                screenContainer = new Container
                                 {
                                     RelativeSizeAxes = Axes.Both,
-                                    ColumnDimensions = new[]
-                                    {
-                                        new Dimension(GridSizeMode.AutoSize),
-                                        new Dimension(),
-                                        new Dimension(GridSizeMode.AutoSize),
-                                    },
-                                    Content = new[]
-                                    {
-                                        new Drawable[]
-                                        {
-                                            componentsSidebar = new EditorSidebar(),
-                                            content = new Container
-                                            {
-                                                Depth = float.MaxValue,
-                                                RelativeSizeAxes = Axes.Both,
-                                            },
-                                            settingsSidebar = new EditorSidebar(),
-                                        }
-                                    }
-                                }
+                                },
                             },
                         }
+                    }
+                }
+            };
+
+            composeContent = new Container
+            {
+                RelativeSizeAxes = Axes.Both,
+                Child = new GridContainer
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    RowDimensions = new[]
+                    {
+                        new Dimension(GridSizeMode.AutoSize),
+                        new Dimension(),
+                    },
+                    Content = new[]
+                    {
+                        new Drawable[]
+                        {
+                            new SkinEditorSceneLibrary
+                            {
+                                RelativeSizeAxes = Axes.X,
+                            },
+                        },
+                        new Drawable[]
+                        {
+                            new GridContainer
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                ColumnDimensions = new[]
+                                {
+                                    new Dimension(GridSizeMode.AutoSize),
+                                    new Dimension(),
+                                    new Dimension(GridSizeMode.AutoSize),
+                                },
+                                Content = new[]
+                                {
+                                    new Drawable[]
+                                    {
+                                        componentsSidebar = new EditorSidebar(),
+                                        content = new Container
+                                        {
+                                            Depth = float.MaxValue,
+                                            RelativeSizeAxes = Axes.Both,
+                                        },
+                                        settingsSidebar = new EditorSidebar(),
+                                    }
+                                }
+                            }
+                        },
                     }
                 }
             };
@@ -300,6 +321,44 @@ namespace osu.Game.Overlays.SkinEditor
             SelectedComponents.BindCollectionChanged((_, _) => Scheduler.AddOnce(populateSettings), true);
 
             selectedTarget.BindValueChanged(targetChanged, true);
+
+            mode.BindValueChanged(onModeChanged, true);
+        }
+
+        private void onModeChanged(ValueChangedEvent<SkinEditorScreenMode> e)
+        {
+            var lastScreen = currentEditorScreen;
+            lastScreen?.Hide();
+
+            if ((currentEditorScreen = screenContainer.OfType<SkinEditorScreen>().SingleOrDefault(s => s.Type == e.NewValue)) != null)
+            {
+                screenContainer.ChangeChildDepth(currentEditorScreen, lastScreen?.Depth + 1 ?? 0);
+                currentEditorScreen.Show();
+                return;
+            }
+
+            switch (e.NewValue)
+            {
+                case SkinEditorScreenMode.Setup:
+                    currentEditorScreen = new SkinSetupScreen();
+                    break;
+
+                case SkinEditorScreenMode.Compose:
+                    currentEditorScreen = new SkinComposeScreen(composeContent);
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(e.NewValue), e.NewValue, null);
+            }
+
+            LoadComponentAsync(currentEditorScreen, newScreen =>
+            {
+                if (newScreen != currentEditorScreen)
+                    return;
+
+                screenContainer.Add(newScreen);
+                newScreen.Show();
+            });
         }
 
         private async Task editExternally()
@@ -503,22 +562,6 @@ namespace osu.Game.Overlays.SkinEditor
             if (skins.EnsureMutableSkin())
                 // Another skin changed event will arrive which will complete the process.
                 return;
-
-            headerText.Clear();
-
-            headerText.AddText(SkinEditorStrings.SkinEditor, cp => cp.Font = OsuFont.Default.With(size: 16));
-            headerText.NewLine();
-            headerText.AddText(SkinEditorStrings.CurrentlyEditing, cp =>
-            {
-                cp.Font = OsuFont.Default.With(size: 12);
-                cp.Colour = colours.Yellow;
-            });
-
-            headerText.AddText($" {currentSkin.Value.SkinInfo}", cp =>
-            {
-                cp.Font = OsuFont.Default.With(size: 12, weight: FontWeight.Bold);
-                cp.Colour = colours.Yellow;
-            });
 
             changeHandler?.Dispose();
             changeHandler = null;
@@ -762,11 +805,30 @@ namespace osu.Game.Overlays.SkinEditor
 
         #region Drag & drop import handling
 
+        public event Action? SkinBackgroundChanged;
+
         public Task Import(params string[] paths)
         {
             Schedule(() =>
             {
                 var file = new FileInfo(paths.First());
+
+                // On setup, image drops set the skin background instead of placing a layout sprite.
+                if (mode.Value == SkinEditorScreenMode.Setup)
+                {
+                    if (skins.EnsureMutableSkin())
+                        return;
+
+                    currentSkin.Value.SkinInfo.PerformWrite(skinInfo =>
+                    {
+                        using (var contents = file.OpenRead())
+                            skins.SetSkinBackground(skinInfo, contents, file.Extension);
+                    });
+
+                    realm.Run(r => r.Refresh());
+                    SkinBackgroundChanged?.Invoke();
+                    return;
+                }
 
                 // import to skin
                 currentSkin.Value.SkinInfo.PerformWrite(skinInfo =>

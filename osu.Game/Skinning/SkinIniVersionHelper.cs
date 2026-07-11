@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using osu.Framework.Extensions;
+using osu.Game.Database;
+using osu.Game.Models;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
@@ -18,6 +20,11 @@ namespace osu.Game.Skinning
     {
         public const string DEFAULT_VERSION = "1.0";
 
+        /// <summary>
+        /// Base filename (without extension) for the skin listing/background image stored inside a skin.
+        /// </summary>
+        public const string BackgroundName = "bg";
+
         private const string skin_ini_filename = "skin.ini";
         private const string name_key = "Name:";
         private const string author_key = "Author:";
@@ -25,6 +32,8 @@ namespace osu.Game.Skinning
         private const string skin_type_key = "SkinType:";
         private const string modified_modes_key = "ModifiedModes:";
         private const string online_skin_id_key = "OnlineSkinID:";
+        private const string description_key = "Description:";
+        private const string tags_key = "Tags:";
 
         private static readonly ArchiveEncoding skin_archive_encoding = new ArchiveEncoding
         {
@@ -39,6 +48,34 @@ namespace osu.Game.Skinning
 
             return useDefaultIfMissing ? DEFAULT_VERSION : string.Empty;
         }
+
+        /// <summary>
+        /// Builds a background filename such as <c>bg.png</c> or <c>bg.jpg</c>, preserving the source extension.
+        /// </summary>
+        public static string GetBackgroundFilename(string extension)
+        {
+            if (string.IsNullOrWhiteSpace(extension))
+                extension = ".png";
+
+            if (!extension.StartsWith('.'))
+                extension = "." + extension;
+
+            return BackgroundName + extension.ToLowerInvariant();
+        }
+
+        public static bool IsBackgroundFilename(string? filename)
+        {
+            if (string.IsNullOrWhiteSpace(filename))
+                return false;
+
+            return string.Equals(Path.GetFileNameWithoutExtension(filename), BackgroundName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static RealmNamedFileUsage? FindBackgroundFile(IHasRealmFiles model) =>
+            model.Files.FirstOrDefault(f => IsBackgroundFilename(f.Filename));
+
+        public static IEnumerable<RealmNamedFileUsage> FindBackgroundFiles(IHasRealmFiles model) =>
+            model.Files.Where(f => IsBackgroundFilename(f.Filename));
 
         public static string GetSkinVersion(Skin skin, bool useDefaultIfMissing = false) => GetSkinVersion(skin.Configuration, useDefaultIfMissing);
 
@@ -106,7 +143,7 @@ namespace osu.Game.Skinning
         public static string UpdateSkinIniContent(string content, string version) =>
             UpdateSkinIniMetadata(content, name: null, author: null, version: version);
 
-        public static string UpdateSkinIniMetadata(string content, string? name, string? author, string? version, string? skinType = null, string? modifiedModes = null, int? onlineSkinId = null)
+        public static string UpdateSkinIniMetadata(string content, string? name, string? author, string? version, string? skinType = null, string? modifiedModes = null, int? onlineSkinId = null, string? description = null, string? tags = null)
         {
             var lines = content.Replace("\r\n", "\n").Split('\n').ToList();
 
@@ -125,10 +162,34 @@ namespace osu.Game.Skinning
             if (!string.IsNullOrWhiteSpace(modifiedModes))
                 updateAllMatchingKeys(lines, modified_modes_key, modifiedModes.Trim());
 
+            if (description != null)
+                updateAllMatchingKeys(lines, description_key, description.Trim());
+
+            if (tags != null)
+                updateAllMatchingKeys(lines, tags_key, tags.Trim());
+
             if (onlineSkinId is > 0)
                 updateAllMatchingKeys(lines, online_skin_id_key, onlineSkinId.Value.ToString(CultureInfo.InvariantCulture));
 
-            appendUploadMetadataBlock(lines, name, author, version, skinType, modifiedModes, onlineSkinId);
+            appendUploadMetadataBlock(lines, name, author, version, skinType, modifiedModes, onlineSkinId, description, tags);
+
+            return string.Join('\n', lines);
+        }
+
+        /// <summary>
+        /// Applies skin editor setup fields to <c>skin.ini</c>, updating existing keys or inserting them under <c>[General]</c>.
+        /// </summary>
+        public static string ApplyEditorSetupMetadata(string content, string name, string author, string version, string description, string tags, string skinType, string modifiedModes)
+        {
+            var lines = content.Replace("\r\n", "\n").Split('\n').ToList();
+
+            setOrInsertKey(lines, name_key, name.Trim());
+            setOrInsertKey(lines, author_key, author.Trim());
+            setOrInsertKey(lines, skin_version_key, string.IsNullOrWhiteSpace(version) ? DEFAULT_VERSION : version.Trim());
+            setOrInsertKey(lines, description_key, description.Trim());
+            setOrInsertKey(lines, tags_key, tags.Trim());
+            setOrInsertKey(lines, skin_type_key, skinType.Trim());
+            setOrInsertKey(lines, modified_modes_key, modifiedModes.Trim());
 
             return string.Join('\n', lines);
         }
@@ -169,13 +230,15 @@ namespace osu.Game.Skinning
             }
         }
 
-        private static void appendUploadMetadataBlock(List<string> lines, string? name, string? author, string? version, string? skinType, string? modifiedModes, int? onlineSkinId)
+        private static void appendUploadMetadataBlock(List<string> lines, string? name, string? author, string? version, string? skinType, string? modifiedModes, int? onlineSkinId, string? description = null, string? tags = null)
         {
             if (string.IsNullOrWhiteSpace(name)
                 && string.IsNullOrWhiteSpace(author)
                 && string.IsNullOrWhiteSpace(version)
                 && string.IsNullOrWhiteSpace(skinType)
                 && string.IsNullOrWhiteSpace(modifiedModes)
+                && string.IsNullOrWhiteSpace(description)
+                && string.IsNullOrWhiteSpace(tags)
                 && onlineSkinId is not > 0)
                 return;
 
@@ -200,8 +263,50 @@ namespace osu.Game.Skinning
             if (!string.IsNullOrWhiteSpace(modifiedModes))
                 lines.Add($"{modified_modes_key} {modifiedModes.Trim()}");
 
+            if (!string.IsNullOrWhiteSpace(description))
+                lines.Add($"{description_key} {description.Trim()}");
+
+            if (!string.IsNullOrWhiteSpace(tags))
+                lines.Add($"{tags_key} {tags.Trim()}");
+
             if (onlineSkinId is > 0)
                 lines.Add($"{online_skin_id_key} {onlineSkinId.Value.ToString(CultureInfo.InvariantCulture)}");
+        }
+
+        private static void setOrInsertKey(List<string> lines, string key, string value)
+        {
+            bool updated = false;
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                if (!lines[i].TrimStart().StartsWith(key, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                lines[i] = $"{key} {value}";
+                updated = true;
+            }
+
+            if (updated)
+                return;
+
+            int generalIndex = lines.FindIndex(l => l.Trim().Equals("[General]", StringComparison.OrdinalIgnoreCase));
+
+            if (generalIndex < 0)
+            {
+                if (lines.Count > 0 && !string.IsNullOrWhiteSpace(lines[^1]))
+                    lines.Add(string.Empty);
+
+                lines.Add("[General]");
+                lines.Add($"{key} {value}");
+                return;
+            }
+
+            int insertAt = generalIndex + 1;
+
+            while (insertAt < lines.Count && string.IsNullOrWhiteSpace(lines[insertAt]))
+                insertAt++;
+
+            lines.Insert(insertAt, $"{key} {value}");
         }
 
         private static bool isSkinIniEntry(string? key)
