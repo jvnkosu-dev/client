@@ -331,6 +331,21 @@ namespace osu.Game.Skinning
         }
 
         /// <summary>
+        /// Forces <see cref="SkinInfo.OnlineHash"/> to the current local hash when the skin is not
+        /// marked locally modified (used right after upload so Update is not offered for our own push).
+        /// </summary>
+        public void AlignOnlineHashWithLocal(Live<SkinInfo> skinInfo)
+        {
+            skinInfo.PerformWrite(s =>
+            {
+                if (s.LocallyModified || string.IsNullOrEmpty(s.Hash))
+                    return;
+
+                s.OnlineHash = s.Hash;
+            });
+        }
+
+        /// <summary>
         /// Ensures listing linkage is stored on the realm model (beatmap-style).
         /// </summary>
         public void EnsureListingLink(Live<SkinInfo> skinInfo, int onlineSkinIdFromConfiguration)
@@ -503,6 +518,58 @@ namespace osu.Game.Skinning
         public void PersistOnlineSkinId(Live<SkinInfo> skinInfo, int onlineSkinId)
         {
             skinInfo.PerformWrite(s => skinImporter.PersistOnlineSkinId(s, onlineSkinId, s.Realm!));
+        }
+
+        /// <summary>
+        /// Marks the local skin as matching the listing after a successful upload/update.
+        /// </summary>
+        public void PersistAfterSuccessfulUpload(Live<SkinInfo> skinInfo, int onlineSkinId, DateTimeOffset? uploadedAt = null)
+        {
+            skinInfo.PerformWrite(s => skinImporter.PersistAfterSuccessfulUpload(s, onlineSkinId, uploadedAt, s.Realm!));
+        }
+
+        /// <summary>
+        /// Online skin id of the skin most recently uploaded from this client.
+        /// Listing refresh uses this to adopt the server <c>last_updated</c> without rewriting local files from API metadata.
+        /// </summary>
+        public int? LastUploadedOnlineSkinId { get; set; }
+
+        /// <summary>
+        /// After upload/listing refresh: keep local files as-is, only refresh listing baseline timestamps/hashes
+        /// so Update is not offered for the skin we just pushed.
+        /// </summary>
+        public void SyncLocalSkinWithListing(Live<SkinInfo> skinInfo, APIOnlineSkin online, bool reloadCurrent = false)
+        {
+            if (online.OnlineID <= 0)
+                return;
+
+            var lastUpdated = online.LastUpdated ?? online.CreatedAt ?? DateTimeOffset.UtcNow;
+            PersistAfterSuccessfulUpload(skinInfo, online.OnlineID, lastUpdated);
+
+            if (LastUploadedOnlineSkinId == online.OnlineID)
+                LastUploadedOnlineSkinId = null;
+
+            if (!reloadCurrent || CurrentSkinInfo.Value.ID != skinInfo.ID)
+                return;
+
+            CurrentSkin.Value = skinInfo.PerformRead(GetSkin);
+            CurrentSkin.Value.Configuration.OnlineSkinId = online.OnlineID;
+            CurrentSkin.Value.Configuration.ServerLastUpdated = SkinUpdateHelper.FormatServerLastUpdated(lastUpdated);
+        }
+
+        /// <summary>
+        /// If <paramref name="online"/> matches <see cref="LastUploadedOnlineSkinId"/>, sync that local install.
+        /// </summary>
+        public void TrySyncAfterListingRefresh(APIOnlineSkin online)
+        {
+            if (LastUploadedOnlineSkinId is not int uploadedId || online.OnlineID != uploadedId)
+                return;
+
+            var local = Query(s => s.OnlineSkinId == uploadedId && !s.DeletePending);
+            if (local == null)
+                return;
+
+            SyncLocalSkinWithListing(local, online, reloadCurrent: true);
         }
 
         /// <summary>

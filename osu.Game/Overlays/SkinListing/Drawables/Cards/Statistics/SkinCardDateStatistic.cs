@@ -17,9 +17,9 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards.Statistics
         {
             this.dateTime = dateTime;
 
-            Icon = FontAwesome.Solid.Upload;
+            Icon = FontAwesome.Regular.Clock;
             Text = dateTime.ToLocalisedMediumDate();
-            TooltipText = LocalisableString.Interpolate($"Submitted: {dateTime.ToLocalisedMediumDate()}");
+            TooltipText = LocalisableString.Interpolate($"Updated: {dateTime.ToLocalisedMediumDate()}");
         }
 
         public override object TooltipContent => dateTime;
@@ -27,7 +27,7 @@ namespace osu.Game.Overlays.SkinListing.Drawables.Cards.Statistics
 
         public static SkinCardDateStatistic? CreateFor(APIOnlineSkin skin)
         {
-            var displayDate = skin.CreatedAt ?? skin.LastUpdated;
+            var displayDate = skin.LastUpdated ?? skin.CreatedAt;
 
             if (displayDate == null)
                 return null;

@@ -269,6 +269,22 @@ namespace osu.Game.Skinning
             return string.Join('\n', lines);
         }
 
+        /// <summary>
+        /// After a successful listing upload, sync <c>OnlineSkinID</c> + <c>ServerLastUpdated</c> without rewriting other metadata.
+        /// </summary>
+        public static string ApplyUploadSyncMetadata(string content, int onlineSkinId, string serverLastUpdated)
+        {
+            var lines = content.Replace("\r\n", "\n").Split('\n').ToList();
+
+            if (onlineSkinId > 0)
+                setOrInsertKey(lines, online_skin_id_key, onlineSkinId.ToString(CultureInfo.InvariantCulture));
+
+            if (!string.IsNullOrWhiteSpace(serverLastUpdated))
+                setOrInsertKey(lines, server_last_updated_key, serverLastUpdated.Trim());
+
+            return string.Join('\n', lines);
+        }
+
         public static void EnsureSkinMetadataInOsk(string oskPath, string name, string author, string version, string? skinType = null, string? modifiedModes = null, int? onlineSkinId = null) =>
             patchSkinIniInOsk(oskPath, content => UpdateSkinIniMetadata(content, name, author, version, skinType, modifiedModes, onlineSkinId));
 

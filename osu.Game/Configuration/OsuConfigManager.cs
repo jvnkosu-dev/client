@@ -239,6 +239,7 @@ namespace osu.Game.Configuration
 
             SetDefault(OsuSetting.EditorSubmissionNotifyOnDiscussionReplies, true);
             SetDefault(OsuSetting.EditorSubmissionLoadInBrowserAfterSubmission, true);
+            SetDefault(OsuSetting.SkinSubmissionOpenPageAfterSubmission, true);
 
             SetDefault(OsuSetting.WasSupporter, false);
 
@@ -472,6 +473,7 @@ namespace osu.Game.Configuration
         EditorShowStoryboard,
         EditorSubmissionNotifyOnDiscussionReplies,
         EditorSubmissionLoadInBrowserAfterSubmission,
+        SkinSubmissionOpenPageAfterSubmission,
 
         /// <summary>
         /// Cached state of whether local user is a supporter.

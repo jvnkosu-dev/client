@@ -8,21 +8,25 @@ namespace osu.Game.Overlays.SkinListing.Submission
 {
     public static class SkinMetadataHelper
     {
-        public const string UploadActionText = "Upload to server";
-        public const string UpdateUploadActionText = "Update & upload skin";
+        public const string UploadActionText = "Upload skin";
+        public const string UpdateUploadActionText = "Update skin";
 
         public static string ExtractBaseName(string skinName) => SkinIniVersionHelper.ExtractBaseName(skinName);
 
-        public static string GetUploadName(Skin skin) => SkinIniVersionHelper.SanitizeUploadName(skin.SkinInfo.Value.Name);
+        public static string GetUploadName(Skin skin) =>
+            skin.SkinInfo.PerformRead(s => SkinIniVersionHelper.SanitizeUploadName(s.Name));
 
         public static string GetUploadAuthor(Skin skin)
         {
-            string creator = skin.SkinInfo.Value.Creator;
+            return skin.SkinInfo.PerformRead(s =>
+            {
+                string creator = s.Creator;
 
-            if (string.IsNullOrWhiteSpace(creator) || creator == @"Unknown")
-                return string.Empty;
+                if (string.IsNullOrWhiteSpace(creator) || creator == @"Unknown")
+                    return string.Empty;
 
-            return creator.Trim();
+                return creator.Trim();
+            });
         }
 
         public static APIOnlineSkin? FindMatchingOnlineSkin(Skin skin, IEnumerable<APIOnlineSkin> listing, string? username)
@@ -46,21 +50,24 @@ namespace osu.Game.Overlays.SkinListing.Submission
 
         public static void PopulateSettingsFromSkin(SkinSubmissionSettings settings, Skin skin)
         {
-            var skinInfo = skin.SkinInfo.Value;
             var configuration = skin.Configuration;
 
-            settings.Name.Value = SkinIniVersionHelper.SanitizeUploadName(skinInfo.Name);
             settings.Version.Value = SkinIniVersionHelper.GetSkinVersion(skin, useDefaultIfMissing: true);
             settings.Description.Value = configuration.Description?.Trim() ?? string.Empty;
             settings.Tags.Value = configuration.Tags?.Trim() ?? string.Empty;
 
-            settings.Author.Value = !string.IsNullOrWhiteSpace(skinInfo.Creator) && skinInfo.Creator != @"Unknown"
-                ? skinInfo.Creator
-                : string.Empty;
+            skin.SkinInfo.PerformRead(skinInfo =>
+            {
+                settings.Name.Value = SkinIniVersionHelper.SanitizeUploadName(skinInfo.Name);
 
-            settings.EngineType.Value = !string.IsNullOrWhiteSpace(configuration.SkinType)
-                ? configuration.SkinType.Trim()
-                : SkinEngineTypeHelper.ToStorageString(SkinEngineTypeHelper.FromSkinInfo(skinInfo));
+                settings.Author.Value = !string.IsNullOrWhiteSpace(skinInfo.Creator) && skinInfo.Creator != @"Unknown"
+                    ? skinInfo.Creator
+                    : string.Empty;
+
+                settings.EngineType.Value = !string.IsNullOrWhiteSpace(configuration.SkinType)
+                    ? configuration.SkinType.Trim()
+                    : SkinEngineTypeHelper.ToStorageString(SkinEngineTypeHelper.FromSkinInfo(skinInfo));
+            });
 
             settings.ModifiedModes.Clear();
 
@@ -72,7 +79,12 @@ namespace osu.Game.Overlays.SkinListing.Submission
         {
             PopulateSettingsFromSkin(settings, skin);
 
-            if (SkinIniVersionHelper.TryGetOnlineSkinId(skin, out int onlineSkinId))
+            int onlineSkinId = skin.SkinInfo.PerformRead(s => s.OnlineSkinId);
+
+            if (onlineSkinId <= 0)
+                SkinIniVersionHelper.TryGetOnlineSkinId(skin, out onlineSkinId);
+
+            if (onlineSkinId > 0)
             {
                 settings.OnlineSkinId.Value = onlineSkinId;
                 settings.IsUpdate.Value = true;

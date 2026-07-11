@@ -51,8 +51,8 @@ namespace osu.Game.Overlays.Settings.Sections
 
         private readonly Bindable<Skin> currentSkin = new Bindable<Skin>();
 
-        private TruncatingSpriteText titleText = null!;
-        private TruncatingSpriteText creatorText = null!;
+        private MarqueeContainer titleText = null!;
+        private MarqueeContainer creatorText = null!;
         private SkinOriginStatusPill originPill = null!;
         private StatisticPill downloadsPill = null!;
         private FavouritePill favouritesPill = null!;
@@ -71,6 +71,7 @@ namespace osu.Game.Overlays.Settings.Sections
 
         private int lookupGeneration;
         private CancellationTokenSource? lookupCancellation;
+        private OverlayColourProvider colourProvider = null!;
 
         [Resolved]
         private SkinManager skins { get; set; } = null!;
@@ -101,6 +102,8 @@ namespace osu.Game.Overlays.Settings.Sections
         [BackgroundDependencyLoader]
         private void load(OverlayColourProvider colourProvider)
         {
+            this.colourProvider = colourProvider;
+
             // Match song select wedges: shear the stack, counter-shear content so text stays upright.
             InternalChild = new FillFlowContainer
             {
@@ -226,18 +229,24 @@ namespace osu.Game.Overlays.Settings.Sections
                             {
                                 TextSize = OsuFont.Style.Caption1.Size,
                             },
-                            titleText = new TruncatingSpriteText
+                            new Container
                             {
                                 RelativeSizeAxes = Axes.X,
-                                Font = OsuFont.Style.Title,
-                                Shadow = true,
+                                Height = OsuFont.Style.Title.Size,
+                                Margin = new MarginPadding { Bottom = -4f },
+                                Child = titleText = new MarqueeContainer
+                                {
+                                    OverflowSpacing = 50,
+                                },
                             },
-                            creatorText = new TruncatingSpriteText
+                            new Container
                             {
                                 RelativeSizeAxes = Axes.X,
-                                Font = OsuFont.Style.Heading2,
-                                Colour = colourProvider.Content2,
-                                Shadow = true,
+                                Height = OsuFont.Style.Heading2.Size,
+                                Child = creatorText = new MarqueeContainer
+                                {
+                                    OverflowSpacing = 50,
+                                },
                             },
                             new FillFlowContainer
                             {
@@ -405,7 +414,7 @@ namespace osu.Game.Overlays.Settings.Sections
                                 {
                                     new Drawable[]
                                     {
-                                        submitted = new MetadataField(SongSelectStrings.Submitted),
+                                        submitted = new MetadataField("Uploaded"),
                                         lastUpdated = new MetadataField("Last updated"),
                                     },
                                 },
@@ -430,9 +439,6 @@ namespace osu.Game.Overlays.Settings.Sections
 
             downloadsPill.SetValue(null);
             favouritesPill.SetSkin(null);
-            uploadedBy.SetText("-");
-            submitted.SetDate(null);
-            lastUpdated.SetDate(null);
             hideUpdateButton();
             lastOnlineSkin = null;
 
@@ -445,7 +451,16 @@ namespace osu.Game.Overlays.Settings.Sections
 
             int onlineSkinId = SkinManager.GetListingId(skin);
             if (onlineSkinId <= 0)
+            {
+                uploadedBy.SetText("-");
+                submitted.SetDate(null);
+                lastUpdated.SetDate(null);
                 return;
+            }
+
+            uploadedBy.SetLoading();
+            submitted.SetLoading();
+            lastUpdated.SetLoading();
 
             var token = lookupCancellation.Token;
 
@@ -467,6 +482,12 @@ namespace osu.Game.Overlays.Settings.Sections
                     // Failed lookup must not flip Server → Local (connection blips, etc.).
                     if (result != null)
                         applyOnlineSkin(result, generation);
+                    else
+                    {
+                        uploadedBy.SetText("-");
+                        submitted.SetDate(null);
+                        lastUpdated.SetDate(null);
+                    }
                 });
             }, token);
         }
@@ -479,8 +500,22 @@ namespace osu.Game.Overlays.Settings.Sections
             string displayName = SkinIniVersionHelper.GetDisplayName(skin.Name);
             string creator = skin.SkinInfo.PerformRead(s => s.Creator) ?? string.Empty;
 
-            titleText.Text = string.IsNullOrWhiteSpace(displayName) ? skin.SkinInfo.ToString() : displayName;
-            creatorText.Text = string.IsNullOrWhiteSpace(creator) || creator == @"Unknown" ? "-" : creator;
+            string title = string.IsNullOrWhiteSpace(displayName) ? skin.SkinInfo.ToString() : displayName;
+            string creatorDisplay = string.IsNullOrWhiteSpace(creator) || creator == @"Unknown" ? "-" : creator;
+
+            titleText.CreateContent = () => new OsuSpriteText
+            {
+                Text = title,
+                Shadow = true,
+                Font = OsuFont.Style.Title,
+            };
+            creatorText.CreateContent = () => new OsuSpriteText
+            {
+                Text = creatorDisplay,
+                Shadow = true,
+                Font = OsuFont.Style.Heading2,
+                Colour = colourProvider.Content2,
+            };
 
             string localVersion = SkinIniVersionHelper.GetSkinVersion(skin, useDefaultIfMissing: false);
             version.SetText(string.IsNullOrWhiteSpace(localVersion) ? "-" : localVersion);
@@ -518,6 +553,12 @@ namespace osu.Game.Overlays.Settings.Sections
             lastOnlineSkin = online;
             skins.EnsureListingLink(currentSkin.Value.SkinInfo, online.OnlineID);
             skins.EnsureOnlineHashBaseline(currentSkin.Value.SkinInfo);
+
+            // Server-origin skins keep OnlineHash aligned with local content. Update detection uses
+            // LocallyModified + SkinVersion (not LastUpdated / hash drift after our own upload).
+            if (!currentSkin.Value.SkinInfo.PerformRead(s => s.LocallyModified))
+                skins.AlignOnlineHashWithLocal(currentSkin.Value.SkinInfo);
+
             updateOriginPill(currentSkin.Value);
             updateUpdateButton(online);
         }
@@ -993,6 +1034,7 @@ namespace osu.Game.Overlays.Settings.Sections
             private readonly DrawableDate contentDate;
             private readonly LinkFlowContainer contentLink;
             private readonly LinkFlowContainer contentTags;
+            private readonly LoadingSpinner contentLoading;
 
             public MetadataField(LocalisableString label)
             {
@@ -1012,7 +1054,8 @@ namespace osu.Game.Overlays.Settings.Sections
                     new Container
                     {
                         RelativeSizeAxes = Axes.X,
-                        AutoSizeAxes = Axes.Y,
+                        // Fixed height so loading spinner ↔ text never shifts rows or wedge size.
+                        Height = OsuFont.Style.Caption2.Size,
                         Children = new Drawable[]
                         {
                             contentText = new TruncatingSpriteText
@@ -1047,33 +1090,49 @@ namespace osu.Game.Overlays.Settings.Sections
                                 AutoSizeAxes = Axes.Y,
                                 Alpha = 0,
                             },
+                            contentLoading = new LoadingSpinner
+                            {
+                                Anchor = Anchor.CentreLeft,
+                                Origin = Anchor.CentreLeft,
+                                Size = new Vector2(10),
+                            },
                         },
                     },
                 };
             }
 
-            public void SetText(LocalisableString text)
+            private void clear()
             {
-                contentText.Text = text;
-                contentText.Show();
+                contentText.Hide();
                 contentDate.Hide();
                 contentLink.Hide();
                 contentTags.Hide();
+                contentLoading.Hide();
+            }
+
+            public void SetLoading()
+            {
+                clear();
+                contentLoading.Show();
+            }
+
+            public void SetText(LocalisableString text)
+            {
+                clear();
+                contentText.Text = text;
+                contentText.Show();
             }
 
             public void SetUploader(string username)
             {
+                clear();
                 contentLink.Clear();
                 contentLink.AddUserLink(new APIUser { Username = username }, t =>
                 {
                     t.Font = OsuFont.Style.Caption2;
                     t.Colour = Color4.White.Opacity(0.75f);
                 });
-
                 contentLink.Show();
-                contentText.Hide();
-                contentDate.Hide();
-                contentTags.Hide();
             }
 
             public void SetDate(DateTimeOffset? date)
@@ -1084,22 +1143,21 @@ namespace osu.Game.Overlays.Settings.Sections
                     return;
                 }
 
+                clear();
                 contentDate.Date = date.Value;
                 contentDate.Show();
-                contentText.Hide();
-                contentLink.Hide();
-                contentTags.Hide();
             }
 
             public void SetTags(string[] tagList, Action<string>? onTagClick = null)
             {
-                contentTags.Clear();
-
                 if (tagList.Length == 0)
                 {
                     SetText("-");
                     return;
                 }
+
+                clear();
+                contentTags.Clear();
 
                 for (int i = 0; i < tagList.Length; i++)
                 {
@@ -1115,9 +1173,6 @@ namespace osu.Game.Overlays.Settings.Sections
                 }
 
                 contentTags.Show();
-                contentText.Hide();
-                contentDate.Hide();
-                contentLink.Hide();
             }
         }
     }

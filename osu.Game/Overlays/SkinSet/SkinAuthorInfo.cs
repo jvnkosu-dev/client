@@ -117,7 +117,7 @@ namespace osu.Game.Overlays.SkinSet
 
             if (skin.CreatedAt != null)
             {
-                fields.Add(new DateField("submitted", skin.CreatedAt.Value, OsuFont.GetFont(weight: FontWeight.Bold))
+                fields.Add(new DateField("uploaded", skin.CreatedAt.Value, OsuFont.GetFont(weight: FontWeight.Bold))
                 {
                     Margin = new MarginPadding { Top = 5 },
                 });

@@ -50,6 +50,9 @@ namespace osu.Game.Overlays.SkinListing
         [Resolved]
         private SkinLookupCache skinLookupCache { get; set; } = null!;
 
+        [Resolved]
+        private SkinManager skinManager { get; set; } = null!;
+
         public SkinListingFilterControl()
         {
             RelativeSizeAxes = Axes.X;
@@ -199,6 +202,10 @@ namespace osu.Game.Overlays.SkinListing
             getSkinsRequest.Success += skins =>
             {
                 skinLookupCache.StoreSkins(skins);
+
+                foreach (var online in skins)
+                    skinManager.TrySyncAfterListingRefresh(online);
+
                 lastResults = sortSkins(skins);
                 getSkinsRequest = null;
                 publishResults();

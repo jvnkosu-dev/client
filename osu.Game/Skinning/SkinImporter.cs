@@ -312,6 +312,54 @@ namespace osu.Game.Skinning
         }
 
         /// <summary>
+        /// After a successful listing upload/update: link <see cref="SkinInfo.OnlineSkinId"/>,
+        /// refresh <c>ServerLastUpdated</c>, and treat local files as matching the listing
+        /// (<see cref="SkinInfo.OnlineHash"/> + clear <see cref="SkinInfo.LocallyModified"/>)
+        /// so the Update button is not offered for the skin that was just pushed.
+        /// </summary>
+        public void PersistAfterSuccessfulUpload(SkinInfo item, int onlineSkinId, DateTimeOffset? uploadedAt, Realm realm)
+        {
+            if (onlineSkinId <= 0)
+                return;
+
+            item.OnlineSkinId = onlineSkinId;
+
+            string serverLastUpdated = SkinUpdateHelper.FormatServerLastUpdated(uploadedAt ?? DateTimeOffset.UtcNow);
+            var existingFile = item.GetFile(@"skin.ini");
+
+            if (existingFile == null)
+            {
+                using (Stream stream = new MemoryStream())
+                {
+                    using (var sw = new StreamWriter(stream, Encoding.UTF8, 1024, true))
+                    {
+                        sw.WriteLine(@"// The following content was automatically added by osu! in order to use metadata that more closely matches user expectations.");
+                        sw.WriteLine(@"[General]");
+                        sw.WriteLine(FormattableString.Invariant($"{@"OnlineSkinID"}: {onlineSkinId}"));
+                        sw.WriteLine($"{@"ServerLastUpdated"}: {serverLastUpdated}");
+                    }
+
+                    modelManager.AddFile(item, stream, @"skin.ini", realm);
+                }
+            }
+            else
+            {
+                using (var existingStream = Files.Storage.GetStream(existingFile.File.GetStoragePath()))
+                using (var reader = new StreamReader(existingStream))
+                {
+                    string updated = SkinIniVersionHelper.ApplyUploadSyncMetadata(reader.ReadToEnd(), onlineSkinId, serverLastUpdated);
+
+                    using (Stream stream = new MemoryStream(Encoding.UTF8.GetBytes(updated)))
+                        modelManager.ReplaceFile(existingFile, stream, realm);
+                }
+            }
+
+            item.Hash = ComputeHash(item);
+            item.OnlineHash = item.Hash;
+            item.LocallyModified = false;
+        }
+
+        /// <summary>
         /// Persists skin editor setup metadata (name, author, version, description, tags, modes) to <see cref="SkinInfo"/> and skin.ini.
         /// </summary>
         public void PersistSetupMetadata(Skin skin, string name, string author, string version, string description, string tags, string modifiedModes)
