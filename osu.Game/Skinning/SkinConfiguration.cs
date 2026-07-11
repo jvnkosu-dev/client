@@ -56,6 +56,16 @@ namespace osu.Game.Skinning
         /// </summary>
         public string Tags { get; internal set; } = string.Empty;
 
+        /// <summary>
+        /// Server <c>last_updated</c> snapshot at last install/update (jvnko extension), ISO-8601 in skin.ini as <c>ServerLastUpdated</c>.
+        /// </summary>
+        public string ServerLastUpdated { get; internal set; } = string.Empty;
+
+        /// <summary>
+        /// Downloaded <c>.osk</c> content length at last install/update (jvnko extension), stored as <c>ServerContentLength</c>.
+        /// </summary>
+        public long ServerContentLength { get; internal set; }
+
         public enum LegacySetting
         {
             Version,

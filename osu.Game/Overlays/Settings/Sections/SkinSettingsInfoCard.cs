@@ -57,6 +57,8 @@ namespace osu.Game.Overlays.Settings.Sections
         private FavouritePill favouritesPill = null!;
         private Sprite titleCover = null!;
         private Box titleCoverDim = null!;
+        private SkinSection.UpdateSkinButton updateButton = null!;
+        private APIOnlineSkin? lastOnlineSkin;
 
         private MetadataField uploadedBy = null!;
         private MetadataField modes = null!;
@@ -80,6 +82,9 @@ namespace osu.Game.Overlays.Settings.Sections
 
         [Resolved]
         private OsuGame? game { get; set; }
+
+        [Resolved]
+        private SettingsOverlay? settingsOverlay { get; set; }
 
         public SkinSettingsInfoCard()
         {
@@ -121,12 +126,36 @@ namespace osu.Game.Overlays.Settings.Sections
             currentSkin.BindValueChanged(_ => updateDisplay(), true);
 
             skins.SourceChanged += onSkinSourceChanged;
+
+            settingsOverlay?.State.BindValueChanged(onSettingsVisibilityChanged);
+        }
+
+        private void onSettingsVisibilityChanged(ValueChangedEvent<Visibility> state)
+        {
+            if (state.NewValue != Visibility.Visible)
+                return;
+
+            // Re-check local hash + fresh listing metadata whenever settings open.
+            refreshUpdateCheck();
+        }
+
+        private void refreshUpdateCheck()
+        {
+            if (currentSkin.Value != null && SkinIniVersionHelper.TryGetOnlineSkinId(currentSkin.Value, out int onlineSkinId))
+                skinLookupCache.Invalidate(onlineSkinId);
+
+            updateDisplay();
         }
 
         private void onSkinSourceChanged() => Schedule(() =>
         {
             if (currentSkin.Value != null)
+            {
                 updateTitleCoverFromLocalSkin(currentSkin.Value);
+
+                if (lastOnlineSkin != null)
+                    updateUpdateButton(lastOnlineSkin);
+            }
         });
 
         protected override void Dispose(bool isDisposing)
@@ -216,6 +245,19 @@ namespace osu.Game.Overlays.Settings.Sections
                             },
                         },
                     },
+                    updateButton = new SkinSection.UpdateSkinButton
+                    {
+                        Anchor = Anchor.BottomRight,
+                        Origin = Anchor.BottomRight,
+                        Margin = new MarginPadding
+                        {
+                            Right = content_padding,
+                            Bottom = content_padding,
+                        },
+                        // Cancel parent wedge shear; button applies its own Content.Shear like song select.
+                        Shear = -OsuGame.SHEAR,
+                        Alpha = 0,
+                    },
                 },
             };
         }
@@ -272,7 +314,6 @@ namespace osu.Game.Overlays.Settings.Sections
                     Children = new Drawable[]
                     {
                         new SkinSection.EditSkinButton { AutoSizeAxes = Axes.X, Height = 30 },
-                        new SkinSection.RenameSkinButton { AutoSizeAxes = Axes.X, Height = 30 },
                         new SkinSection.ExportSkinButton { AutoSizeAxes = Axes.X, Height = 30 },
                         new SkinSection.DeleteSkinButton { AutoSizeAxes = Axes.X, Height = 30 },
                     },
@@ -393,6 +434,8 @@ namespace osu.Game.Overlays.Settings.Sections
             lastUpdated.SetDate(null);
             tags.SetTags(Array.Empty<string>());
             updateTitleCoverFromLocalSkin(skin);
+            hideUpdateButton();
+            lastOnlineSkin = null;
 
             if (!SkinIniVersionHelper.TryGetOnlineSkinId(skin, out int onlineSkinId))
                 return;
@@ -456,6 +499,30 @@ namespace osu.Game.Overlays.Settings.Sections
                 : online.Tags.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
             tags.SetTags(tagList, tag => game?.SearchSkin(tag));
+
+            lastOnlineSkin = online;
+            skins.EnsureOnlineHashBaseline(currentSkin.Value.SkinInfo);
+            updateUpdateButton(online);
+        }
+
+        private void updateUpdateButton(APIOnlineSkin online)
+        {
+            var skin = currentSkin.Value;
+
+            if (!SkinUpdateHelper.IsUpdateAvailable(skin, online))
+            {
+                hideUpdateButton();
+                return;
+            }
+
+            updateButton.SetTarget(online, skin.SkinInfo);
+            updateButton.FadeIn(200, Easing.OutQuint);
+        }
+
+        private void hideUpdateButton()
+        {
+            updateButton.ClearTarget();
+            updateButton.FadeOut(150, Easing.OutQuint);
         }
 
         private void setModes(IReadOnlyCollection<string> modeList)

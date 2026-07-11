@@ -26,6 +26,7 @@ using osu.Game.Audio;
 using osu.Game.Configuration;
 using osu.Game.Database;
 using osu.Game.IO;
+using osu.Game.Online.API.Requests;
 using osu.Game.Overlays.Notifications;
 using osu.Game.Utils;
 
@@ -294,7 +295,25 @@ namespace osu.Game.Skinning
             if (!skin.SkinInfo.IsManaged)
                 throw new InvalidOperationException($"Attempting to save a skin which is not yet tracked. Call {nameof(EnsureMutableSkin)} first.");
 
-            return skinImporter.Save(skin);
+            bool hadChanges = skinImporter.Save(skin);
+
+            if (hadChanges)
+                scheduler.Add(() => SourceChanged?.Invoke());
+
+            return hadChanges;
+        }
+
+        /// <summary>
+        /// If this skin came from the listing but has no <see cref="SkinInfo.OnlineHash"/> yet
+        /// (installed before that field existed), record the current hash as the listing baseline.
+        /// </summary>
+        public void EnsureOnlineHashBaseline(Live<SkinInfo> skinInfo)
+        {
+            skinInfo.PerformWrite(s =>
+            {
+                if (string.IsNullOrEmpty(s.OnlineHash) && !string.IsNullOrEmpty(s.Hash))
+                    s.OnlineHash = s.Hash;
+            });
         }
 
         /// <summary>
@@ -439,6 +458,33 @@ namespace osu.Game.Skinning
         public void PersistOnlineSkinId(Live<SkinInfo> skinInfo, int onlineSkinId)
         {
             skinInfo.PerformWrite(s => skinImporter.PersistOnlineSkinId(s, onlineSkinId, s.Realm!));
+        }
+
+        /// <summary>
+        /// Persists online listing metadata and file snapshot used for update detection.
+        /// </summary>
+        public void PersistServerSnapshot(Live<SkinInfo> skinInfo, APIOnlineSkin online, long? contentLength = null)
+        {
+            string version = SkinIniVersionHelper.GetDisplayVersion(online.Version, online.Name);
+            string skinType = !string.IsNullOrWhiteSpace(online.EngineType)
+                ? online.EngineType.Trim()
+                : string.Empty;
+            string modifiedModes = SkinModifiedModesHelper.FormatForUpload(online.ModifiedModes ?? Enumerable.Empty<string>());
+            string serverLastUpdated = SkinUpdateHelper.FormatServerLastUpdated(online.LastUpdated ?? online.CreatedAt);
+
+            skinInfo.PerformWrite(s => skinImporter.PersistServerSnapshot(
+                s,
+                online.Name,
+                online.Creator,
+                version,
+                online.Description ?? string.Empty,
+                online.Tags ?? string.Empty,
+                skinType,
+                modifiedModes,
+                online.OnlineID,
+                serverLastUpdated,
+                contentLength,
+                s.Realm!));
         }
 
         /// <summary>

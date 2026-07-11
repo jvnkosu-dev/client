@@ -54,9 +54,11 @@ namespace osu.Game.Skinning
         /// <param name="task">The <see cref="ImportTask"/> to update the <paramref name="original"/> with</param>
         /// <param name="original">The <see cref="SkinInfo"/> to update</param>
         /// <returns></returns>
-        public override async Task<Live<SkinInfo>?> ImportAsUpdate(ProgressNotification notification, ImportTask task, SkinInfo original)
+        public override Task<Live<SkinInfo>?> ImportAsUpdate(ProgressNotification notification, ImportTask task, SkinInfo original)
         {
-            return await Realm.WriteAsync<Live<SkinInfo>?>(r =>
+            // Use synchronous Write so this can run from a background download thread
+            // (WriteAsync is update-thread-only).
+            return Task.FromResult(Realm.Write<Live<SkinInfo>?>(r =>
             {
                 var skinInfo = r.Find<SkinInfo>(original.ID)!;
                 skinInfo.Files.Clear();
@@ -88,7 +90,7 @@ namespace osu.Game.Skinning
                 }
 
                 return skinInfo.ToLive(Realm);
-            }).ConfigureAwait(false);
+            }));
         }
 
         protected override void Populate(SkinInfo model, ArchiveReader? archive, Realm realm, CancellationToken cancellationToken = default)
@@ -364,6 +366,50 @@ namespace osu.Game.Skinning
 
                 s.Hash = ComputeHash(s);
             });
+        }
+
+        /// <summary>
+        /// Writes listing metadata + server file snapshot into skin.ini after download/update.
+        /// </summary>
+        public void PersistServerSnapshot(SkinInfo item, string name, string author, string version, string description, string tags, string skinType, string modifiedModes, int onlineSkinId, string? serverLastUpdated, long? serverContentLength, Realm realm)
+        {
+            item.Name = SkinIniVersionHelper.SanitizeUploadName(name);
+            item.Creator = string.IsNullOrWhiteSpace(author) ? @"Unknown" : author.Trim();
+
+            var existingFile = item.GetFile(@"skin.ini");
+            string existingContent = string.Empty;
+
+            if (existingFile != null)
+            {
+                using (var existingStream = Files.Storage.GetStream(existingFile.File.GetStoragePath()))
+                using (var reader = new StreamReader(existingStream))
+                    existingContent = reader.ReadToEnd();
+            }
+
+            string updated = SkinIniVersionHelper.ApplyServerSnapshotMetadata(
+                existingContent,
+                item.Name,
+                item.Creator,
+                version,
+                description,
+                tags,
+                skinType,
+                modifiedModes,
+                onlineSkinId,
+                serverLastUpdated,
+                serverContentLength);
+
+            using (Stream stream = new MemoryStream(Encoding.UTF8.GetBytes(updated)))
+            {
+                if (existingFile != null)
+                    modelManager.ReplaceFile(existingFile, stream, realm);
+                else
+                    modelManager.AddFile(item, stream, @"skin.ini", realm);
+            }
+
+            item.Hash = ComputeHash(item);
+            // Beatmap-style: remember the listing snapshot hash so later Save() divergence can offer Update.
+            item.OnlineHash = item.Hash;
         }
 
         private Skin createInstance(SkinInfo item) => item.CreateInstance(skinResources);

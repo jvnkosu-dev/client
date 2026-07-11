@@ -38,7 +38,20 @@ namespace osu.Game.Skinning
 
         public string Hash { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Content hash of the skin as last downloaded/updated from the listing (analogous to <c>BeatmapInfo.OnlineMD5Hash</c>).
+        /// Compared with <see cref="Hash"/> to detect local layout/file edits.
+        /// </summary>
+        public string OnlineHash { get; set; } = string.Empty;
+
         public bool Protected { get; set; }
+
+        /// <summary>
+        /// Whether local files still match the last downloaded/updated listing snapshot.
+        /// Returns <c>true</c> when no online snapshot has been recorded yet.
+        /// </summary>
+        [JsonIgnore]
+        public bool MatchesOnlineVersion => string.IsNullOrEmpty(OnlineHash) || Hash == OnlineHash;
 
         public virtual Skin CreateInstance(IStorageResourceProvider resources)
         {

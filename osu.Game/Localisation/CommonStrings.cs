@@ -65,6 +65,11 @@ namespace osu.Game.Localisation
         public static LocalisableString Download => new TranslatableString(getKey(@"download"), @"Download");
 
         /// <summary>
+        /// "Update"
+        /// </summary>
+        public static LocalisableString Update => new TranslatableString(getKey(@"update"), @"Update");
+
+        /// <summary>
         /// "Downloading..."
         /// </summary>
         public static LocalisableString Downloading => new TranslatableString(getKey(@"downloading"), @"Downloading...");

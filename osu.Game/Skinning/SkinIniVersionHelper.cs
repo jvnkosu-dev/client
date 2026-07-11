@@ -34,6 +34,8 @@ namespace osu.Game.Skinning
         private const string online_skin_id_key = "OnlineSkinID:";
         private const string description_key = "Description:";
         private const string tags_key = "Tags:";
+        private const string server_last_updated_key = "ServerLastUpdated:";
+        private const string server_content_length_key = "ServerContentLength:";
 
         private static readonly ArchiveEncoding skin_archive_encoding = new ArchiveEncoding
         {
@@ -190,6 +192,44 @@ namespace osu.Game.Skinning
             setOrInsertKey(lines, tags_key, tags.Trim());
             setOrInsertKey(lines, skin_type_key, skinType.Trim());
             setOrInsertKey(lines, modified_modes_key, modifiedModes.Trim());
+
+            return string.Join('\n', lines);
+        }
+
+        /// <summary>
+        /// Writes the server listing snapshot used for downloader update detection into <c>skin.ini</c>.
+        /// </summary>
+        public static string ApplyServerSnapshotMetadata(
+            string content,
+            string name,
+            string author,
+            string version,
+            string description,
+            string tags,
+            string skinType,
+            string modifiedModes,
+            int onlineSkinId,
+            string? serverLastUpdated,
+            long? serverContentLength)
+        {
+            var lines = content.Replace("\r\n", "\n").Split('\n').ToList();
+
+            setOrInsertKey(lines, name_key, name.Trim());
+            setOrInsertKey(lines, author_key, author.Trim());
+            setOrInsertKey(lines, skin_version_key, string.IsNullOrWhiteSpace(version) ? DEFAULT_VERSION : version.Trim());
+            setOrInsertKey(lines, description_key, description.Trim());
+            setOrInsertKey(lines, tags_key, tags.Trim());
+            setOrInsertKey(lines, skin_type_key, skinType.Trim());
+            setOrInsertKey(lines, modified_modes_key, modifiedModes.Trim());
+
+            if (onlineSkinId > 0)
+                setOrInsertKey(lines, online_skin_id_key, onlineSkinId.ToString(CultureInfo.InvariantCulture));
+
+            if (!string.IsNullOrWhiteSpace(serverLastUpdated))
+                setOrInsertKey(lines, server_last_updated_key, serverLastUpdated.Trim());
+
+            if (serverContentLength is > 0)
+                setOrInsertKey(lines, server_content_length_key, serverContentLength.Value.ToString(CultureInfo.InvariantCulture));
 
             return string.Join('\n', lines);
         }

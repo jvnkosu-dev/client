@@ -9,24 +9,27 @@ using System.Linq;
 using JetBrains.Annotations;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
-using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Cursor;
+using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
-using osu.Framework.Graphics.UserInterface;
+using osu.Framework.Input.Events;
+using osu.Framework.IO.Network;
 using osu.Framework.Localisation;
 using osu.Framework.Logging;
 using osu.Game.Database;
 using osu.Game.Graphics;
+using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Localisation;
 using osu.Game.Overlays.Dialog;
 using osu.Game.Overlays.SkinEditor;
 using osu.Game.Overlays.SkinSet;
+using osu.Game.Online.API.Requests;
 using osu.Game.Skinning;
 using osuTK;
+using osuTK.Graphics;
 using Realms;
 using WebCommonStrings = osu.Game.Resources.Localisation.Web.CommonStrings;
 
@@ -128,35 +131,174 @@ namespace osu.Game.Overlays.Settings.Sections
             }
         }
 
-        public partial class RenameSkinButton : ShearedButton, IHasPopover
+        /// <summary>
+        /// Matches song select <c>PanelUpdateBeatmapButton</c> (sync icon + Update), with shear for sheared wedges.
+        /// </summary>
+        public partial class UpdateSkinButton : OsuAnimatedButton
         {
+            private const float icon_size = 12;
+
+            [Resolved]
+            private SkinDownloader skinDownloader { get; set; }
+
             [Resolved]
             private SkinManager skins { get; set; }
 
-            private Bindable<Skin> currentSkin;
+            private APIOnlineSkin onlineSkin;
+            private Live<SkinInfo> existingSkin;
+
+            private SpriteIcon icon;
+            private Box progressFill;
+
+            public UpdateSkinButton()
+            {
+                AutoSizeAxes = Axes.X;
+                Height = 22f;
+            }
 
             [BackgroundDependencyLoader]
             private void load()
             {
-                Text = CommonStrings.Rename;
-                TextSize = 14;
-                Action = this.ShowPopover;
+                Content.Anchor = Anchor.Centre;
+                Content.Origin = Anchor.Centre;
+                Content.Shear = OsuGame.SHEAR;
+                Content.CornerRadius = 4;
+                Content.CornerExponent = 2;
+
+                Content.AddRange(new Drawable[]
+                {
+                    progressFill = new Box
+                    {
+                        Colour = Color4.White,
+                        Alpha = 0.2f,
+                        Blending = BlendingParameters.Additive,
+                        RelativeSizeAxes = Axes.Both,
+                        Width = 0,
+                    },
+                    new FillFlowContainer
+                    {
+                        Padding = new MarginPadding { Horizontal = 5, Vertical = 3 },
+                        AutoSizeAxes = Axes.Both,
+                        Direction = FillDirection.Horizontal,
+                        Spacing = new Vector2(4),
+                        Shear = -OsuGame.SHEAR,
+                        Children = new Drawable[]
+                        {
+                            new Container
+                            {
+                                Size = new Vector2(icon_size),
+                                Anchor = Anchor.CentreLeft,
+                                Origin = Anchor.CentreLeft,
+                                Child = icon = new SpriteIcon
+                                {
+                                    Anchor = Anchor.Centre,
+                                    Origin = Anchor.Centre,
+                                    Icon = FontAwesome.Solid.SyncAlt,
+                                    Size = new Vector2(icon_size),
+                                },
+                            },
+                            new OsuSpriteText
+                            {
+                                Anchor = Anchor.CentreLeft,
+                                Origin = Anchor.CentreLeft,
+                                Font = OsuFont.Style.Body.With(weight: FontWeight.SemiBold),
+                                Text = WebCommonStrings.ButtonsUpdate,
+                            }
+                        }
+                    },
+                });
+
+                Action = updateSkin;
+            }
+
+            public void SetTarget(APIOnlineSkin online, Live<SkinInfo> existing)
+            {
+                onlineSkin = online;
+                existingSkin = existing;
+                attachExistingDownload();
+            }
+
+            public void ClearTarget()
+            {
+                onlineSkin = null;
+                existingSkin = null;
+                Enabled.Value = false;
+                progressFill.ResizeWidthTo(0, 100, Easing.OutQuint);
             }
 
             protected override void LoadComplete()
             {
                 base.LoadComplete();
 
-                currentSkin = skins.CurrentSkin.GetBoundCopy();
-                currentSkin.BindValueChanged(_ => updateState());
-                currentSkin.BindDisabledChanged(_ => updateState(), true);
+                skinDownloader.DownloadBegan += onDownloadBegan;
+                skinDownloader.DownloadCompleted += onDownloadFinished;
+                skinDownloader.DownloadFailed += onDownloadFinished;
+                attachExistingDownload();
+                icon.Spin(4000, RotationDirection.Clockwise);
             }
 
-            private void updateState() => Enabled.Value = !currentSkin.Disabled && currentSkin.Value.SkinInfo.PerformRead(s => !s.Protected);
-
-            public Popover GetPopover()
+            protected override void Dispose(bool isDisposing)
             {
-                return new RenameSkinPopover();
+                if (skinDownloader != null)
+                {
+                    skinDownloader.DownloadBegan -= onDownloadBegan;
+                    skinDownloader.DownloadCompleted -= onDownloadFinished;
+                    skinDownloader.DownloadFailed -= onDownloadFinished;
+                }
+
+                base.Dispose(isDisposing);
+            }
+
+            protected override bool OnHover(HoverEvent e)
+            {
+                icon.Spin(400, RotationDirection.Clockwise, icon.Rotation);
+                return base.OnHover(e);
+            }
+
+            protected override void OnHoverLost(HoverLostEvent e)
+            {
+                icon.Spin(4000, RotationDirection.Clockwise, icon.Rotation);
+                base.OnHoverLost(e);
+            }
+
+            private void onDownloadBegan(APIOnlineSkin skin, FileWebRequest _) => Schedule(attachExistingDownload);
+
+            private void onDownloadFinished(APIOnlineSkin _) => Schedule(attachExistingDownload);
+
+            private void attachExistingDownload()
+            {
+                if (onlineSkin == null || existingSkin == null)
+                {
+                    Enabled.Value = false;
+                    progressFill.ResizeWidthTo(0, 100, Easing.OutQuint);
+                    return;
+                }
+
+                var download = skinDownloader.GetActiveRequest(onlineSkin);
+
+                if (download != null)
+                {
+                    Enabled.Value = false;
+                    download.DownloadProgress += (current, total) =>
+                    {
+                        float progress = total > 0 ? (float)current / total : 0;
+                        Schedule(() => progressFill.ResizeWidthTo(progress, 100, Easing.OutQuint));
+                    };
+                }
+                else
+                {
+                    Enabled.Value = !skins.CurrentSkin.Disabled;
+                    progressFill.ResizeWidthTo(0, 100, Easing.OutQuint);
+                }
+            }
+
+            private void updateSkin()
+            {
+                if (onlineSkin == null || existingSkin == null)
+                    return;
+
+                skinDownloader.DownloadAndUpdate(onlineSkin, existingSkin);
+                attachExistingDownload();
             }
         }
 
@@ -297,64 +439,6 @@ namespace osu.Game.Overlays.Settings.Sections
                     manager.Delete(skin.SkinInfo.Value);
                     manager.CurrentSkinInfo.SetDefault();
                 };
-            }
-        }
-
-        public partial class RenameSkinPopover : OsuPopover
-        {
-            [Resolved]
-            private SkinManager skins { get; set; }
-
-            private readonly FocusedTextBox textBox;
-
-            public RenameSkinPopover()
-            {
-                AutoSizeAxes = Axes.Both;
-                Origin = Anchor.TopCentre;
-
-                RoundedButton renameButton;
-
-                Child = new FillFlowContainer
-                {
-                    Direction = FillDirection.Vertical,
-                    AutoSizeAxes = Axes.Y,
-                    Width = 250,
-                    Spacing = new Vector2(10f),
-                    Children = new Drawable[]
-                    {
-                        textBox = new FocusedTextBox
-                        {
-                            PlaceholderText = SkinSettingsStrings.SkinName,
-                            FontSize = OsuFont.DEFAULT_FONT_SIZE,
-                            RelativeSizeAxes = Axes.X,
-                            SelectAllOnFocus = true,
-                        },
-                        renameButton = new RoundedButton
-                        {
-                            Height = 40,
-                            RelativeSizeAxes = Axes.X,
-                            MatchingFilter = true,
-                            Text = WebCommonStrings.ButtonsSave,
-                        }
-                    }
-                };
-
-                renameButton.Action += rename;
-                textBox.OnCommit += (_, _) => rename();
-            }
-
-            protected override void PopIn()
-            {
-                textBox.Text = skins.CurrentSkinInfo.Value.Value.Name;
-                textBox.TakeFocus();
-
-                base.PopIn();
-            }
-
-            private void rename()
-            {
-                skins.Rename(skins.CurrentSkinInfo.Value, textBox.Text);
-                PopOut();
             }
         }
     }

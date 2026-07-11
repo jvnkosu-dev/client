@@ -37,6 +37,11 @@ namespace osu.Game.Database
 
         public bool TryGetCached(int skinId, [MaybeNullWhen(false)] out APIOnlineSkin skin) => CheckExists(skinId, out skin);
 
+        /// <summary>
+        /// Drop a cached listing entry so the next lookup hits the API again.
+        /// </summary>
+        public void Invalidate(int skinId) => Invalidate(id => id == skinId);
+
         protected override async Task<APIOnlineSkin?> ComputeValueAsync(int lookup, CancellationToken token = default)
         {
             var request = new GetSkinRequest(lookup);

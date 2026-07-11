@@ -1,11 +1,16 @@
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// See the LICENCE file in the repository root for full licence text.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.IO.Network;
+using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Game.Database;
 using osu.Game.Online.API.Requests;
@@ -64,15 +69,31 @@ namespace osu.Game.Skinning
                 return;
             }
 
+            beginDownload(onlineSkin, existing: null);
+        }
+
+        public void DownloadAndUpdate(APIOnlineSkin onlineSkin, Live<SkinInfo> existing)
+        {
             if (activeRequests.ContainsKey(onlineSkin.OnlineID))
                 return;
 
+            beginDownload(onlineSkin, existing);
+        }
+
+        private void beginDownload(APIOnlineSkin onlineSkin, Live<SkinInfo>? existing)
+        {
+            if (activeRequests.ContainsKey(onlineSkin.OnlineID))
+                return;
+
+            bool isUpdate = existing != null;
             string tempFileName = $"{onlineSkin.OnlineID}_{Guid.NewGuid()}.osk";
             string tempPath = Path.Combine(storage.GetFullPath("temp"), tempFileName);
 
             var notification = new ProgressNotification
             {
-                Text = $"Downloading skin {onlineSkin.Name}...",
+                Text = isUpdate
+                    ? $"Downloading update for {onlineSkin.Name}..."
+                    : $"Downloading skin {onlineSkin.Name}...",
             };
 
             var request = new FileWebRequest(tempPath, onlineSkin.DownloadUrl);
@@ -80,23 +101,43 @@ namespace osu.Game.Skinning
 
             request.DownloadProgress += (current, total) =>
             {
-                notification.Progress = (float)current / total;
+                notification.Progress = total > 0 ? (float)current / total : 0;
             };
 
             request.Finished += () =>
             {
                 notification.Progress = 1;
-                notification.Text = $"Importing skin {onlineSkin.Name}...";
+                notification.Text = isUpdate
+                    ? $"Updating skin {onlineSkin.Name}..."
+                    : $"Importing skin {onlineSkin.Name}...";
+
+                // Capture ID on this callback thread; Live.Value must not be touched from Task.Run.
+                Guid? existingId = existing?.ID;
+                long contentLength = new FileInfo(tempPath).Exists ? new FileInfo(tempPath).Length : 0;
 
                 Task.Run(async () =>
                 {
+                    string? extractDir = null;
+
                     try
                     {
-                        await skinManager.Import(new ImportTask(tempPath), new ImportParameters
+                        if (isUpdate)
                         {
-                            OnlineSkinListingName = onlineSkin.Name,
-                            OnlineSkinListingCreator = onlineSkin.Creator,
-                        }).ConfigureAwait(false);
+                            extractDir = Path.Combine(storage.GetFullPath("temp"), $"skin-update-{onlineSkin.OnlineID}-{Guid.NewGuid()}");
+                            Directory.CreateDirectory(extractDir);
+                            ZipFile.ExtractToDirectory(tempPath, extractDir);
+
+                            var original = new SkinInfo { ID = existingId!.Value };
+                            await skinManager.ImportAsUpdate(notification, new ImportTask(extractDir), original).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            await skinManager.Import(new ImportTask(tempPath), new ImportParameters
+                            {
+                                OnlineSkinListingName = onlineSkin.Name,
+                                OnlineSkinListingCreator = onlineSkin.Creator,
+                            }).ConfigureAwait(false);
+                        }
 
                         notification.CompletionClickAction = () =>
                         {
@@ -107,18 +148,28 @@ namespace osu.Game.Skinning
 
                             return true;
                         };
-                        notification.CompletionText = $"Skin {onlineSkin.Name} installed successfully!";
+                        notification.CompletionText = isUpdate
+                            ? $"Skin {onlineSkin.Name} updated successfully!"
+                            : $"Skin {onlineSkin.Name} installed successfully!";
                         notification.State = ProgressNotificationState.Completed;
+
                         Schedule(() =>
                         {
                             activeRequests.Remove(onlineSkin.OnlineID);
 
-                            var imported = GetInstalledSkin(onlineSkin);
+                            var imported = existing ?? GetInstalledSkin(onlineSkin);
 
                             if (imported != null && onlineSkin.OnlineID > 0)
                             {
                                 installedOnlineSkins[onlineSkin.OnlineID] = imported;
-                                skinManager.PersistOnlineSkinId(imported, onlineSkin.OnlineID);
+                                skinManager.PersistServerSnapshot(imported, onlineSkin, contentLength > 0 ? contentLength : null);
+
+                                // Reload current skin instance so Configuration / files refresh.
+                                if (skinManager.CurrentSkinInfo.Value.ID == imported.ID)
+                                {
+                                    var refreshed = imported.PerformRead(s => s.CreateInstance(skinManager));
+                                    skinManager.CurrentSkin.Value = refreshed;
+                                }
                             }
 
                             DownloadCompleted?.Invoke(onlineSkin);
@@ -126,8 +177,14 @@ namespace osu.Game.Skinning
                     }
                     catch (Exception ex)
                     {
+                        Logger.Error(ex, isUpdate
+                            ? $"Failed to update skin '{onlineSkin.Name}'"
+                            : $"Failed to import skin '{onlineSkin.Name}'");
+
                         notification.State = ProgressNotificationState.Cancelled;
-                        notification.Text = $"Failed to import {onlineSkin.Name}: {ex.Message}";
+                        notification.Text = isUpdate
+                            ? $"Failed to update {onlineSkin.Name}: {ex.Message}"
+                            : $"Failed to import {onlineSkin.Name}: {ex.Message}";
                         Schedule(() =>
                         {
                             activeRequests.Remove(onlineSkin.OnlineID);
@@ -138,6 +195,18 @@ namespace osu.Game.Skinning
                     {
                         if (File.Exists(tempPath))
                             File.Delete(tempPath);
+
+                        if (extractDir != null && Directory.Exists(extractDir))
+                        {
+                            try
+                            {
+                                Directory.Delete(extractDir, true);
+                            }
+                            catch
+                            {
+                                // Best-effort cleanup.
+                            }
+                        }
                     }
                 });
             };
@@ -145,7 +214,9 @@ namespace osu.Game.Skinning
             request.Failed += _ =>
             {
                 notification.State = ProgressNotificationState.Cancelled;
-                notification.Text = $"Failed to download {onlineSkin.Name}";
+                notification.Text = isUpdate
+                    ? $"Failed to download update for {onlineSkin.Name}"
+                    : $"Failed to download {onlineSkin.Name}";
                 activeRequests.Remove(onlineSkin.OnlineID);
                 DownloadFailed?.Invoke(onlineSkin);
             };

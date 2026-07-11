@@ -58,6 +58,16 @@ namespace osu.Game.Skinning
                                 skin.Tags = pair.Value;
                                 return;
 
+                            case @"ServerLastUpdated":
+                                skin.ServerLastUpdated = pair.Value;
+                                return;
+
+                            case @"ServerContentLength":
+                                if (long.TryParse(pair.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out long contentLength) && contentLength > 0)
+                                    skin.ServerContentLength = contentLength;
+
+                                return;
+
                             case @"Version":
                                 if (pair.Value == "latest")
                                     skin.LegacyVersion = SkinConfiguration.LATEST_VERSION;
