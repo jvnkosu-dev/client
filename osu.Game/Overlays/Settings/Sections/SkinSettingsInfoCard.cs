@@ -142,8 +142,12 @@ namespace osu.Game.Overlays.Settings.Sections
 
         private void refreshUpdateCheck()
         {
-            if (currentSkin.Value != null && SkinIniVersionHelper.TryGetOnlineSkinId(currentSkin.Value, out int onlineSkinId))
-                skinLookupCache.Invalidate(onlineSkinId);
+            if (currentSkin.Value != null)
+            {
+                int onlineSkinId = SkinManager.GetListingId(currentSkin.Value);
+                if (onlineSkinId > 0)
+                    skinLookupCache.Invalidate(onlineSkinId);
+            }
 
             updateDisplay();
         }
@@ -155,7 +159,7 @@ namespace osu.Game.Overlays.Settings.Sections
 
             applyLocalMetadata(currentSkin.Value);
             updateTitleCoverFromLocalSkin(currentSkin.Value);
-            updateOriginPill(currentSkin.Value, lastOnlineSkin);
+            updateOriginPill(currentSkin.Value);
 
             if (lastOnlineSkin != null)
                 updateUpdateButton(lastOnlineSkin);
@@ -432,15 +436,16 @@ namespace osu.Game.Overlays.Settings.Sections
             hideUpdateButton();
             lastOnlineSkin = null;
 
-            // Purely local skin, or listing id missing → Local pill immediately.
-            if (!SkinIniVersionHelper.TryGetOnlineSkinId(skin, out int onlineSkinId))
-            {
-                originPill.SetOrigin(SkinOriginStatus.Local);
-                return;
-            }
+            // Backfill realm OnlineSkinId from skin.ini for skins installed before that field existed.
+            if (SkinIniVersionHelper.TryGetOnlineSkinId(skin, out int configOnlineId))
+                skins.EnsureListingLink(skin.SkinInfo, configOnlineId);
 
-            // Reflect local file divergence right away; flip further when listing metadata arrives.
-            updateOriginPill(skin, null);
+            // Pill uses only realm-persisted fields (like beatmap OnlineID + LocallyModified).
+            updateOriginPill(skin);
+
+            int onlineSkinId = SkinManager.GetListingId(skin);
+            if (onlineSkinId <= 0)
+                return;
 
             var token = lookupCancellation.Token;
 
@@ -459,10 +464,9 @@ namespace osu.Game.Overlays.Settings.Sections
                     if (generation != lookupGeneration || token.IsCancellationRequested)
                         return;
 
+                    // Failed lookup must not flip Server → Local (connection blips, etc.).
                     if (result != null)
                         applyOnlineSkin(result, generation);
-                    else
-                        originPill.SetOrigin(SkinOriginStatus.Local);
                 });
             }, token);
         }
@@ -512,30 +516,27 @@ namespace osu.Game.Overlays.Settings.Sections
             lastUpdated.SetDate(online.LastUpdated ?? online.CreatedAt);
 
             lastOnlineSkin = online;
+            skins.EnsureListingLink(currentSkin.Value.SkinInfo, online.OnlineID);
             skins.EnsureOnlineHashBaseline(currentSkin.Value.SkinInfo);
-            updateOriginPill(currentSkin.Value, online);
+            updateOriginPill(currentSkin.Value);
             updateUpdateButton(online);
         }
 
-        private void updateOriginPill(Skin skin, APIOnlineSkin? online)
+        /// <summary>
+        /// Origin pill reads listing link via direct realm Find (not Skin.SkinInfo Live).
+        /// </summary>
+        private void updateOriginPill(Skin skin)
         {
-            // Not linked to listing at all.
-            if (!SkinIniVersionHelper.TryGetOnlineSkinId(skin, out _))
+            bool showServer = skins.IsServerOrigin(skin.SkinInfo.ID);
+
+            // Recover missing realm link from skin.ini when possible (upgrade / stale live).
+            if (!showServer && SkinIniVersionHelper.TryGetOnlineSkinId(skin, out int configOnlineId))
             {
-                originPill.SetOrigin(SkinOriginStatus.Local);
-                return;
+                skins.EnsureListingLink(skin.SkinInfo, configOnlineId);
+                showServer = skins.IsServerOrigin(skin.SkinInfo.ID);
             }
 
-            // User edited layout/files after last download/update → Local (same signal that offers Update).
-            bool locallyDiverged = skin.SkinInfo.PerformRead(s => !s.MatchesOnlineVersion);
-
-            if (locallyDiverged || (online != null && SkinUpdateHelper.IsUpdateAvailable(skin, online)))
-            {
-                originPill.SetOrigin(SkinOriginStatus.Local);
-                return;
-            }
-
-            originPill.SetOrigin(SkinOriginStatus.Server);
+            originPill.SetOrigin(showServer ? SkinOriginStatus.Server : SkinOriginStatus.Local);
         }
 
         private void updateUpdateButton(APIOnlineSkin online)
@@ -636,6 +637,13 @@ namespace osu.Game.Overlays.Settings.Sections
             private void load(OverlayColourProvider colourProvider)
             {
                 this.colourProvider = colourProvider;
+                // Don't paint default Local here — wait for SetOrigin from updateOriginPill,
+                // otherwise a later SetOrigin(Server) before IsLoaded can be overwritten visually.
+            }
+
+            protected override void LoadComplete()
+            {
+                base.LoadComplete();
                 updateState();
             }
 
@@ -645,13 +653,14 @@ namespace osu.Game.Overlays.Settings.Sections
                     return;
 
                 origin = value;
-
-                if (IsLoaded)
-                    updateState();
+                updateState();
             }
 
             private void updateState()
             {
+                if (!IsLoaded || colourProvider == null)
+                    return;
+
                 switch (origin)
                 {
                     default:

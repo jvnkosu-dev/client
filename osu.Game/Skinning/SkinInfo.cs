@@ -39,12 +39,36 @@ namespace osu.Game.Skinning
         public string Hash { get; set; } = string.Empty;
 
         /// <summary>
+        /// Listing ID for skins installed from / linked to the skin shop (analogous to <c>BeatmapInfo.OnlineID</c>).
+        /// Stored in realm so the Local/Server pill does not depend on skin.ini being parsed yet.
+        /// </summary>
+        public int OnlineSkinId { get; set; }
+
+        /// <summary>
         /// Content hash of the skin as last downloaded/updated from the listing (analogous to <c>BeatmapInfo.OnlineMD5Hash</c>).
-        /// Compared with <see cref="Hash"/> to detect local layout/file edits.
+        /// Compared with <see cref="Hash"/> for update detection.
         /// </summary>
         public string OnlineHash { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Whether the user has saved local edits since the last download/update from the listing.
+        /// Used with <see cref="OnlineSkinId"/> for the Local/Server origin pill.
+        /// </summary>
+        public bool LocallyModified { get; set; }
+
         public bool Protected { get; set; }
+
+        /// <summary>
+        /// Whether this skin is linked to the online listing (realm field, not skin.ini).
+        /// </summary>
+        [JsonIgnore]
+        public bool IsFromListing => OnlineSkinId > 0;
+
+        /// <summary>
+        /// Whether the settings origin pill should show Server (green).
+        /// </summary>
+        [JsonIgnore]
+        public bool ShowsAsServerOrigin => OnlineSkinId > 0 && !LocallyModified;
 
         /// <summary>
         /// Whether local files still match the last downloaded/updated listing snapshot.

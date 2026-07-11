@@ -278,6 +278,8 @@ namespace osu.Game.Skinning
             if (onlineSkinId <= 0)
                 return;
 
+            item.OnlineSkinId = onlineSkinId;
+
             var existingFile = item.GetFile(@"skin.ini");
 
             if (existingFile == null)
@@ -365,6 +367,50 @@ namespace osu.Game.Skinning
                 }
 
                 s.Hash = ComputeHash(s);
+
+                if (s.OnlineSkinId > 0 || skin.Configuration.OnlineSkinId > 0 || !string.IsNullOrEmpty(s.OnlineHash))
+                {
+                    if (s.OnlineSkinId <= 0 && skin.Configuration.OnlineSkinId > 0)
+                        s.OnlineSkinId = skin.Configuration.OnlineSkinId;
+
+                    s.LocallyModified = true;
+                }
+            });
+        }
+
+        /// <summary>
+        /// One-shot startup backfill: copy <c>OnlineSkinID</c> from skin.ini into realm for listing-linked skins
+        /// that only had the id in files (and clear stale <see cref="SkinInfo.LocallyModified"/> once linked).
+        /// </summary>
+        public void BackfillListingOrigin()
+        {
+            Realm.Write(r =>
+            {
+                foreach (var item in r.All<SkinInfo>().Where(s => !s.DeletePending && !s.Protected))
+                {
+                    if (item.OnlineSkinId <= 0)
+                    {
+                        var existingFile = item.GetFile(@"skin.ini");
+                        if (existingFile == null)
+                            continue;
+
+                        using (var stream = Files.Storage.GetStream(existingFile.File.GetStoragePath()))
+                        {
+                            if (stream == null)
+                                continue;
+
+                            using (var reader = new StreamReader(stream))
+                            {
+                                if (!SkinIniVersionHelper.TryParseOnlineSkinIdFromIni(reader.ReadToEnd(), out int onlineSkinId))
+                                    continue;
+
+                                item.OnlineSkinId = onlineSkinId;
+                                // First realm link — clear stale LocallyModified from older hash-based logic.
+                                item.LocallyModified = false;
+                            }
+                        }
+                    }
+                }
             });
         }
 
@@ -375,6 +421,9 @@ namespace osu.Game.Skinning
         {
             item.Name = SkinIniVersionHelper.SanitizeUploadName(name);
             item.Creator = string.IsNullOrWhiteSpace(author) ? @"Unknown" : author.Trim();
+
+            if (onlineSkinId > 0)
+                item.OnlineSkinId = onlineSkinId;
 
             var existingFile = item.GetFile(@"skin.ini");
             string existingContent = string.Empty;
@@ -410,6 +459,7 @@ namespace osu.Game.Skinning
             item.Hash = ComputeHash(item);
             // Beatmap-style: remember the listing snapshot hash so later Save() divergence can offer Update.
             item.OnlineHash = item.Hash;
+            item.LocallyModified = false;
         }
 
         private Skin createInstance(SkinInfo item) => item.CreateInstance(skinResources);
@@ -458,6 +508,15 @@ namespace osu.Game.Skinning
                 hadChanges = newHash != s.Hash;
 
                 s.Hash = newHash;
+
+                // Only explicit user/layout saves mark the skin as locally modified for the origin pill.
+                if (hadChanges && (s.OnlineSkinId > 0 || skin.Configuration.OnlineSkinId > 0 || !string.IsNullOrEmpty(s.OnlineHash)))
+                {
+                    if (s.OnlineSkinId <= 0 && skin.Configuration.OnlineSkinId > 0)
+                        s.OnlineSkinId = skin.Configuration.OnlineSkinId;
+
+                    s.LocallyModified = true;
+                }
             });
 
             return hadChanges;

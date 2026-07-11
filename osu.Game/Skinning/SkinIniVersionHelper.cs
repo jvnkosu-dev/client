@@ -89,6 +89,41 @@ namespace osu.Game.Skinning
 
         public static bool TryGetOnlineSkinId(Skin skin, out int onlineSkinId) => TryGetOnlineSkinId(skin.Configuration, out onlineSkinId);
 
+        /// <summary>
+        /// Reads <c>OnlineSkinID</c> from raw skin.ini text without constructing a full <see cref="Skin"/>.
+        /// </summary>
+        public static bool TryParseOnlineSkinIdFromIni(string skinIniContent, out int onlineSkinId)
+        {
+            onlineSkinId = 0;
+
+            if (string.IsNullOrEmpty(skinIniContent))
+                return false;
+
+            using (var reader = new StringReader(skinIniContent))
+            {
+                string? line;
+
+                while ((line = reader.ReadLine()) != null)
+                {
+                    line = line.Trim();
+
+                    if (line.Length == 0 || line.StartsWith("//", StringComparison.Ordinal) || line.StartsWith(';'))
+                        continue;
+
+                    if (!line.StartsWith(online_skin_id_key, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    string value = line[(online_skin_id_key.Length)..].Trim();
+
+                    if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out onlineSkinId) && onlineSkinId > 0)
+                        return true;
+                }
+            }
+
+            onlineSkinId = 0;
+            return false;
+        }
+
         public static string GetDisplayVersion(string? apiVersion, string skinName)
         {
             if (!string.IsNullOrWhiteSpace(apiVersion))

@@ -24,7 +24,7 @@ namespace osu.Game.Skinning
             var skinInfo = local.SkinInfo.Value;
 
             // Local layout / file edits after last download or update.
-            if (!skinInfo.MatchesOnlineVersion)
+            if (skinInfo.LocallyModified || !skinInfo.MatchesOnlineVersion)
                 return true;
 
             string localName = SkinIniVersionHelper.SanitizeUploadName(skinInfo.Name);

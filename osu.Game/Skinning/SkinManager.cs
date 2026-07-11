@@ -138,6 +138,10 @@ namespace osu.Game.Skinning
             {
                 PostNotification = obj => PostNotification?.Invoke(obj)
             };
+
+            // One-shot: persist listing origin into realm so the settings pill is correct on cold start
+            // (does not depend on skin.ini being parsed when the card first paints).
+            skinImporter.BackfillListingOrigin();
         }
 
         /// <summary>
@@ -239,7 +243,16 @@ namespace osu.Game.Skinning
         /// </summary>
         /// <param name="skinInfo">The skin to lookup.</param>
         /// <returns>A <see cref="Skin"/> instance correlating to the provided <see cref="SkinInfo"/>.</returns>
-        public Skin GetSkin(SkinInfo skinInfo) => skinInfo.CreateInstance(this);
+        public Skin GetSkin(SkinInfo skinInfo)
+        {
+            var skin = skinInfo.CreateInstance(this);
+
+            // Backfill realm listing id from skin.ini once Configuration is parsed (upgrade path).
+            if (skin.Configuration.OnlineSkinId > 0 && skin.SkinInfo.IsManaged)
+                EnsureListingLink(skin.SkinInfo, skin.Configuration.OnlineSkinId);
+
+            return skin;
+        }
 
         /// <summary>
         /// Ensure that the current skin is in a state it can accept user modifications.
@@ -306,6 +319,7 @@ namespace osu.Game.Skinning
         /// <summary>
         /// If this skin came from the listing but has no <see cref="SkinInfo.OnlineHash"/> yet
         /// (installed before that field existed), record the current hash as the listing baseline.
+        /// Also backfills <see cref="SkinInfo.OnlineSkinId"/> from skin.ini when missing in realm.
         /// </summary>
         public void EnsureOnlineHashBaseline(Live<SkinInfo> skinInfo)
         {
@@ -314,6 +328,37 @@ namespace osu.Game.Skinning
                 if (string.IsNullOrEmpty(s.OnlineHash) && !string.IsNullOrEmpty(s.Hash))
                     s.OnlineHash = s.Hash;
             });
+        }
+
+        /// <summary>
+        /// Ensures listing linkage is stored on the realm model (beatmap-style).
+        /// </summary>
+        public void EnsureListingLink(Live<SkinInfo> skinInfo, int onlineSkinIdFromConfiguration)
+        {
+            if (onlineSkinIdFromConfiguration <= 0)
+                return;
+
+            skinInfo.PerformWrite(s =>
+            {
+                if (s.OnlineSkinId <= 0)
+                {
+                    s.OnlineSkinId = onlineSkinIdFromConfiguration;
+                    // First realm link — clear stale LocallyModified from older hash-based logic.
+                    s.LocallyModified = false;
+                }
+            });
+        }
+
+        /// <summary>
+        /// Resolves listing ID from realm first, then skin.ini configuration.
+        /// </summary>
+        public static int GetListingId(Skin skin)
+        {
+            int realmId = skin.SkinInfo.PerformRead(s => s.OnlineSkinId);
+            if (realmId > 0)
+                return realmId;
+
+            return SkinIniVersionHelper.TryGetOnlineSkinId(skin, out int configId) ? configId : 0;
         }
 
         /// <summary>
@@ -458,6 +503,18 @@ namespace osu.Game.Skinning
         public void PersistOnlineSkinId(Live<SkinInfo> skinInfo, int onlineSkinId)
         {
             skinInfo.PerformWrite(s => skinImporter.PersistOnlineSkinId(s, onlineSkinId, s.Realm!));
+        }
+
+        /// <summary>
+        /// Origin pill source-of-truth: direct realm Find (not Skin.SkinInfo Live).
+        /// </summary>
+        public bool IsServerOrigin(Guid skinId)
+        {
+            return Realm.Run(r =>
+            {
+                var skin = r.Find<SkinInfo>(skinId);
+                return skin != null && skin.OnlineSkinId > 0 && !skin.LocallyModified;
+            });
         }
 
         /// <summary>

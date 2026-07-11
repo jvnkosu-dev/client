@@ -102,8 +102,13 @@ namespace osu.Game.Database
         /// 50   2025-07-11    Add UserTags to BeatmapMetadata.
         /// 51   2025-07-22    Add ScoreInfo.Pauses.
         /// 52   2026-07-11    Add SkinInfo.OnlineHash for downloader update detection (local vs listing snapshot).
+        /// 53   2026-07-11    Add SkinInfo.LocallyModified for Local/Server origin pill (set only on user save).
+        /// 54   2026-07-11    Add SkinInfo.OnlineSkinId so listing origin is realm-persisted like beatmap OnlineID.
+        /// 55   2026-07-11    Add SkinInfo.OnlineStatus (later removed; cleared LocallyModified for listing skins).
+        /// 56   2026-07-11    Store OnlineStatusInt under its own name (later removed).
+        /// 57   2026-07-11    Remove unused SkinInfo.OnlineStatusInt (pill uses OnlineSkinId + LocallyModified).
         /// </summary>
-        private const int schema_version = 52;
+        private const int schema_version = 57;
 
         /// <summary>
         /// Lock object which is held during <see cref="BlockAllOperations"/> sections, blocking realm retrieval during blocking periods.
@@ -1341,6 +1346,22 @@ namespace osu.Game.Database
                     foreach (var score in migration.NewRealm.All<ScoreInfo>().Where(s => s.LegacyOnlineID == 0))
                         score.LegacyOnlineID = -1;
 
+                    break;
+
+                case 55:
+                    // Was: introduce SkinOnlineStatus. Listing-linked skins should not stay stuck Local
+                    // from the pre-status hash era — only LocallyModified remains relevant for the pill.
+                    foreach (var skin in migration.NewRealm.All<SkinInfo>().Where(s => s.OnlineSkinId > 0))
+                        skin.LocallyModified = false;
+
+                    break;
+
+                case 56:
+                    // Was: rename OnlineStatus → OnlineStatusInt. No data fix required beyond schema weave.
+                    break;
+
+                case 57:
+                    // OnlineStatusInt removed from SkinInfo; Realm drops the column automatically.
                     break;
             }
 
