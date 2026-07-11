@@ -46,7 +46,7 @@ namespace osu.Game.Overlays.SkinSet
         {
             public SkinSetHeaderTitle()
             {
-                Title = "skin";
+                Title = "skin info";
                 Description = "skin details";
                 Icon = OsuIcon.SkinB;
             }

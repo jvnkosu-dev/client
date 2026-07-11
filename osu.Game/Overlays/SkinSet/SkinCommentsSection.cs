@@ -13,7 +13,6 @@ using osu.Game.Online.API.Requests;
 using osu.Game.Overlays.BeatmapSet;
 using osu.Game.Overlays.Comments;
 using osuTK;
-using osuTK.Graphics;
 
 namespace osu.Game.Overlays.SkinSet
 {
@@ -21,7 +20,7 @@ namespace osu.Game.Overlays.SkinSet
     /// Placeholder comments section for skins. Mirrors the beatmap set layout but remains
     /// inactive until skin comments are implemented server-side.
     /// </summary>
-    public partial class SkinCommentsSection : FillFlowContainer
+    public partial class SkinCommentsSection : Container
     {
         public readonly Bindable<APIOnlineSkin?> Skin = new Bindable<APIOnlineSkin?>();
 
@@ -29,31 +28,25 @@ namespace osu.Game.Overlays.SkinSet
         {
             RelativeSizeAxes = Axes.X;
             AutoSizeAxes = Axes.Y;
-            Direction = FillDirection.Vertical;
-            Spacing = new Vector2(0, 10);
 
-            Children = new Drawable[]
+            Child = new BeatmapSetLayoutSection
             {
-                // Sits on the page background, not inside the comments card.
-                new SkinCommentsUnavailableBanner(),
-                new BeatmapSetLayoutSection
+                // Blocks all interaction until skin comments are implemented server-side.
+                Child = new NonInteractiveContainer
                 {
-                    Child = new Container
+                    RelativeSizeAxes = Axes.X,
+                    AutoSizeAxes = Axes.Y,
+                    Child = new FillFlowContainer
                     {
                         RelativeSizeAxes = Axes.X,
                         AutoSizeAxes = Axes.Y,
+                        Direction = FillDirection.Vertical,
                         Children = new Drawable[]
                         {
+                            new SkinCommentsUnavailableBanner(),
                             new CommentsContainer
                             {
                                 Alpha = 0.45f,
-                            },
-                            // Absorb clicks so the grayed-out editor/header cannot be interacted with.
-                            new Box
-                            {
-                                RelativeSizeAxes = Axes.Both,
-                                Colour = Color4.Black,
-                                Alpha = 0.001f,
                             },
                         },
                     },
@@ -69,9 +62,15 @@ namespace osu.Game.Overlays.SkinSet
             }, true);
         }
 
+        private partial class NonInteractiveContainer : Container
+        {
+            public override bool PropagatePositionalInputSubTree => false;
+            public override bool PropagateNonPositionalInputSubTree => false;
+        }
+
         /// <summary>
         /// Matches <see cref="Settings.SettingsNote"/> warning styling (yellow plaque + dark text),
-        /// with an exclamation triangle icon.
+        /// with an exclamation triangle icon. Sits at the top of the comments card, above the title.
         /// </summary>
         private partial class SkinCommentsUnavailableBanner : CompositeDrawable
         {
@@ -79,53 +78,70 @@ namespace osu.Game.Overlays.SkinSet
             {
                 RelativeSizeAxes = Axes.X;
                 AutoSizeAxes = Axes.Y;
-                Padding = new MarginPadding
-                {
-                    Horizontal = WaveOverlayContainer.HORIZONTAL_PADDING,
-                };
             }
 
             [BackgroundDependencyLoader]
             private void load(OsuColour colours, OverlayColourProvider colourProvider)
             {
-                InternalChild = new Container
+                InternalChildren = new Drawable[]
                 {
-                    RelativeSizeAxes = Axes.X,
-                    AutoSizeAxes = Axes.Y,
-                    CornerRadius = 5,
-                    CornerExponent = 2.5f,
-                    Masking = true,
-                    Children = new Drawable[]
+                    // Match CommentsContainer's grayed-out Background5 (Alpha 0.45 over page bg).
+                    new Box
                     {
-                        new Box
+                        RelativeSizeAxes = Axes.Both,
+                        Colour = colourProvider.Background5,
+                        Alpha = 0.45f,
+                    },
+                    new Container
+                    {
+                        RelativeSizeAxes = Axes.X,
+                        AutoSizeAxes = Axes.Y,
+                        Padding = new MarginPadding
                         {
-                            RelativeSizeAxes = Axes.Both,
-                            Colour = colours.Orange1,
+                            Horizontal = WaveOverlayContainer.HORIZONTAL_PADDING,
+                            Top = 15,
+                            Bottom = 5,
                         },
-                        new FillFlowContainer
+                        Child = new Container
                         {
                             RelativeSizeAxes = Axes.X,
                             AutoSizeAxes = Axes.Y,
-                            Direction = FillDirection.Horizontal,
-                            Spacing = new Vector2(8, 0),
-                            Padding = new MarginPadding(8),
+                            CornerRadius = 5,
+                            CornerExponent = 2.5f,
+                            Masking = true,
                             Children = new Drawable[]
                             {
-                                new SpriteIcon
+                                new Box
                                 {
-                                    Icon = FontAwesome.Solid.ExclamationTriangle,
-                                    Size = new Vector2(14),
-                                    Colour = colourProvider.Background5,
-                                    Anchor = Anchor.CentreLeft,
-                                    Origin = Anchor.CentreLeft,
+                                    RelativeSizeAxes = Axes.Both,
+                                    Colour = colours.Orange1,
                                 },
-                                new OsuSpriteText
+                                new FillFlowContainer
                                 {
-                                    Text = "Comments for skins are not implemented yet.",
-                                    Font = OsuFont.Style.Caption1.With(weight: FontWeight.SemiBold),
-                                    Colour = colourProvider.Background5,
-                                    Anchor = Anchor.CentreLeft,
-                                    Origin = Anchor.CentreLeft,
+                                    RelativeSizeAxes = Axes.X,
+                                    AutoSizeAxes = Axes.Y,
+                                    Direction = FillDirection.Horizontal,
+                                    Spacing = new Vector2(8, 0),
+                                    Padding = new MarginPadding(8),
+                                    Children = new Drawable[]
+                                    {
+                                        new SpriteIcon
+                                        {
+                                            Icon = FontAwesome.Solid.ExclamationTriangle,
+                                            Size = new Vector2(14),
+                                            Colour = colourProvider.Background5,
+                                            Anchor = Anchor.CentreLeft,
+                                            Origin = Anchor.CentreLeft,
+                                        },
+                                        new OsuSpriteText
+                                        {
+                                            Text = "Comments are currently unavailable.",
+                                            Font = OsuFont.Style.Caption1.With(weight: FontWeight.SemiBold),
+                                            Colour = colourProvider.Background5,
+                                            Anchor = Anchor.CentreLeft,
+                                            Origin = Anchor.CentreLeft,
+                                        },
+                                    },
                                 },
                             },
                         },

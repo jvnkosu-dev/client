@@ -128,7 +128,7 @@ namespace osu.Game.Overlays.SkinListing
 
             public SkinSearchTextBox()
             {
-                PlaceholderText = "Search for a skin or author...";
+                PlaceholderText = "type in keywords...";
             }
 
             protected override bool OnKeyDown(KeyDownEvent e)
