@@ -69,6 +69,8 @@ namespace osu.Game.Tests.Visual.Navigation
 
             AddUntilStep("wait for gameplay", () => player?.IsBreakTime.Value == false);
 
+            AddAssert("key counter shows custom binding", () => keyCounter.Trigger.Name == "S");
+
             AddStep("press 'z'", () => InputManager.Key(Key.Z));
             AddAssert("key counter didn't increase", () => keyCounter.CountPresses.Value == 0);
 

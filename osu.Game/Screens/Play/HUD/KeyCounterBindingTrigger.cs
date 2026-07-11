@@ -28,8 +28,8 @@ namespace osu.Game.Screens.Play.HUD
         {
             return keyCombinationProvider?.GetReadableString(key.KeyCombination) ?? $"B{(int)(object)action + 1}";
         }
-        public KeyCounterBindingTrigger(IKeyBinding key, T action)
-            : base("")
+        public KeyCounterBindingTrigger(IKeyBinding key, T action, string? displayName = null)
+            : base(displayName ?? string.Empty)
         {
             Key = key;
             Action = action;
@@ -38,7 +38,9 @@ namespace osu.Game.Screens.Play.HUD
         protected override void LoadComplete()
         {
             base.LoadComplete();
-            Name = getName(Key, Action);
+
+            if (string.IsNullOrEmpty(Name))
+                Name = getName(Key, Action);
         }
 
         public bool OnPressed(KeyBindingPressEvent<T> e)

@@ -40,7 +40,7 @@ namespace osu.Game.Rulesets.Osu
         public bool AllowUserCursorMovement { get; set; } = true;
 
         protected override KeyBindingContainer<OsuAction> CreateKeyBindingContainer(RulesetInfo ruleset, int variant, SimultaneousBindingMode unique)
-            => new OsuKeyBindingContainer(ruleset, variant, unique);
+            => new OsuKeyBindingContainer(this, ruleset, variant, unique);
 
         public bool CheckScreenSpaceActionPressJudgeable(Vector2 screenSpacePosition) =>
             // This is a very naive but simple approach.
@@ -88,8 +88,8 @@ namespace osu.Game.Rulesets.Osu
                 }
             }
 
-            public OsuKeyBindingContainer(RulesetInfo ruleset, int variant, SimultaneousBindingMode unique)
-                : base(ruleset, variant, unique)
+            public OsuKeyBindingContainer(OsuInputManager inputManager, RulesetInfo ruleset, int variant, SimultaneousBindingMode unique)
+                : base(inputManager, ruleset, variant, unique)
             {
             }
 

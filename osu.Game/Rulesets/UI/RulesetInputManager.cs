@@ -176,15 +176,71 @@ namespace osu.Game.Rulesets.UI
 
         #region Key Counter Attachment
 
+        private InputCountController? attachedInputCountController;
+        private bool keyCounterTriggersAttached;
+
+        [Resolved]
+        private ReadableKeyCombinationProvider keyCombinationProvider { get; set; } = null!;
+
         public void Attach(InputCountController inputCountController)
         {
-            var bindings = rulesetKeyBindingContainer.DefaultKeyBindings;
-            var triggers = bindings.Select(b => new KeyCounterBindingTrigger<T>(b, b.GetAction<T>()))
-                                   .DistinctBy(b => b.Action)
-                                   .ToArray();
+            attachedInputCountController = inputCountController;
+            attachKeyCounterTriggers();
+        }
+
+        private void attachKeyCounterTriggers()
+        {
+            if (attachedInputCountController == null || keyCounterTriggersAttached)
+                return;
+
+            var container = (RulesetKeyBindingContainer)KeyBindingContainer;
+
+            if (container.ActiveKeyBindings == null)
+                return;
+
+            keyCounterTriggersAttached = true;
+
+            var triggers = getKeyCounterDisplayBindings(container)
+                           .Select(b => new KeyCounterBindingTrigger<T>(b, b.GetAction<T>(), keyCombinationProvider.GetReadableString(b.KeyCombination)))
+                           .ToArray();
 
             KeyBindingContainer.AddRange(triggers);
-            inputCountController.AddRange(triggers);
+            attachedInputCountController.AddRange(triggers);
+        }
+
+        private IEnumerable<IKeyBinding> getKeyCounterDisplayBindings(RulesetKeyBindingContainer container)
+        {
+            var bindings = container.ActiveKeyBindings ?? container.DefaultKeyBindings;
+
+            var defaultActionOrder = container.DefaultKeyBindings
+                                                .Select(b => b.GetAction<T>())
+                                                .Distinct()
+                                                .Select((action, index) => (action, index))
+                                                .ToDictionary(x => x.action, x => x.index);
+
+            return bindings
+                   .GroupBy(b => b.GetAction<T>())
+                   .OrderBy(g => defaultActionOrder.GetValueOrDefault(g.Key, int.MaxValue))
+                   .Select(g => g.OrderBy(b => isMouseBinding(b) ? 1 : 0).First());
+        }
+
+        private static bool isMouseBinding(IKeyBinding binding) =>
+            binding.KeyCombination.Keys.All(isMouseKey);
+
+        private static bool isMouseKey(InputKey key)
+        {
+            switch (key)
+            {
+                case InputKey.MouseLeft:
+                case InputKey.MouseRight:
+                case InputKey.MouseMiddle:
+                case InputKey.ExtraMouseButton1:
+                case InputKey.ExtraMouseButton2:
+                    return true;
+
+                default:
+                    return false;
+            }
         }
 
         #endregion
@@ -216,18 +272,23 @@ namespace osu.Game.Rulesets.UI
         #endregion
 
         protected virtual KeyBindingContainer<T> CreateKeyBindingContainer(RulesetInfo ruleset, int variant, SimultaneousBindingMode unique)
-            => new RulesetKeyBindingContainer(ruleset, variant, unique);
+            => new RulesetKeyBindingContainer(this, ruleset, variant, unique);
 
         private RulesetKeyBindingContainer createRulesetKeyBindingContainer(RulesetInfo ruleset, int variant, SimultaneousBindingMode unique)
-            => new RulesetKeyBindingContainer(ruleset, variant, unique);
+            => new RulesetKeyBindingContainer(this, ruleset, variant, unique);
 
         public partial class RulesetKeyBindingContainer : DatabasedKeyBindingContainer<T>
         {
             protected override bool HandleRepeats => false;
 
-            public RulesetKeyBindingContainer(RulesetInfo ruleset, int variant, SimultaneousBindingMode unique)
+            private readonly RulesetInputManager<T> inputManager;
+
+            public IEnumerable<IKeyBinding> ActiveKeyBindings => KeyBindings;
+
+            public RulesetKeyBindingContainer(RulesetInputManager<T> inputManager, RulesetInfo ruleset, int variant, SimultaneousBindingMode unique)
                 : base(ruleset, variant, unique)
             {
+                this.inputManager = inputManager;
             }
 
             protected override void ReloadMappings(IQueryable<RealmKeyBinding> realmKeyBindings)
@@ -236,6 +297,8 @@ namespace osu.Game.Rulesets.UI
 
                 KeyBindings = KeyBindings.Where(static b => RealmKeyBindingStore.CheckValidForGameplay(b.KeyCombination)).ToList();
                 RealmKeyBindingStore.ClearDuplicateBindings(KeyBindings);
+
+                inputManager.attachKeyCounterTriggers();
             }
         }
 

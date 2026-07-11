@@ -29,12 +29,12 @@ namespace osu.Game.Rulesets.Mania.Tests
             }
 
             protected override KeyBindingContainer<ManiaAction> CreateKeyBindingContainer(RulesetInfo ruleset, int variant, SimultaneousBindingMode unique)
-                => new LocalKeyBindingContainer(ruleset, variant, unique);
+                => new LocalKeyBindingContainer(this, ruleset, variant, unique);
 
             private partial class LocalKeyBindingContainer : RulesetKeyBindingContainer
             {
-                public LocalKeyBindingContainer(RulesetInfo ruleset, int variant, SimultaneousBindingMode unique)
-                    : base(ruleset, variant, unique)
+                public LocalKeyBindingContainer(LocalInputManager inputManager, RulesetInfo ruleset, int variant, SimultaneousBindingMode unique)
+                    : base(inputManager, ruleset, variant, unique)
                 {
                 }
 
