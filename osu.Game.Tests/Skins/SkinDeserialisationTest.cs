@@ -85,6 +85,8 @@ namespace osu.Game.Tests.Skins
             "Archives/modified-argon-20250308.osk",
             // Covers "Argon" clicks/s counter, longest combo counter, skinnable SR display and beatmap status pill
             "Archives/modified-argon-20251215-jvnkosu.osk",
+            // Covers legacy bar hit error meter
+            "Archives/modified-classic-20260806.osk",
         };
 
         /// <summary>

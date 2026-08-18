@@ -100,6 +100,8 @@ namespace osu.Game.Skinning
                                 {
                                     var leaderboard = container.OfType<DrawableGameplayLeaderboard>().FirstOrDefault();
                                     var spectatorList = container.OfType<SpectatorList>().FirstOrDefault();
+                                    var hitError = container.OfType<HitErrorMeter>().FirstOrDefault();
+                                    var hitError2 = container.OfType<HitErrorMeter>().LastOrDefault();
 
                                     if (leaderboard != null)
                                         leaderboard.Position = new Vector2(40, 60);
@@ -113,6 +115,20 @@ namespace osu.Game.Skinning
                                         spectatorList.Position = new Vector2(screen_edge_padding, -(song_progress_offset_height + screen_edge_padding));
                                     }
 
+                                    if (hitError != null)
+                                    {
+                                        hitError.Anchor = Anchor.CentreLeft;
+                                        hitError.Origin = Anchor.CentreLeft;
+                                    }
+
+                                    if (hitError2 != null)
+                                    {
+                                        hitError2.Anchor = Anchor.CentreRight;
+                                        hitError2.Scale = new Vector2(-1, 1);
+                                        // origin flipped to match scale above.
+                                        hitError2.Origin = Anchor.CentreLeft;
+                                    }
+
                                     foreach (var d in container.OfType<ISerialisableDrawable>())
                                         d.UsesFixedAnchor = true;
                                 })
@@ -122,6 +138,8 @@ namespace osu.Game.Skinning
                                     {
                                         new DrawableGameplayLeaderboard(),
                                         new SpectatorList(),
+                                        new BarHitErrorMeter(),
+                                        new BarHitErrorMeter(),
                                     },
                                 };
                             }
@@ -161,24 +179,6 @@ namespace osu.Game.Skinning
                                             combo.Anchor = Anchor.TopCentre;
                                         }
                                     }
-
-                                    var hitError = container.OfType<HitErrorMeter>().FirstOrDefault();
-
-                                    if (hitError != null)
-                                    {
-                                        hitError.Anchor = Anchor.CentreLeft;
-                                        hitError.Origin = Anchor.CentreLeft;
-                                    }
-
-                                    var hitError2 = container.OfType<HitErrorMeter>().LastOrDefault();
-
-                                    if (hitError2 != null)
-                                    {
-                                        hitError2.Anchor = Anchor.CentreRight;
-                                        hitError2.Scale = new Vector2(-1, 1);
-                                        // origin flipped to match scale above.
-                                        hitError2.Origin = Anchor.CentreLeft;
-                                    }
                                 }
 
                                 if (songProgress != null && keyCounter != null)
@@ -200,8 +200,6 @@ namespace osu.Game.Skinning
                                     new DefaultHealthDisplay(),
                                     new DefaultSongProgress(),
                                     new DefaultKeyCounterDisplay(),
-                                    new BarHitErrorMeter(),
-                                    new BarHitErrorMeter(),
                                     new TrianglesPerformancePointsCounter(),
                                 }
                             };

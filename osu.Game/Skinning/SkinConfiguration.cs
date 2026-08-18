@@ -66,6 +66,8 @@ namespace osu.Game.Skinning
         /// </summary>
         public long ServerContentLength { get; internal set; }
 
+        internal bool IsLatestVersion;
+
         public enum LegacySetting
         {
             Version,
