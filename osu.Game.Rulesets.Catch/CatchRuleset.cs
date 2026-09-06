@@ -81,6 +81,7 @@ namespace osu.Game.Rulesets.Catch
                         new KeyBinding(InputKey.Number2, CatchAction.EditorFruitTool),
                         new KeyBinding(InputKey.Number3, CatchAction.EditorJuiceStreamTool),
                         new KeyBinding(InputKey.Number4, CatchAction.EditorBananaShowerTool),
+                        new KeyBinding(InputKey.T, CatchAction.EditorToggleDistanceSnap),
                     ];
             }
         }
@@ -293,7 +294,7 @@ namespace osu.Game.Rulesets.Catch
         {
             return new[]
             {
-                new StatisticItem("Performance Breakdown", () => new PerformanceBreakdownChart(score, playableBeatmap)
+                new StatisticItem("Performance Breakdown", () => new PerformanceBreakdownChart(score)
                 {
                     RelativeSizeAxes = Axes.X,
                     AutoSizeAxes = Axes.Y
