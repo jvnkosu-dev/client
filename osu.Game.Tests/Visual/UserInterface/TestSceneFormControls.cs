@@ -105,6 +105,11 @@ namespace osu.Game.Tests.Visual.UserInterface
                                             HintText = EditorSetupStrings.LetterboxDuringBreaksDescription,
                                             Current = { Value = true, Disabled = true },
                                         },
+                                        new FormColour
+                                        {
+                                            Caption = "Logo colour",
+                                            Current = { Value = Colour4.FromHex(@"8400FF") },
+                                        },
                                         new FormSliderBar<float>
                                         {
                                             Caption = "Slider",

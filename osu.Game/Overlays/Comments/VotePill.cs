@@ -94,7 +94,7 @@ namespace osu.Game.Overlays.Comments
                 return;
             }
 
-            request = new CommentVoteRequest(comment.Id, isVoted.Value ? CommentVoteAction.UnVote : CommentVoteAction.Vote);
+            request = new CommentVoteRequest(comment.Id, isVoted.Value ? CommentVoteAction.UnVote : CommentVoteAction.Vote, comment.CommentableType);
             request.Success += onSuccess;
             api.Queue(request);
         }

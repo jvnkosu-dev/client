@@ -2,7 +2,6 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Allocation;
-using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Localisation;
@@ -17,25 +16,11 @@ namespace osu.Game.Overlays.Settings.Sections.UserInterface
     {
         protected override LocalisableString Header => UserInterfaceStrings.SongSelectHeader;
 
-        private readonly Bindable<SettingsNote.Data?> selectV1Gone = new Bindable<SettingsNote.Data?>();
-
         [BackgroundDependencyLoader]
         private void load(OsuConfigManager config)
         {
-            selectV1Gone.Value = new SettingsNote.Data("SelectV1 has been fully removed from upstream code base.\nAt this time, we cannot bring it back.", SettingsNote.Type.Warning);
-            Bindable<bool> selectV1 = config.GetBindable<bool>(OsuSetting.ForceLegacySongSelect);
-            selectV1.Disabled = true;
-
             Children = new Drawable[]
             {
-                new SettingsItemV2(new FormCheckBox
-                {
-                    Caption = UserInterfaceStrings.ForceLegacySongSelect,
-                    Current = selectV1,
-                })
-                {
-                    Note = { BindTarget = selectV1Gone }
-                },
                 new SettingsItemV2(new FormCheckBox
                 {
                     Caption = UserInterfaceStrings.ShowConvertedBeatmaps,

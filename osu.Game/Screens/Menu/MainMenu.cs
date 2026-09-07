@@ -38,6 +38,7 @@ using osu.Game.Overlays.Volume;
 using osu.Game.Rulesets;
 using osu.Game.Screens.Backgrounds;
 using osu.Game.Screens.Edit;
+using osu.Game.Screens.Marathon;
 using osu.Game.Screens.OnlinePlay.DailyChallenge;
 using osu.Game.Screens.OnlinePlay.Multiplayer;
 using osu.Game.Screens.OnlinePlay.Playlists;
@@ -164,6 +165,7 @@ namespace osu.Game.Screens.Menu
                             OnQuickPlay = loadQuickPlay,
                             OnRankedPlay = loadRankedPlay,
                             OnPlaylists = () => this.Push(new Playlists()),
+                            OnMarathon = () => this.Push(new MarathonScreen()),
                             OnDailyChallenge = room =>
                             {
                                 if (statics.Get<bool>(Static.DailyChallengeIntroPlayed))

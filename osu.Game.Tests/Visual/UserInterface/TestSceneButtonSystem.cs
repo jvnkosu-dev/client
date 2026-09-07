@@ -71,6 +71,7 @@ namespace osu.Game.Tests.Visual.UserInterface
         [TestCase(Key.M, Key.M, Key.L)]
         [TestCase(Key.M, Key.M, Key.M)]
         [TestCase(Key.L, Key.L)]
+        [TestCase(Key.A, Key.A)]
         [TestCase(Key.B, Key.E, Key.B)]
         [TestCase(Key.S, Key.E, Key.S)]
         [TestCase(Key.D)]
@@ -96,6 +97,10 @@ namespace osu.Game.Tests.Visual.UserInterface
 
                     case Key.L:
                         buttons.OnPlaylists = action;
+                        break;
+
+                    case Key.A:
+                        buttons.OnMarathon = action;
                         break;
 
                     case Key.B:

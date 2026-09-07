@@ -395,7 +395,7 @@ namespace osu.Game.Overlays.Comments
         {
             actionsContainer.Hide();
             actionsLoading.Show();
-            var request = new CommentDeleteRequest(Comment.Id);
+            var request = new CommentDeleteRequest(Comment.Id, Comment.CommentableType);
             request.Success += _ => Schedule(() =>
             {
                 actionsLoading.Hide();

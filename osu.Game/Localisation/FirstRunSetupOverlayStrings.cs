@@ -26,9 +26,9 @@ namespace osu.Game.Localisation
         public static LocalisableString FirstRunSetupTitle => new TranslatableString(getKey(@"first_run_setup_title"), @"First-run setup");
 
         /// <summary>
-        /// "Set up osu! to suit you"
+        /// "Set up jvnkosu! to suit you"
         /// </summary>
-        public static LocalisableString FirstRunSetupDescription => new TranslatableString(getKey(@"first_run_setup_description"), @"Set up osu! to suit you");
+        public static LocalisableString FirstRunSetupDescription => new TranslatableString(getKey(@"jvnkosu_first_run_setup_description"), @"Set up jvnkosu! to suit you");
 
         /// <summary>
         /// "Welcome"

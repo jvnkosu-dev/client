@@ -16,5 +16,8 @@ namespace osu.Game.Configuration
 
         [LocalisableDescription(typeof(UserInterfaceStrings), nameof(UserInterfaceStrings.BeatmapWithStoryboard))]
         BeatmapWithStoryboard,
+
+        [LocalisableDescription(typeof(UserInterfaceStrings), nameof(UserInterfaceStrings.CustomBackgroundSource))]
+        Custom,
     }
 }

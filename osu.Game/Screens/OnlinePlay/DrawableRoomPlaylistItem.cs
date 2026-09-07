@@ -47,6 +47,11 @@ namespace osu.Game.Screens.OnlinePlay
 
         private const float icon_height = 34;
 
+        /// <summary>
+        /// Font size used for beatmap and author text on this playlist row.
+        /// </summary>
+        protected virtual float ItemFontSize => 14;
+
         private const float border_thickness = 3;
 
         /// <summary>
@@ -373,7 +378,7 @@ namespace osu.Game.Screens.OnlinePlay
 
         protected override Drawable CreateContent()
         {
-            Action<SpriteText> fontParameters = s => s.Font = OsuFont.Default.With(size: 14, weight: FontWeight.SemiBold);
+            Action<SpriteText> fontParameters = s => s.Font = OsuFont.Default.With(size: ItemFontSize, weight: FontWeight.SemiBold);
 
             return new Container
             {
@@ -432,7 +437,7 @@ namespace osu.Game.Screens.OnlinePlay
                                                     RelativeSizeAxes = Axes.X,
                                                     // workaround to ensure only the first line of text shows, emulating truncation (but without ellipsis at the end).
                                                     // TODO: remove when text/link flow can support truncation with ellipsis natively.
-                                                    Height = OsuFont.DEFAULT_FONT_SIZE,
+                                                    Height = Math.Max(OsuFont.DEFAULT_FONT_SIZE, ItemFontSize),
                                                     Masking = true
                                                 },
                                                 new FillFlowContainer

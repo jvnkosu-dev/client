@@ -99,6 +99,7 @@ namespace osu.Game.Online.API
 
             log = Logger.GetLogger(LoggingTarget.Network);
             log.Add($@"API endpoint root: {Endpoints.APIUrl}");
+            log.Add($@"Marathon endpoint: {Endpoints.MarathonUrl}");
             log.Add($@"API request version: {APIVersion}");
 
             ProvidedUsername = config.Get<string>(OsuSetting.Username);

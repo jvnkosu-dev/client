@@ -36,6 +36,10 @@ namespace osu.Game.Online.API.Requests
             return req;
         }
 
+        protected override string Uri => Commentable == CommentableType.Skin
+            ? $@"{API!.Endpoints.APIUrl}/api/skins/{CommentableId}/comments"
+            : base.Uri;
+
         protected override string Target => "comments";
     }
 }

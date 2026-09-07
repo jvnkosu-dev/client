@@ -10,29 +10,29 @@ namespace osu.Game.Localisation
         private const string prefix = @"osu.Game.Resources.Localisation.WindowsAssociationManager";
 
         /// <summary>
-        /// "osu! Beatmap"
+        /// "jvnkosu! Beatmap"
         /// </summary>
-        public static LocalisableString OsuBeatmap => new TranslatableString(getKey(@"osu_beatmap"), @"osu! Beatmap");
+        public static LocalisableString OsuBeatmap => new TranslatableString(getKey(@"jvnkosu_beatmap"), @"jvnkosu! Beatmap");
 
         /// <summary>
-        /// "osu! Replay"
+        /// "jvnkosu! Replay"
         /// </summary>
-        public static LocalisableString OsuReplay => new TranslatableString(getKey(@"osu_replay"), @"osu! Replay");
+        public static LocalisableString OsuReplay => new TranslatableString(getKey(@"jvnkosu_replay"), @"jvnkosu! Replay");
 
         /// <summary>
-        /// "osu! Skin"
+        /// "jvnkosu! Skin"
         /// </summary>
-        public static LocalisableString OsuSkin => new TranslatableString(getKey(@"osu_skin"), @"osu! Skin");
+        public static LocalisableString OsuSkin => new TranslatableString(getKey(@"jvnkosu_skin"), @"jvnkosu! Skin");
 
         /// <summary>
-        /// "osu!"
+        /// "jvnkosu!"
         /// </summary>
-        public static LocalisableString OsuProtocol => new TranslatableString(getKey(@"osu_protocol"), @"osu!");
+        public static LocalisableString OsuProtocol => new TranslatableString(getKey(@"jvnkosu_protocol"), @"jvnkosu!");
 
         /// <summary>
-        /// "osu! Multiplayer"
+        /// "jvnkosu! Multiplayer"
         /// </summary>
-        public static LocalisableString OsuMultiplayer => new TranslatableString(getKey(@"osu_multiplayer"), @"osu! Multiplayer");
+        public static LocalisableString OsuMultiplayer => new TranslatableString(getKey(@"jvnkosu_multiplayer"), @"jvnkosu! Multiplayer");
 
         private static string getKey(string key) => $@"{prefix}:{key}";
     }

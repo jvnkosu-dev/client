@@ -500,7 +500,7 @@ namespace osu.Game.Overlays.Settings.Sections
             string displayName = SkinIniVersionHelper.GetDisplayName(skin.Name);
             string creator = skin.SkinInfo.PerformRead(s => s.Creator) ?? string.Empty;
 
-            string title = string.IsNullOrWhiteSpace(displayName) ? skin.SkinInfo.ToString() : displayName;
+            string title = (string.IsNullOrWhiteSpace(displayName) ? skin.SkinInfo.ToString() : displayName) ?? string.Empty;
             string creatorDisplay = string.IsNullOrWhiteSpace(creator) || creator == @"Unknown" ? "-" : creator;
 
             titleText.CreateContent = () => new OsuSpriteText

@@ -361,8 +361,8 @@ namespace osu.Game.Overlays.SkinListing.Submission
 
             try
             {
-                if (resolvedOnlineSkinId is > 0)
-                    persistOnlineSkinId(resolvedOnlineSkinId.Value);
+                if (resolvedOnlineSkinId is int persistedId && persistedId > 0)
+                    persistOnlineSkinId(persistedId);
 
                 skinListing.RefreshListing();
 
@@ -370,13 +370,13 @@ namespace osu.Game.Overlays.SkinListing.Submission
                 completedSample.Play();
 
                 bool openPage = configManager.Get<bool>(OsuSetting.SkinSubmissionOpenPageAfterSubmission)
-                                && resolvedOnlineSkinId is > 0;
+                                && resolvedOnlineSkinId is int resolvedId && resolvedId > 0;
 
                 if (openPage)
                 {
                     allowExit();
 
-                    int skinId = resolvedOnlineSkinId.Value;
+                    int skinId = resolvedOnlineSkinId.GetValueOrDefault();
                     openSkinPageOnExit = true;
                     returnToEditorOnExit = false;
 

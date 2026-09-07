@@ -84,6 +84,16 @@ namespace osu.Game.Screens.Ranking
         /// </summary>
         public bool IsLocalPlay { get; init; }
 
+        /// <summary>
+        /// Whether buttons acting on the played beatmap (collection management, favouriting) should be displayed.
+        /// </summary>
+        public bool AllowBeatmapActions { get; init; } = true;
+
+        /// <summary>
+        /// The button strip at the bottom of the screen, for subclasses wanting to add their own buttons to it.
+        /// </summary>
+        protected FillFlowContainer BottomPanelButtons { get; private set; } = null!;
+
         private Sample? popInSample;
 
         [Cached]
@@ -99,8 +109,6 @@ namespace osu.Game.Screens.Ranking
         [BackgroundDependencyLoader]
         private void load(AudioManager audio)
         {
-            FillFlowContainer buttons;
-
             popInSample = audio.Samples.Get(@"UI/overlay-pop-in");
 
             InternalChild = new PopoverContainer
@@ -159,7 +167,7 @@ namespace osu.Game.Screens.Ranking
                                         RelativeSizeAxes = Axes.Both,
                                         Colour = Color4Extensions.FromHex("#333")
                                     },
-                                    buttons = new FillFlowContainer
+                                    BottomPanelButtons = new FillFlowContainer
                                     {
                                         Anchor = Anchor.Centre,
                                         Origin = Anchor.Centre,
@@ -195,7 +203,7 @@ namespace osu.Game.Screens.Ranking
 
             if (AllowWatchingReplay)
             {
-                buttons.Add(new ReplayDownloadButton(SelectedScore.Value)
+                BottomPanelButtons.Add(new ReplayDownloadButton(SelectedScore.Value)
                 {
                     Score = { BindTarget = SelectedScore },
                     Width = 300
@@ -210,7 +218,7 @@ namespace osu.Game.Screens.Ranking
 
             if (player != null && AllowRetry)
             {
-                buttons.Add(new RetryButton { Width = 300 });
+                BottomPanelButtons.Add(new RetryButton { Width = 300 });
                 allowHotkeyRetry = true;
             }
 
@@ -228,11 +236,14 @@ namespace osu.Game.Screens.Ranking
                 });
             }
 
+            if (!AllowBeatmapActions)
+                return;
+
             if (Score?.BeatmapInfo != null)
-                buttons.Add(new CollectionButton(Score.BeatmapInfo));
+                BottomPanelButtons.Add(new CollectionButton(Score.BeatmapInfo));
 
             if (Score?.BeatmapInfo?.BeatmapSet != null && Score.BeatmapInfo.BeatmapSet.OnlineID > 0)
-                buttons.Add(new FavouriteButton(Score.BeatmapInfo.BeatmapSet));
+                BottomPanelButtons.Add(new FavouriteButton(Score.BeatmapInfo.BeatmapSet));
         }
 
         protected override void LoadComplete()

@@ -52,6 +52,7 @@ namespace osu.Game.Screens.Menu
         public Action? OnQuickPlay;
         public Action? OnRankedPlay;
         public Action? OnPlaylists;
+        public Action? OnMarathon;
         public Action<Room>? OnDailyChallenge;
 
         private readonly IBindable<bool> isIdle = new BindableBool();
@@ -158,6 +159,7 @@ namespace osu.Game.Screens.Menu
             });
             buttonsPlay.Add(new MainMenuButton(ButtonSystemStrings.Multi, @"button-default-select", OsuIcon.Online, new Color4(94, 63, 186, 255), (_, _) => State = ButtonSystemState.Multi, Key.M));
             buttonsPlay.Add(new MainMenuButton(ButtonSystemStrings.Playlists, @"button-default-select", OsuIcon.Tournament, new Color4(94, 63, 186, 255), onPlaylists, Key.L));
+            buttonsPlay.Add(new MainMenuButton(MarathonStrings.MenuButton, @"button-default-select", FontAwesome.Solid.LayerGroup, new Color4(76, 58, 168, 255), (_, _) => OnMarathon?.Invoke(), Key.A));
             buttonsPlay.Add(new DailyChallengeButton(@"button-daily-select", new Color4(94, 63, 186, 255), onDailyChallenge, Key.D));
             buttonsPlay.ForEach(b => b.VisibleState = ButtonSystemState.Play);
 
@@ -186,7 +188,7 @@ namespace osu.Game.Screens.Menu
             buttonsBrowse.Add(new MainMenuButton(@"skin listing", @"button-default-select", OsuIcon.SkinB, new Color4(140, 180, 0, 255), (_, _) => OnSkinListing?.Invoke(), Key.S));
             buttonsBrowse.ForEach(b => b.VisibleState = ButtonSystemState.Browse);
 
-            buttonsTopLevel.Add(new MainMenuButton(ButtonSystemStrings.Play, @"button-play-select", OsuIcon.Play, new Color4(102, 68, 204, 255), (_, _) => State = ButtonSystemState.Play, Key.P, Key.M, Key.L)
+            buttonsTopLevel.Add(new MainMenuButton(ButtonSystemStrings.Play, @"button-play-select", OsuIcon.Play, new Color4(102, 68, 204, 255), (_, _) => State = ButtonSystemState.Play, Key.P, Key.M, Key.L, Key.A)
             {
                 Padding = new MarginPadding { Left = WEDGE_WIDTH },
             });

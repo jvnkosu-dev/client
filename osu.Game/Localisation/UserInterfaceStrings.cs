@@ -50,9 +50,9 @@ namespace osu.Game.Localisation
         public static LocalisableString InterfaceVoices => new TranslatableString(getKey(@"interface_voices"), @"Interface voices");
 
         /// <summary>
-        /// "Music theme"
+        /// "jvnkosu! music theme"
         /// </summary>
-        public static LocalisableString OsuMusicTheme => new TranslatableString(getKey(@"osu_music_theme"), @"Music theme");
+        public static LocalisableString OsuMusicTheme => new TranslatableString(getKey(@"jvnkosu_music_theme"), @"jvnkosu! music theme");
 
         /// <summary>
         /// "Intro sequence"
@@ -68,6 +68,11 @@ namespace osu.Game.Localisation
         /// "Background source"
         /// </summary>
         public static LocalisableString BackgroundSource => new TranslatableString(getKey(@"background_source"), @"Background source");
+
+        /// <summary>
+        /// "Custom"
+        /// </summary>
+        public static LocalisableString CustomBackgroundSource => new TranslatableString(getKey(@"custom_background_source"), @"Custom");
 
         /// <summary>
         /// "Use custom backgrounds from server"

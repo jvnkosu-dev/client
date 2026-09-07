@@ -29,6 +29,11 @@ namespace osu.Game.Online
         public string APIUrl { get; set; } = string.Empty;
 
         /// <summary>
+        /// The root URL for the marathon microservice. Does not include a trailing slash.
+        /// </summary>
+        public string MarathonUrl { get; set; } = string.Empty;
+
+        /// <summary>
         /// The root URL for the service handling beatmap submission. Does not include a trailing slash.
         /// </summary>
         public string? BeatmapSubmissionServiceUrl { get; set; }

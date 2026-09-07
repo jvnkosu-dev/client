@@ -34,20 +34,26 @@ namespace osu.Game.Graphics.Backgrounds
         private IAPIProvider api { get; set; }
 
         private readonly IBindable<APIState> apiState = new Bindable<APIState>();
-        private Bindable<bool> useSeasonalBackgrounds;
+        private Bindable<BackgroundSource> backgroundSource;
         private Bindable<string> selectedCategory;
         private Bindable<APISeasonalBackgrounds> currentBackgrounds;
 
         private int currentBackgroundIndex;
 
-        private bool shouldShowCustomBackgrounds => useSeasonalBackgrounds.Value;
+        private bool shouldShowCustomBackgrounds => backgroundSource.Value == BackgroundSource.Custom;
         private bool shouldFetchCustomBackgrounds = false;
 
         [BackgroundDependencyLoader]
         private void load(OsuConfigManager config, SessionStatics sessionStatics)
         {
-            useSeasonalBackgrounds = config.GetBindable<bool>(OsuSetting.UseSeasonalBackgroundsV2);
-            useSeasonalBackgrounds.BindValueChanged(_ => BackgroundChanged?.Invoke());
+            backgroundSource = config.GetBindable<BackgroundSource>(OsuSetting.MenuBackgroundSource);
+            backgroundSource.BindValueChanged(_ =>
+            {
+                if (shouldShowCustomBackgrounds)
+                    fetchCategories(true);
+
+                BackgroundChanged?.Invoke();
+            });
 
             selectedCategory = config.GetBindable<string>(OsuSetting.BackgroundCategory);
             selectedCategory.BindValueChanged(_ => fetchBackgroundsForSelectedCategory());
@@ -126,7 +132,10 @@ namespace osu.Game.Graphics.Backgrounds
 
         public Background LoadNextBackground()
         {
-            if (!shouldShowCustomBackgrounds || !shouldFetchCustomBackgrounds || currentBackgrounds.Value?.Backgrounds?.Any() != true)
+            if (!shouldShowCustomBackgrounds)
+                return null;
+
+            if (!shouldFetchCustomBackgrounds || currentBackgrounds.Value?.Backgrounds?.Any() != true)
                 return new Background($@"Menu/menu-background-{RNG.Next(1, 9)}");
 
             var backgrounds = currentBackgrounds.Value.Backgrounds;

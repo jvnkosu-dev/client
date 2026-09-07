@@ -34,6 +34,22 @@ namespace osu.Game.Configuration
         public OsuConfigManager(Storage storage)
             : base(storage)
         {
+            migrateCustomBackgroundsToSource();
+        }
+
+        /// <summary>
+        /// The custom-background toggle used to override <see cref="OsuSetting.MenuBackgroundSource"/>.
+        /// Move that onto the source dropdown once so existing configs keep the same backgrounds.
+        /// </summary>
+        private void migrateCustomBackgroundsToSource()
+        {
+            if (Get<bool>(OsuSetting.MigratedCustomBackgroundSource))
+                return;
+
+            if (Get<bool>(OsuSetting.UseSeasonalBackgroundsV2))
+                SetValue(OsuSetting.MenuBackgroundSource, BackgroundSource.Custom);
+
+            SetValue(OsuSetting.MigratedCustomBackgroundSource, true);
         }
 
         protected override void InitialiseDefaults()
@@ -205,6 +221,7 @@ namespace osu.Game.Configuration
             SetDefault(OsuSetting.MenuBackgroundSource, BackgroundSource.Skin);
             SetDefault(OsuSetting.SeasonalBackgroundMode, SeasonalBackgroundMode.Never);
             SetDefault(OsuSetting.UseSeasonalBackgroundsV2, true);
+            SetDefault(OsuSetting.MigratedCustomBackgroundSource, false);
 
             SetDefault(OsuSetting.DiscordRichPresence, DiscordRichPresenceMode.Full);
 
@@ -438,7 +455,8 @@ namespace osu.Game.Configuration
         MenuBackgroundSource,
         GameplayDisableWinKey,
         SeasonalBackgroundMode,
-        UseSeasonalBackgroundsV2, // TODO: add migrations
+        UseSeasonalBackgroundsV2,
+        MigratedCustomBackgroundSource,
         BackgroundCategory,
         EditorWaveformOpacity,
         EditorShowHitMarkers,

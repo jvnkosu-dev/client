@@ -14,6 +14,7 @@ namespace osu.Game.Online
             MultiplayerUrl = $@"https://osu-spec.jvnko.boats/multiplayer";
             MetadataUrl = $@"https://osu-spec.jvnko.boats/metadata";
             BeatmapSubmissionServiceUrl = $@"https://osu-bss.jvnko.boats";
+            MarathonUrl = @"https://osu-marathon.jvnko.boats";
         }
     }
 }

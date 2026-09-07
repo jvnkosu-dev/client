@@ -47,6 +47,7 @@ namespace osu.Game.Online.API
         {
             APIUrl = "http://localhost",
             WebsiteUrl = "http://localhost",
+            MarathonUrl = "https://osu-marathon.jvnko.boats",
         };
 
         public int APIVersion => int.Parse(DateTime.Now.ToString("yyyyMMdd"));
