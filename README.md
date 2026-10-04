@@ -17,7 +17,7 @@ Registered trademarks "osu!" and "ppy" are property of ppy Pty Ltd., and protect
 ## Compiling from source
 Building jvnkosu! from source is pretty much possible (and welcome here).  
 
-First, you must have a desktop platform with [.NET Core SDK 8](https://dotnet.microsoft.com/download) installed. Windows, Linux, macOS should work well. You can check if you have the SDK installed by running `dotnet --version` in your command prompt/terminal.  
+First, you must have a desktop platform with the [.NET 10 SDK](https://dotnet.microsoft.com/download) installed. Windows, Linux, macOS should work well. You can check if you have the SDK installed by running `dotnet --version` in your command prompt/terminal.  
 
 Then, download the source code. You may download it as an archive and unzip it, but using [Git](https://git-scm.com/) instead is recommended:
 ```

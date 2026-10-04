@@ -7,9 +7,9 @@
             "request": "launch",
             "program": "dotnet",
             "args": [
-                "${workspaceFolder}/osu.Desktop/bin/Debug/net8.0/osu!.dll"
+                "${workspaceRoot}/osu.Desktop/bin/Debug/net10.0/osu!.dll"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build osu! (Debug)",
             "console": "internalConsole"
         },
@@ -19,7 +19,7 @@
             "request": "launch",
             "program": "dotnet",
             "args": [
-                "${workspaceRoot}/osu.Desktop/bin/Debug/net8.0/osu!.dll",
+                "${workspaceRoot}/osu.Desktop/bin/Debug/net10.0/osu!.dll",
                 "--debug-client-id=1"
             ],
             "cwd": "${workspaceRoot}",
@@ -32,9 +32,9 @@
             "request": "launch",
             "program": "dotnet",
             "args": [
-                "${workspaceFolder}/osu.Desktop/bin/Release/net8.0/osu!.dll"
+                "${workspaceRoot}/osu.Desktop/bin/Release/net10.0/osu!.dll"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build osu! (Release)",
             "console": "internalConsole"
         },
@@ -44,9 +44,9 @@
             "request": "launch",
             "program": "dotnet",
             "args": [
-                "${workspaceFolder}/osu.Game.Tests/bin/Debug/net8.0/osu.Game.Tests.dll"
+                "${workspaceRoot}/osu.Game.Tests/bin/Debug/net10.0/osu.Game.Tests.dll"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build tests (Debug)",
             "console": "internalConsole"
         },
@@ -56,9 +56,9 @@
             "request": "launch",
             "program": "dotnet",
             "args": [
-                "${workspaceFolder}/osu.Game.Tests/bin/Release/net8.0/osu.Game.Tests.dll"
+                "${workspaceRoot}/osu.Game.Tests/bin/Release/net10.0/osu.Game.Tests.dll"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build tests (Release)",
             "console": "internalConsole"
         },
@@ -68,10 +68,10 @@
             "request": "launch",
             "program": "dotnet",
             "args": [
-                "${workspaceFolder}/osu.Desktop/bin/Debug/net8.0/osu!.dll",
+                "${workspaceRoot}/osu.Desktop/bin/Debug/net10.0/osu!.dll",
                 "--tournament"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build osu! (Debug)",
             "console": "internalConsole"
         },
@@ -81,10 +81,10 @@
             "request": "launch",
             "program": "dotnet",
             "args": [
-                "${workspaceFolder}/osu.Desktop/bin/Release/net8.0/osu!.dll",
+                "${workspaceRoot}/osu.Desktop/bin/Release/net10.0/osu!.dll",
                 "--tournament"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build osu! (Release)",
             "console": "internalConsole"
         },
@@ -94,10 +94,10 @@
             "request": "launch",
             "program": "dotnet",
             "args": [
-                "${workspaceFolder}/osu.Game.Tournament.Tests/bin/Debug/net8.0/osu.Game.Tournament.Tests.dll",
+                "${workspaceRoot}/osu.Game.Tournament.Tests/bin/Debug/net10.0/osu.Game.Tournament.Tests.dll",
                 "--tournament"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build tournament tests (Debug)",
             "console": "internalConsole"
         },
@@ -107,10 +107,10 @@
             "request": "launch",
             "program": "dotnet",
             "args": [
-                "${workspaceFolder}/osu.Game.Tournament.Tests/bin/Debug/net8.0/osu.Game.Tournament.Tests.dll",
+                "${workspaceRoot}/osu.Game.Tournament.Tests/bin/Debug/net10.0/osu.Game.Tournament.Tests.dll",
                 "--tournament"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build tournament tests (Release)",
             "console": "internalConsole"
         },
@@ -118,12 +118,12 @@
             "name": "Benchmark",
             "type": "coreclr",
             "request": "launch",
-            "program": "${workspaceFolder}/osu.Game.Benchmarks/bin/Release/net8.0/osu.Game.Benchmarks.dll",
+            "program": "${workspaceRoot}/osu.Game.Benchmarks/bin/Release/net10.0/osu.Game.Benchmarks.dll",
             "args": [
                 "--filter",
                 "*"
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceRoot}",
             "preLaunchTask": "Build benchmarks",
             "console": "internalConsole"
         }
