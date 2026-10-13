@@ -8,8 +8,9 @@ namespace osu.Game.Online
         public ProductionEndpointConfiguration()
         {
             WebsiteUrl = APIUrl = @"https://osu.jvnko.boats";
-            APIClientSecret = @"ijBg9O6aULCYGnvEELYD3IdW7fqrYiFaoMdkzQNA";
-            APIClientID = "1";
+            // OAuth client credentials are supplied at release/build time — do not commit secrets.
+            APIClientSecret = string.Empty;
+            APIClientID = string.Empty;
             SpectatorUrl = $@"https://osu-spec.jvnko.boats/spectator";
             MultiplayerUrl = $@"https://osu-spec.jvnko.boats/multiplayer";
             MetadataUrl = $@"https://osu-spec.jvnko.boats/metadata";
