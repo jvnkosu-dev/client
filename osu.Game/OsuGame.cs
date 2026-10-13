@@ -728,7 +728,7 @@ namespace osu.Game
         /// <param name="onlineSkin">The online skin entry to present.</param>
         public void PresentSkinFromListing(APIOnlineSkin onlineSkin)
         {
-            var installedSkin = dependencies.Get<SkinDownloader>().GetInstalledSkin(onlineSkin);
+            var installedSkin = Dependencies.Get<SkinDownloader>().GetInstalledSkin(onlineSkin);
 
             if (installedSkin == null)
             {
@@ -737,7 +737,7 @@ namespace osu.Game
             }
 
             PresentSkin(installedSkin.Value);
-            dependencies.Get<SettingsOverlay>().ShowSkinSection();
+            Dependencies.Get<SettingsOverlay>().ShowSkinSection();
         }
 
         /// <summary>
